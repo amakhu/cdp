@@ -8075,3 +8075,1288 @@ Click on the appropriate job name to see the output.
 ```
 ```
 
+````md
+# Software Component Analysis Using Safety
+
+## Download the source code
+We will do all the exercises locally first in **DevSecOps-Box**, so let’s start the exercise.  
+
+First, we need to download the source code of the project from our git repository.
+
+```bash
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+````
+
+### Command Output
+
+```
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+```
+
+Let’s **cd into the application code**, so we can scan the app.
+
+```bash
+cd webapp
+```
+
+We are now in the `webapp` directory. ✅
+
+---
+
+➡️ Let’s move to the next step.
+
+```
+```
+````md
+# Install Safety
+
+Safety checks your installed dependencies for known security vulnerabilities.  
+By default, it uses the open Python vulnerability database **Safety DB**, but it can be upgraded to use **pyup.io’s Safety API** using the `--key` option.
+
+🔗 Source: [https://pypi.org/project/safety](https://pypi.org/project/safety)  
+
+You can find more details about the project at **Safety**.
+
+---
+
+## Install the safety tool
+We will install the **safety** tool on the system to scan Python dependencies.
+
+```bash
+pip3 install safety==2.3.5
+````
+
+### Command Output
+
+```
+Collecting safety==2.3.5
+  Downloading safety-2.3.5-py3-none-any.whl (57 kB)
+     |████████████████████████████████| 57 kB 8.0 MB/s 
+Requirement already satisfied: setuptools>=19.3 in /usr/local/lib/python3.8/dist-packages (from safety==2.3.5) (67.4.0)
+Collecting Click>=8.0.2
+  Downloading click-8.1.3-py3-none-any.whl (96 kB)
+     |████████████████████████████████| 96 kB 9.9 MB/s 
+Requirement already satisfied: requests in /usr/local/lib/python3.8/dist-packages (from safety==2.3.5) (2.28.2)
+
+...[SNIP]...
+
+Successfully installed Click-8.1.3 dparse-0.6.2 packaging-21.3 pyparsing-3.0.9 ruamel.yaml-0.17.21 ruamel.yaml.clib-0.2.7 safety-2.3.5 toml-0.10.2
+```
+
+---
+
+## Explore Safety options
+
+Now let’s check what options Safety provides us:
+
+```bash
+safety check --help
+```
+
+### Command Output
+
+```
+Usage: safety check [OPTIONS]
+
+  Find vulnerabilities in Python dependencies at the target provided.
+
+Options:
+  --key TEXT                      API Key for pyup.io's vulnerability
+                                  database. Can be set as SAFETY_API_KEY
+                                  environment variable. Default: empty
+  --db TEXT                       Path to a local or remote vulnerability
+                                  database. Default: empty
+  --full-report / --short-report  Full reports include a security advisory (if
+                                  available). Default: --short-report NOTE:
+                                  This argument is mutually exclusive with
+                                  arguments: [bare with values [True, False],
+                                  json with values [True, False], output with
+                                  values ['json', 'bare']].
+  --stdin                         Read input from stdin. NOTE: This argument
+                                  is mutually exclusive with  arguments:
+                                  [files].
+  -r, --file FILENAME             Read input from one (or multiple)
+                                  requirement files. Default: empty NOTE: This
+                                  argument is mutually exclusive with
+                                  arguments: [stdin].
+  -i, --ignore TEXT               Ignore one (or multiple) vulnerabilities by
+                                  ID. Default: empty
+  -o, --output [screen|text|json|bare]
+  -pr, --proxy-protocol [http|https]
+                                  Proxy protocol (https or http) --proxy-
+                                  protocol NOTE: This argument requires the
+                                  following flags  [proxy_host].
+  -ph, --proxy-host TEXT          Proxy host IP or DNS --proxy-host
+  -pp, --proxy-port INTEGER       Proxy port number --proxy-port NOTE: This
+                                  argument requires the following flags
+                                  [proxy_host].
+  --exit-code / --continue-on-error
+                                  Output standard exit codes. Default: --exit-
+                                  code
+  --policy-file FILENAME          Define the policy file to be used
+  --audit-and-monitor / --disable-audit-and-monitor
+                                  Send results back to pyup.io for viewing on
+                                  your dashboard. Requires an API key.
+  --project TEXT                  Project to associate this scan with on
+                                  pyup.io. Defaults to a canonicalized github
+                                  style name if available, otherwise unknown
+  --save-json TEXT                Path to where output file will be placed, if
+                                  the path is a directory, Safety will use
+                                  safety-report.json as filename. Default:
+                                  empty
+  --help                          Show this message and exit.
+```
+
+---
+
+✅ We have installed Safety successfully and explored its options.
+➡️ Let’s move to the next step.
+
+```
+```
+````md
+# Run the Scanner
+
+As we have learned in the **DevSecOps Gospel**, we should save the output in a **machine-readable format**.  
+
+We are using the **tee** command to show the output and store it in a file simultaneously.
+
+```bash
+safety check -r requirements.txt --json | tee safety-output.json
+````
+
+* `-r` flag → specifies the input file (`requirements.txt`).
+* `--json` flag → tells Safety to output results in **JSON format**.
+
+---
+
+### Command Output
+
+```json
+{
+    "report_meta": {
+        "scan_target": "files",
+        "scanned": [
+            "requirements.txt"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "api_key": false,
+        "local_database_path": null,
+        "safety_version": "2.3.5",
+        "timestamp": "2023-03-05 05:49:22",
+        "packages_found": 1,
+        "vulnerabilities_found": 26,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+        ...
+    },
+    "vulnerabilities": [
+        {
+            "package_name": "django",
+            "installed_version": "3.0",
+            "analyzed_version": "3.0",
+            "advisory": "Django 3.2.14 and 4.0.6 include a fix for CVE-2022-34265: Potential SQL injection via Trunc(kind) and Extract(lookup_name) arguments.\r\nhttps://www.djangoproject.com/weblog/2022/jul/04/security-releases",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2022-34265",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://pyup.io/v/49733/f17"
+        }
+    ],
+    "ignored_vulnerabilities": [],
+    "remediations": {
+        "django": {
+            "current_version": "3.0",
+            "vulnerabilities_found": 26,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://pyup.io/?from=3.0"
+        }
+    }
+}
+```
+
+---
+
+### Variable Scan Results
+
+⚠️ Your results might slightly vary because of the dynamic landscape of changing vulnerabilities, and security updates.
+````md
+# Software Component Analysis Using RetireJS
+
+## Download the Source Code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, We need to download the source code of the project from our git repository.
+
+```bash
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+````
+
+**Command Output**
+
+```
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+```
+
+Let’s cd into the application code so we can scan the app.
+
+```bash
+cd webapp
+```
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Installing RetireJS
+
+There are lots of JavaScript libraries for use on the Web and in Node.JS apps. The availability of these libraries greatly simplifies development, but also increases the security risks. Because of rampant abuse of these libraries, attackers are concentrating on these libraries. Realizing the need for awareness, OWASP has included **“Using Components with Known Vulnerabilities”** as part of the OWASP Top 10 list.
+
+**RetireJS** helps you in finding the insecure Javascript libraries in your code.
+
+**Source:** [https://github.com/retirejs/retire.js](https://github.com/retirejs/retire.js)
+
+---
+
+## Step 1: Install NodeJS and NPM
+```bash
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE_MAJOR=20
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+apt update
+
+apt install nodejs -y
+````
+
+---
+
+## Step 2: Install RetireJS
+
+Then we can install the RetireJS tool on the system to find the insecure Javascript libraries.
+
+```bash
+npm install -g retire@5.0.0
+```
+
+**Command Output**
+
+```
+added 41 packages in 2s
+
+2 packages are looking for funding
+  run `npm fund` for details
+npm notice
+npm notice New minor version of npm available! 10.7.0 -> 10.8.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v10.8.1
+npm notice To update run: npm install -g npm@10.8.1
+npm notice
+```
+
+---
+
+## Step 3: Explore RetireJS Options
+
+```bash
+retire --help
+```
+
+**Command Output**
+
+```
+Usage: retire [options]
+
+Options:
+  -V, --version            output the version number
+  -v, --verbose            Show identified files (by default only vulnerable files are shown)
+  -c, --nocache            Don't use local cache
+  --jspath <path>          Folder to scan for javascript files (deprecated)
+  --path <path>            Folder to scan for javascript files
+  --jsrepo <path|url>      Local or internal version of repo. Can be multiple comma separated. Default: 'central')
+  --cachedir <path>        Path to use for local cache instead of /tmp/.retire-cache
+  --proxy <url>            Proxy url (http://some.host:8080)
+  --outputformat <format>  Valid formats: text, json, jsonsimple, depcheck (experimental), cyclonedx and cyclonedxJSON
+  --outputpath <path>      File to which output should be written
+  --ignore <paths>         Comma delimited list of paths to ignore
+  --ignorefile <path>      Custom ignore file, defaults to .retireignore / .retireignore.json
+  --severity <level>       Specify the bug severity level from which the process fails. Allowed levels none, low, medium, high, critical. Default:
+                           none
+  --exitwith <code>        Custom exit code (default: 13) when vulnerabilities are found
+  --colors                 Enable color output (console output only)
+  --insecure               Enable fetching remote jsrepo/noderepo files from hosts using an insecure or self-signed SSL (TLS) certificate
+  --ext <extensions>       Comma separated list of file extensions for JavaScript files. The default is "js"
+  --cacert <path>          Use the specified certificate file to verify the peer used for fetching remote jsrepo/noderepo files
+  --includeOsv             Include OSV advisories in the output
+  --deep                   Deep scan (slower and experimental)
+  -h, --help               display help for command
+```
+
+---
+
+We have successfully installed **RetireJS**.
+Let’s move to the next step.
+
+```
+```
+````md
+# Run the Scanner
+
+Front-end dependencies managed via npm are stored in the package.json file. Let’s explore the contents of the package.json file.
+
+```bash
+cat package.json
+````
+
+As we can see, we are using various JavaScript libraries in this project. Let’s find out if we are using any vulnerable libraries.
+
+```bash
+retire --outputformat json --outputpath no-npm-install-retire-output.json
+```
+
+As we have learned in the DevSecOps Gospel, we should always try to save the tool’s output in a machine-readable format. This output will enable us to parse it via script(s).
+
+* `--outputpath` : flag specifies the output file path.
+* `--outputformat` : flag specifies that output format. Here it’s the JSON format.
+
+If you are using an older version of RetireJS, the tool will prompt an error asking you to do npm install before scanning.
+
+However, in the current version, the error is not displayed. It will scan available JS components in our source code, but we still need to run npm install to perform a thorough scan of npm components.
+
+Let’s take a look at the output of the scan before installing the npm package.
+
+```bash
+cat no-npm-install-retire-output.json | jq .
+```
+
+**Command Output**
+
+```
+...[SNIP]...,
+
+            {
+              "info": [
+                "https://blog.jquery.com/2020/04/10/jquery-3-5-0-released/"
+              ],
+              "below": "3.5.0",
+              "atOrAbove": "1.2.0",
+              "severity": "medium",
+              "identifiers": {
+                "summary": "Regex in its jQuery.htmlPrefilter sometimes may introduce XSS",
+                "CVE": [
+                  "CVE-2020-11022"
+                ],
+                "issue": "4642",
+                "githubID": "GHSA-gxr4-xjj5-5px2"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "messages": [],
+  "errors": [],
+  "time": 0.162
+}
+```
+
+The number may vary, as it is dynamic.
+
+Next, let’s install the npm component using the command below.
+
+```bash
+npm install
+```
+
+**Command Output**
+
+```
+...[SNIP]...
+
+added 921 packages, and audited 1371 packages in 22s
+
+69 packages are looking for funding
+  run `npm fund` for details
+
+104 vulnerabilities (3 low, 31 moderate, 54 high, 16 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+```
+
+Then, re-run the previous command to scan the dependencies.
+
+```bash
+retire --outputformat json --outputpath retire_output.json
+```
+
+Once done, you can use the cat command to see the RetireJS output with the help of the jq command.
+
+```bash
+cat retire_output.json | jq .
+```
+
+**Command Output**
+
+```
+...[SNIP]...
+
+            {
+              "info": [
+                "https://github.com/advisories/GHSA-5359-pvf2-pw78",
+                "https://github.com/tinymce/tinymce/security/advisories/GHSA-5359-pvf2-pw78",
+                "https://nvd.nist.gov/vuln/detail/CVE-2024-29881",
+                "https://github.com/tinymce/tinymce/commit/bcdea2ad14e3c2cea40743fb48c63bba067ae6d1",
+                "https://github.com/tinymce/tinymce",
+                "https://www.tiny.cloud/docs/tinymce/6/6.8.1-release-notes/#new-convert_unsafe_embeds-option-that-controls-whether-object-and-embed-elements-will-be-converted-to-more-restrictive-alternatives-namely-img-for-image-mime-types-video-for-video-mime-types-audio-audio-mime-types-or-iframe-for-other-or-unspecified-mime-types",
+                "https://www.tiny.cloud/docs/tinymce/7/7.0-release-notes/#convert_unsafe_embeds-editor-option-is-now-defaulted-to-true"
+              ],
+              "below": "7.0.0",
+              "atOrAbove": "0",
+              "severity": "medium",
+              "identifiers": {
+                "summary": "TinyMCE Cross-Site Scripting (XSS) vulnerability in handling external SVG files through Object or Embed elements",
+                "CVE": [
+                  "CVE-2024-29881"
+                ],
+                "githubID": "GHSA-5359-pvf2-pw78"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "messages": [],
+  "errors": [],
+  "time": 7.772
+}
+```
+
+Did you notice the difference in the scanner output between running it without `npm install` and with `npm install`?
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Understanding the Behavior of Severity Flags
+
+Each security tool may have a specific flag to filter the severity of findings. In this step, we will explore into how this works using RetireJS.
+
+As shown in the second step, we can use the --severity argument to specify the severity level we want to filter. Let’s give it a try by using this command:
+
+```bash
+retire --severity critical --outputformat json --outputpath retire_output.json
+````
+
+We have successfully run the scan. Let’s check if the output contains only the severity level we are interested in, which is critical.
+
+```bash
+cat retire_output.json | jq .
+```
+
+You might be wondering why retire\_output.json still contains low, medium and high severity issues.
+
+This behavior is not a bug but intentional.
+
+**Note**
+
+Each security tool behaves differently, and you might need to explore it further if something doesn’t work as expected.
+
+So, what is the function of the severity flag here?
+
+Let’s experiment with the exit codes that RetireJS provides when we filter the severity for critical and medium issues. You will notice the difference in exit codes when issues are found.
+
+First, filter for critical issues using the command below:
+
+```bash
+retire --severity critical --outputformat json --outputpath retire_output.json
+```
+
+Then, check the exit code.
+
+```bash
+echo $?
+```
+
+**Command Output**
+
+```
+0
+```
+
+This shows 0, indicating no issues found with critical severity. Now, how about filtering for medium issues?
+
+```bash
+retire --severity medium --outputformat json --outputpath retire_output.json
+```
+
+Let’s check the exit code one more time.
+
+```bash
+echo $?
+```
+
+**Command Output**
+
+```
+13
+```
+
+Interesting! The exit code often returns 13 instead of 1 because 13 is the default exit code set by the RetireJS tool.
+
+It’s important to note that an exit code isn’t always 1 when the tool finds security issues, it could be any number chosen by the tool’s developer.
+
+Since each developer or organization may use different exit codes, we primarily focus on whether it’s zero or non-zero. For instance, the argument we used to filter severity returned an exit code of 13.
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Challenges
+In this challenge, you will explore and use the advanced features of RetireJS.
+
+## Tasks
+
+### # 1
+Configure RetireJS such that it only throws non zero exit code when high severity issues are present in the results
+
+**Answer**
+
+When running RetireJS, use the severity argument.
+
+```bash
+retire --severity high --outputformat json --outputpath retire_output.json
+````
+
+Confused why retire\_output.json has medium and low severity issues? Then you need to re-read what the --severity flag does in retirejs. Its not a bug but a functionality.
+
+Please note that an exit code is not always 1 even though the tool found security issues. It can be any number pre-defined by the developer of the tool.
+
+Since every developer/organization is different so are the exit codes. We only care if its zero or non-zero. For example, if you noticed, the argument that we used to filter severity would return exit code 13.
+
+---
+
+### # 2
+
+Mark all high severity issues as False Positive and save the output in JSON format at location `/webapp/retire_output.json`
+
+**Answer**
+
+Below marks every **high**-severity finding in RetireJS output as a false positive by adding `"false_positive": true` to those entries, and writes the final JSON to `/webapp/retire_output.json`.
+
+> Prereqs: ensure `jq` is installed (`apt-get update && apt-get install -y jq`) and you’ve run `npm install` in the repo so RetireJS sees all dependencies.
+
+```bash
+# 1) Run RetireJS and capture raw JSON first
+retire --outputformat json --outputpath /webapp/retire_raw.json
+
+# 2) Add a "false_positive": true flag to all HIGH-severity findings
+jq '(.data[]?.results[]?.vulnerabilities[]? | select(.severity=="high")) += {false_positive: true}' \
+  /webapp/retire_raw.json > /webapp/retire_output.json
+
+# (Optional) sanity-check just the high items now marked
+jq '.data[]?.results[]?.vulnerabilities[]? | select(.severity=="high") | {severity, false_positive, identifiers}' \
+  /webapp/retire_output.json
+```
+
+Notes:
+
+* We do not remove or hide the findings; we explicitly annotate them as **false positives** in the JSON so the context is preserved.
+* If your RetireJS JSON schema differs, adjust the `jq` path `.data[]?.results[]?.vulnerabilities[]?` accordingly.
+
+```
+```
+````md
+# How To Embed Safety Into GitLab
+
+## A Simple CI/CD Pipeline
+Considering your DevOps team created a simple CI pipeline with the following contents. Please add the Safety scan to the below Gitlab CI Script.
+
+**Click anywhere to copy**
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+````
+
+There are some jobs in the pipeline, and we need to embed the OAST tool in this pipeline.
+
+Let’s login into GitLab using the following details and execute this pipeline once again.
+
+**GitLab CI/CD Machine**
+
+| Name     | Value                                                                                                                                                                                                          |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| URL      | [https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml) |
+| Username | root                                                                                                                                                                                                           |
+| Password | pdso-training                                                                                                                                                                                                  |
+
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+### Verify the pipeline run
+
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting [https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines).
+
+Click on the appropriate job name to see the output.
+
+### Notes
+
+We need to share the project’s source code inside the container for it to access these files. We can do that using the -v option of the docker command.
+
+```
+-v $(pwd):/src
+```
+
+The above option mounts the current directory in the host (runner) to /src inside the container. This could also be -v /home/ubuntu/code:/src or c:\Users\student\code:/src if you were using windows.
+
+---
+
+## Challenge
+
+Recall techniques you have learned in the previous module (Secure SDLC and CI/CD).
+
+**Note**
+
+Please try to do this exercise without looking at the solution on the next page.
+
+### Tasks
+
+#### # 1
+
+Create a job named oast in the test stage using the safety tool. Make sure you are using hysnsec/safety docker image for this task. Understand the use of Docker’s -v (volume mount) flag/option. Ensure you follow the DevSecOps Gospel and best practices while embedding the safety tool.
+
+---
+
+### Answer
+
+Add this job to .gitlab-ci.yml
+
+**Click anywhere to copy**
+
+```yaml
+oast:
+  stage: test
+  script:
+    # We are going to pull the hysnsec/safety image to run the safety scanner
+    - docker pull hysnsec/safety
+    # third party components are stored in requirements.txt for python, so we will scan this particular file with safety.
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r requirements.txt --json > oast-results.json
+  artifacts:
+    paths: [oast-results.json]
+    when: always # What does this do?
+  allow_failure: true
+```
+
+```
+```
+
+✅ As you can see, we found **multiple security issues** in third-party components.
+
+➡️ Let’s move to the next step.
+
+```
+```
+```md
+Embed Safety in CI/CD pipeline
+As discussed in the SCA using the Safety exercise, we can embed the Safety tool in our CI/CD pipeline.
+
+However, do remember that you need run commands manually in a local system like devsecops box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like devsecops box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Most of the code (up to 95%) in any software project is open-source/third-party components. It makes sense to perform SCA scans before static analysis.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+oast:
+  stage: test
+  script:
+    - docker pull hysnsec/safety  # We are going to pull the hysnsec/safety image to run the safety scanner
+    # third party components are stored in requirements.txt for python, so we will scan this particular file with safety.
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r requirements.txt --json > oast-results.json
+  artifacts:
+    paths: [oast-results.json]
+    when: always # What does this do?
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Instead of manually removing the container after the scan, we can use the --rm option so the container can clean up after itself.
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+
+Do not forget to click on the “Commit Changes” button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Remember!
+
+Did you notice the job failed because of non zero exit code(here, exit code 64)?
+
+Why did the job fail? Because the tool found security issues. This is the expected behavior of any DevSecOps friendly tool.
+
+You need to either fix the security issues or add allow_failure: true to let the job finish without blocking other jobs.
+
+If you have troubles understanding exit code, please go through the exercise titled Working with Exit Code.
+
+You will notice that the oast job stores the output to a file oast-results.json. We need the output file to process the results further either via APIs or vulnerability management systems like DefectDojo.
+
+In the next step, you will learn the need to not fail the builds.
+```
+```md
+Allow the job failure
+Remember! Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise. You need to refresh the exercise page and click on Start the Exercise button to continue working on it.
+
+You do not want to fail the builds in DevSecOps Maturity Levels 1 and 2. If a security tool fails a build upon security findings, you would want to allow it to fail and not block the pipeline as there would be false positives in the results.
+
+You can use the allow_failure tag to “not fail the build” even though the tool found issues.
+
+oast:
+  stage: test
+  script:
+    - docker pull hysnsec/safety
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r requirements.txt --json > oast-results.json
+  artifacts:
+    paths: [oast-results.json]
+    when: always        # What does this do?
+  allow_failure: true   # <--- allow the build to fail but don't mark it as such
+The pipeline would look like the following.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+oast:
+  stage: test
+  script:
+    # We are going to pull the hysnsec/safety image to run the safety scanner
+    - docker pull hysnsec/safety
+    # third party components are stored in requirements.txt for python, so we will scan this particular file with safety.
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r requirements.txt --json > oast-results.json
+  artifacts:
+    paths: [oast-results.json]
+    when: always # What does this do?
+  allow_failure: true
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Go ahead and add it to the .gitlab-ci.yml file to run the pipeline.
+
+You will notice that the oast job has failed but didn’t block the other jobs from running.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Understanding -v option in docker command
+In docker command above, you can see -v tag to bind the volume with the following:
+
+Command Output
+-v $(pwd):/src
+-v: This option is used to mount a volume from the host machine to the Docker container.
+$(pwd): A shell command that outputs the current working directory on your local machine.
+/src: Specifies the path inside the container where the current working directory will be mounted.
+When running a specific Docker command with the -v option, Docker will mount the current directory into a specific directory inside the container. In this case, the local directory will be mounted to /src. In practice, if we open the container, we will be redirected to the / directory.
+
+For some tools, we need to define and specify the file path, for example, /src/filename.json, so that the output file can be reflected in our current local directory.
+
+For further explanation, you can review our “Manage Data in Docker” exercise.
+```
+```md
+How To Embed RetireJS Into GitLab
+A Simple CI/CD Pipeline
+Considering your DevOps team created a simple CI pipeline with the following contents. Please add the Retire.js scan to this pipeline.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+Let’s log into GitLab using the following details and run the above pipeline.
+
+GitLab CI/CD Machine
+Name	Value
+Link	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline runs
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Challenge
+Recall techniques you have learned in the previous module (Secure SDLC and CI/CD).
+
+Tasks
+# 1
+Embed Retire.js in the test stage with job named oast-frontend. You can make use of any container image of your choice, including the node image.
+
+
+Answer
+
+Add this job to .gitlab-ci.yml
+
+Click anywhere to copy
+
+oast-frontend:
+  stage: test
+  image: node:alpine3.10
+  script:
+    - npm install             # Install the dependencies before scans
+    - npm install -g retire@5.0.0   # Install retirejs tool
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+
+# 2
+Save the output as JSON format with name retirejs-report.json and upload it using artifacts attribute
+
+
+Answer
+
+oast-frontend:
+  stage: test
+  image: node:alpine3.10
+  script:
+    - npm install
+    - npm install -g retire@5.0.0
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+  artifacts:
+    paths: [retirejs-report.json]
+    when: always
+    expire_in: one week # Optional
+```
+```md
+Embed RetireJS in the CI/CD pipeline
+As discussed in the SCA using the RetireJS exercise, we can embed the RetireJS tool in our CI/CD pipeline.
+
+However, do remember that you need to run commands manually in a local system like a DevSecOps-Box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like DevSecOps-Box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Maybe you want to scan the components before performing SAST scans.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+oast-frontend:
+  stage: test
+  image: node:alpine3.10
+  script:
+    - npm install
+    - npm install -g retire@5.0.0 # Install retirejs npm package.
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+  artifacts:
+    paths: [retirejs-report.json]
+    when: always # What is this for?
+    expire_in: one week
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Do not forget to click on the Commit Changes button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Remember!
+
+Did you notice the job failed because of non-zero exit code(exit 13)?
+
+Why did the job fail? Because the tool found security issues. This is the expected behavior of any DevSecOps-friendly tool.
+
+You need to either fix the security issues or add allow_failure: true to let the job finish without blocking other jobs.
+
+If you have trouble understanding the exit code, please go through the exercise titled Working with Exit Code.
+
+You will notice that the oast-frontend job stores the output to a file retirejs-report.json. This is done to ensure we can process the results further via APIs or vulnerability management systems like DefectDojo.
+
+In the next step, you will learn the need to not fail the builds.
+```
+```md
+Allow the job failure
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise
+After two hours, in case of a 404, you need to refresh the exercise page and click on Start the Exercise button to continue working
+You do not want to fail the builds in DevSecOps Maturity Levels 1 and 2. If a security tool fails a build upon security findings, you would want to allow it to fail and not block the pipeline as there would be false positives in the results.
+
+You can use the allow_failure tag to not fail the build even though the tool found security issues.
+
+oast-frontend:
+  stage: test
+  image: node:alpine3.10
+  script:
+    - npm install
+    - npm install -g retire@5.0.0 # Install retirejs npm package.
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+  artifacts:
+    paths: [retirejs-report.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true  #<--- allow the build to fail but don't mark it as such
+Notice allow_failure: true at the end of the YAML file.
+
+The final pipeline would look like the following.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+oast-frontend:
+  stage: test
+  image: node:alpine3.10
+  script:
+    - npm install
+    - npm install -g retire@5.0.0 # Install retirejs npm package.
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+  artifacts:
+    paths: [retirejs-report.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Go ahead and add it to the .gitlab-ci.yml file to run the pipeline.
+
+You will notice that the oast-frontend job has failed but didn’t block the other jobs from running.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+```

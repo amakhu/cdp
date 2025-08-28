@@ -20269,3 +20269,5303 @@ Through research and hands-on testing, you’ve learned how to:
 
 Good luck with embedding more security tools and making your CI/CD pipelines truly **secure by design**! 🚀
 ```
+````markdown
+# 🔎 Dynamic Analysis Using Dastardly
+
+## 📌 Overview
+**Dastardly** is an open-source lightweight web application security scanner from **Burp Suite**.  
+It is designed to be used as a **Dynamic Application Security Testing (DAST)** tool and can be **easily integrated into CI/CD pipelines**.
+
+- ✅ Finds common web vulnerabilities  
+- ✅ Lightweight and open-source  
+- ✅ CI/CD friendly with **Docker-based usage**  
+
+---
+
+## ⚙️ Installation
+Pull the official **Dastardly Docker image**:
+
+```bash
+docker pull public.ecr.aws/portswigger/dastardly
+````
+
+---
+
+## 🚀 Running a Scan
+
+Run Dastardly against the **production target**:
+
+```bash
+docker run --user $(id -u) --rm -v $(pwd):/dastardly \
+  -e BURP_START_URL=https://prod-kr6k1mdm.lab.practical-devsecops.training \
+  -e BURP_REPORT_FILE_PATH=/dastardly/dastardly-output.xml \
+  public.ecr.aws/portswigger/dastardly
+```
+
+### 🔑 Flags Explained
+
+* `--user $(id -u)` → runs as current user to avoid permission issues
+* `-v $(pwd):/dastardly` → mounts current directory for saving reports
+* `-e BURP_START_URL` → target URL to scan
+* `-e BURP_REPORT_FILE_PATH` → file path for saving the report
+
+---
+
+## 📝 Example Output (Truncated)
+
+```text
+2024-11-29 07:14:57 INFO  Issue identified. Path: /robots.txt, Issue Type: HTML does not specify charset, Severity: INFO
+2024-11-29 07:14:57 INFO  Issue identified. Path: /, Issue Type: HTML does not specify charset, Severity: INFO
+2024-11-29 07:14:59 INFO  Scan finished, exiting
+```
+
+* The output is saved in:
+  **`dastardly-output.xml`** inside your current directory.
+
+---
+
+## 📂 Verify Report
+
+Check that the XML file exists:
+
+```bash
+ls -l dastardly-output.xml
+```
+
+To read the results easily, open the XML content in a web-based **XML-to-HTML viewer**.
+
+---
+
+## 🔗 Learn More
+
+* [Dastardly official page](https://portswigger.net/burp/dastardly)
+* [Burp Suite Docker usage](https://portswigger.net/burp/documentation/dastardly/using-docker)
+
+---
+
+✅ At this stage, you have successfully:
+
+1. Pulled the Dastardly image.
+2. Scanned your target app.
+3. Saved the results in XML.
+
+Next, you can **compare findings with ZAP** to decide which tool fits best for your CI/CD pipeline integration. 🚀
+
+```
+
+Would you like me to also show you how to **embed Dastardly into GitLab CI/CD** just like we did with ZAP, Nikto, and SSLyze?
+```
+```markdown
+Dynamic Analysis Using Nuclei
+Nuclei Vulnerability Scanner
+Nuclei can help you ensure the security of complex networks. With vulnerability scans, nuclei can identify security issues on your network. Once configured, nuclei can provide detailed information on each vulnerability, including Severity, Impact, and Recommended remediation.
+
+Source: nuclei.
+
+In this exercise, we will use nuclei scanner to find security issues passively.
+
+Before that, let’s install nuclei binary from source.
+
+wget https://github.com/projectdiscovery/nuclei/releases/download/v3.4.4/nuclei_3.4.4_linux_amd64.zip
+unzip nuclei_3.4.4_linux_amd64.zip
+mv nuclei /usr/local/bin/nuclei
+
+Let’s see the usage of nuclei Scan.
+
+nuclei --help
+
+Command Output
+Nuclei is a fast, template based vulnerability scanner focusing
+on extensive configurability, massive extensibility and ease of use.
+
+Usage:
+  nuclei [flags]
+
+Flags:
+TARGET:
+   -u, -target string[]       target URLs/hosts to scan
+   -l, -list string           path to file containing a list of target URLs/hosts to scan (one per line)
+   -resume string             resume scan using resume.cfg (clustering will be disabled)
+   -sa, -scan-all-ips         scan all the IP's associated with dns record
+   -iv, -ip-version string[]  IP version to scan of hostname (4,6) - (default 4)
+
+TEMPLATES:
+   -nt, -new-templates                    run only new templates added in latest nuclei-templates release
+   -ntv, -new-templates-version string[]  run new templates added in specific version
+   -as, -automatic-scan                   automatic web scan using wappalyzer technology detection to tags mapping
+   -t, -templates string[]                list of template or template directory to run (comma-separated, file)
+   -tu, -template-url string[]            list of template urls to run (comma-separated, file)
+   -w, -workflows string[]                list of workflow or workflow directory to run (comma-separated, file)
+   -wu, -workflow-url string[]            list of workflow urls to run (comma-separated, file)
+   -validate                              validate the passed templates to nuclei
+   -nss, -no-strict-syntax                disable strict syntax check on templates
+   -td, -template-display                 displays the templates content
+   -tl                                    list all available templates
+
+FILTERING:
+   -a, -author string[]               templates to run based on authors (comma-separated, file)
+   -tags string[]                     templates to run based on tags (comma-separated, file)
+   -etags, -exclude-tags string[]     templates to exclude based on tags (comma-separated, file)
+   -itags, -include-tags string[]     tags to be executed even if they are excluded either by default or configuration
+   -id, -template-id string[]         templates to run based on template ids (comma-separated, file)
+   -eid, -exclude-id string[]         templates to exclude based on template ids (comma-separated, file)
+   -it, -include-templates string[]   templates to be executed even if they are excluded either by default or configuration
+   -et, -exclude-templates string[]   template or template directory to exclude (comma-separated, file)
+   -em, -exclude-matchers string[]    template matchers to exclude in result
+   -s, -severity value[]              templates to run based on severity. Possible values: info, low, medium, high, critical, unknown
+   -es, -exclude-severity value[]     templates to exclude based on severity. Possible values: info, low, medium, high, critical, unknown
+   -pt, -type value[]                 templates to run based on protocol type. Possible values: dns, file, http, headless, tcp, workflow, ssl, websocket, whois
+   -ept, -exclude-type value[]        templates to exclude based on protocol type. Possible values: dns, file, http, headless, tcp, workflow, ssl, websocket, whois
+   -tc, -template-condition string[]  templates to run based on expression condition
+
+OUTPUT:
+   -o, -output string            output file to write found issues/vulnerabilities
+   -sresp, -store-resp           store all request/response passed through nuclei to output directory
+   -srd, -store-resp-dir string  store all request/response passed through nuclei to custom directory (default "output")
+   -silent                       display findings only
+   -nc, -no-color                disable output content coloring (ANSI escape codes)
+   -j, -jsonl                    write output in JSONL(lines) format
+   -irr, -include-rr             include request/response pairs in the JSONL output (for findings only)
+   -nm, -no-meta                 disable printing result metadata in cli output
+   -ts, -timestamp               enables printing timestamp in cli output
+   -rdb, -report-db string       nuclei reporting database (always use this to persist report data)
+   -ms, -matcher-status          display match failure status
+   -me, -markdown-export string  directory to export results in markdown format
+   -se, -sarif-export string     file to export results in SARIF format
+   -je, -json-export string      file to export results in JSON format
+   -jle, -jsonl-export string    file to export results in JSONL(ine) format
+
+CONFIGURATIONS:
+   -config string                 path to the nuclei configuration file
+   -fr, -follow-redirects         enable following redirects for http templates
+   -fhr, -follow-host-redirects   follow redirects on the same host
+   -mr, -max-redirects int        max number of redirects to follow for http templates (default 10)
+   -dr, -disable-redirects        disable redirects for http templates
+   -rc, -report-config string     nuclei reporting module configuration file
+   -H, -header string[]           custom header/cookie to include in all http request in header:value format (cli, file)
+   -V, -var value                 custom vars in key=value format
+   -r, -resolvers string          file containing resolver list for nuclei
+   -sr, -system-resolvers         use system DNS resolving as error fallback
+   -dc, -disable-clustering       disable clustering of requests
+   -passive                       enable passive HTTP response processing mode
+   -fh2, -force-http2             force http2 connection on requests
+   -ev, -env-vars                 enable environment variables to be used in template
+   -cc, -client-cert string       client certificate file (PEM-encoded) used for authenticating against scanned hosts
+   -ck, -client-key string        client key file (PEM-encoded) used for authenticating against scanned hosts
+   -ca, -client-ca string         client certificate authority file (PEM-encoded) used for authenticating against scanned hosts
+   -sml, -show-match-line         show match lines for file templates, works with extractors only
+   -ztls                          use ztls library with autofallback to standard one for tls13
+   -sni string                    tls sni hostname to use (default: input domain name)
+   -sandbox                       sandbox nuclei for safe templates execution
+   -i, -interface string          network interface to use for network scan
+   -at, -attack-type string       type of payload combinations to perform (batteringram,pitchfork,clusterbomb)
+   -sip, -source-ip string        source ip address to use for network scan
+   -config-directory string       override the default config path ($home/.config)
+   -rsr, -response-size-read int  max response size to read in bytes (default 10485760)
+   -rss, -response-size-save int  max response size to read in bytes (default 1048576)
+   -reset                         reset removes all nuclei configuration and data files (including nuclei-templates)
+
+INTERACTSH:
+   -iserver, -interactsh-server string  interactsh server url for self-hosted instance (default: oast.pro,oast.live,oast.site,oast.online,oast.fun,oast.me)
+   -itoken, -interactsh-token string    authentication token for self-hosted interactsh server
+   -interactions-cache-size int         number of requests to keep in the interactions cache (default 5000)
+   -interactions-eviction int           number of seconds to wait before evicting requests from cache (default 60)
+   -interactions-poll-duration int      number of seconds to wait before each interaction poll request (default 5)
+   -interactions-cooldown-period int    extra time for interaction polling before exiting (default 5)
+   -ni, -no-interactsh                  disable interactsh server for OAST testing, exclude OAST based templates
+
+FUZZING:
+   -ft, -fuzzing-type string  overrides fuzzing type set in template (replace, prefix, postfix, infix)
+   -fm, -fuzzing-mode string  overrides fuzzing mode set in template (multiple, single)
+
+UNCOVER:
+   -uc, -uncover                  enable uncover engine
+   -uq, -uncover-query string[]   uncover search query
+   -ue, -uncover-engine string[]  uncover search engine (shodan,censys,fofa,shodan-idb,quake,hunter,zoomeye,netlas,criminalip,publicwww,hunterhow) (default shodan)
+   -uf, -uncover-field string     uncover fields to return (ip,port,host) (default "ip:port")
+   -ul, -uncover-limit int        uncover results to return (default 100)
+   -ur, -uncover-ratelimit int    override ratelimit of engines with unknown ratelimit (default 60 req/min) (default 60)
+
+RATE-LIMIT:
+   -rl, -rate-limit int               maximum number of requests to send per second (default 150)
+   -rlm, -rate-limit-minute int       maximum number of requests to send per minute
+   -bs, -bulk-size int                maximum number of hosts to be analyzed in parallel per template (default 25)
+   -c, -concurrency int               maximum number of templates to be executed in parallel (default 25)
+   -hbs, -headless-bulk-size int      maximum number of headless hosts to be analyzed in parallel per template (default 10)
+   -headc, -headless-concurrency int  maximum number of headless templates to be executed in parallel (default 10)
+
+OPTIMIZATIONS:
+   -timeout int                        time to wait in seconds before timeout (default 10)
+   -retries int                        number of times to retry a failed request (default 1)
+   -ldp, -leave-default-ports          leave default HTTP/HTTPS ports (eg. host:80,host:443)
+   -mhe, -max-host-error int           max errors for a host before skipping from scan (default 30)
+   -te, -track-error string[]          adds given error to max-host-error watchlist (standard, file)
+   -nmhe, -no-mhe                      disable skipping host from scan based on errors
+   -project                            use a project folder to avoid sending same request multiple times
+   -project-path string                set a specific project path (default "/tmp")
+   -spm, -stop-at-first-match          stop processing HTTP requests after the first match (may break template/workflow logic)
+   -stream                             stream mode - start elaborating without sorting the input
+   -ss, -scan-strategy value           strategy to use while scanning(auto/host-spray/template-spray) (default auto)
+   -irt, -input-read-timeout duration  timeout on input read (default 3m0s)
+   -nh, -no-httpx                      disable httpx probing for non-url input
+   -no-stdin                           disable stdin processing
+
+HEADLESS:
+   -headless                    enable templates that require headless browser support (root user on Linux will disable sandbox)
+   -page-timeout int            seconds to wait for each page in headless mode (default 20)
+   -sb, -show-browser           show the browser on the screen when running templates with headless mode
+   -sc, -system-chrome          use local installed Chrome browser instead of nuclei installed
+   -lha, -list-headless-action  list available headless actions
+
+DEBUG:
+   -debug                    show all requests and responses
+   -dreq, -debug-req         show all sent requests
+   -dresp, -debug-resp       show all received responses
+   -p, -proxy string[]       list of http/socks5 proxy to use (comma separated or file input)
+   -pi, -proxy-internal      proxy all internal requests
+   -ldf, -list-dsl-function  list all supported DSL function signatures
+   -tlog, -trace-log string  file to write sent requests trace log
+   -elog, -error-log string  file to write sent requests error log
+   -version                  show nuclei version
+   -hm, -hang-monitor        enable nuclei hang monitoring
+   -v, -verbose              show verbose output
+   -profile-mem string       optional nuclei memory profile dump file
+   -vv                       display templates loaded for scan
+   -svd, -show-var-dump      show variables dump for debugging
+   -ep, -enable-pprof        enable pprof debugging server
+   -tv, -templates-version   shows the version of the installed nuclei-templates
+   -hc, -health-check        run diagnostic check up
+
+UPDATE:
+   -up, -update                      update nuclei engine to the latest released version
+   -ut, -update-templates            update nuclei-templates to latest released version
+   -ud, -update-template-dir string  custom directory to install / update nuclei-templates
+   -duc, -disable-update-check       disable automatic nuclei/templates update check
+
+STATISTICS:
+   -stats                    display statistics about the running scan
+   -sj, -stats-json          display statistics in JSONL(lines) format
+   -si, -stats-interval int  number of seconds to wait between showing a statistics update (default 5)
+   -m, -metrics              expose nuclei metrics on a port
+   -mp, -metrics-port int    port to expose nuclei metrics on (default 9092)
+
+CLOUD:
+   -cloud                              run scan on nuclei cloud
+   -ads, -add-datasource string        add specified data source (s3,github)
+   -atr, -add-target string            add target(s) to cloud
+   -atm, -add-template string          add template(s) to cloud
+   -lsn, -list-scan                    list previous cloud scans
+   -lso, -list-output string           list scan output by scan id
+   -ltr, -list-target                  list cloud target by id
+   -ltm, -list-template                list cloud template by id
+   -lds, -list-datasource              list cloud datasource by id
+   -lrs, -list-reportsource            list reporting sources
+   -dsn, -delete-scan string           delete cloud scan by id
+   -dtr, -delete-target string         delete target(s) from cloud
+   -dtm, -delete-template string       delete template(s) from cloud
+   -dds, -delete-datasource string     delete specified data source
+   -drs, -disable-reportsource string  disable specified reporting source
+   -ers, -enable-reportsource string   enable specified reporting source
+   -gtr, -get-target string            get target content by id
+   -gtm, -get-template string          get template content by id
+   -nos, -no-store                     disable scan/output storage on cloud
+   -no-tables                          do not display pretty-printed tables
+   -limit int                          limit the number of output to display (default 100)
+
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+As we have learned in the DevSecOps Gospel, we should save the output in the machine-readable format like JSON, CSV or XML.
+
+Let’s run nuclei with basic options.
+
+nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training
+
+This scanning process is estimated to take 1 minute or more, depending on the complexity of the website.
+
+Command Output
+
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[WRN] Found 1 templates with syntax error (use -validate flag for further examination)
+[WRN] Found 2 templates with runtime error (use -validate flag for further examination)
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 8270
+[INF] Executing 8066 signed templates from projectdiscovery/nuclei-templates
+[WRN] Loading 204 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+[INF] Templates clustered: 1777 (Reduced 1671 Requests)
+[INF] Using Interactsh Server: oast.online
+[missing-sri] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training ["http://fonts.googleapis.com/css?family=PT+Sans:300,400,400italic,700","http://fonts.googleapis.com/css?family=Ubuntu:300,400,400italic,700"]
+[waf-detect:nginxgeneric] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[tls-version] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["tls12"]
+[tls-version] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["tls13"]
+[tech-detect:bootstrap] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[tech-detect:google-font-api] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[tech-detect:nginx] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[tech-detect:font-awesome] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[email-extractor] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training ["info@tm.com"]
+[nginx-version] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training ["nginx/1.18.0"]
+[http-missing-security-headers:strict-transport-security] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:content-security-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:x-content-type-options] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:x-permitted-cross-domain-policies] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:clear-site-data] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:cross-origin-embedder-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:cross-origin-opener-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:cross-origin-resource-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:permissions-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:referrer-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[django-debug-config-enabled] [http] [medium] https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[caa-fingerprint] [dns] [info] prod-kr6k1mdm.lab.practical-devsecops.training
+[soa-detect:cloudflare] [dns] [info] prod-kr6k1mdm.lab.practical-devsecops.training
+[ssl-issuer] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["Let's Encrypt"]
+[ssl-dns-names] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["*.lab.practical-devsecops.training"]
+[wildcard-tls] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["CN: *.lab.practical-devsecops.training","SAN: [*.lab.practical-devsecops.training]"]
+[INF] Scan completed in 5m. 26 matches found.
+If you want the output in JSON format, you can use the -j option to convert to JSON format and -o to save it to a file.
+
+nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training -j -o nuclei-output.json
+
+The nuclei-output.json file is in the current directory.
+
+You can verify the existence of the output file with ls -l command.
+
+If you want to check the arranged output in nuclei-output.json, we can use the following command.
+
+cat nuclei-output.json | jq
+
+Command Output
+{
+  "template-id": "email-extractor",
+  "template-path": "/root/nuclei-templates/miscellaneous/email-extractor.yaml",
+  "info": {
+    "name": "Email Extractor",
+    "author": [
+      "panch0r3d"
+    ],
+    "tags": [
+      "misc",
+      "email"
+    ],
+    "reference": null,
+    "severity": "info"
+  },
+  "type": "http",
+  "host": "https://prod-kr6k1mdm.lab.practical-devsecops.training",
+  "matched-at": "https://prod-kr6k1mdm.lab.practical-devsecops.training",
+  "extracted-results": [
+    "info@tm.com"
+  ],
+  "ip": "143.244.212.229",
+  "timestamp": "2023-04-10T07:50:19.997443542Z",
+  "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2226.0 Safari/537.36' 'https://prod-kr6k1mdm.lab.practical-devsecops.training'",
+  "matcher-status": true,
+  "matched-line": null
+}
+
+............[SNIP]............
+Analysis using Nuclei template
+Previously, we ran Nuclei using the default option.
+
+In this step, we want to run Nuclei using a specific template to scan for our particular needs.
+
+Let’s clone the templates from git repository
+
+git clone https://github.com/projectdiscovery/nuclei-templates.git && cd nuclei-templates
+
+Let’s run Nuclei with the template options. In this case, we want to scan using the misconfiguration/ template to check for misconfigurations within the URL.
+
+nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training -t http/misconfiguration/
+
+This scanning process is estimated to take 1 minute or more, depending on the complexity of the website.
+
+Command Output
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 677
+[INF] Executing 675 signed templates from projectdiscovery/nuclei-templates
+[WRN] Loading 2 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+[INF] Templates clustered: 249 (Reduced 221 Requests)
+[INF] Using Interactsh Server: oast.site
+[missing-sri] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training ["http://fonts.googleapis.com/css?family=PT+Sans:300,400,400italic,700","http://fonts.googleapis.com/css?family=Ubuntu:300,400,400italic,700"]
+[django-debug-config-enabled] [http] [medium] https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[http-missing-security-headers:cross-origin-resource-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:strict-transport-security] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:content-security-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:permissions-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:x-content-type-options] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:x-permitted-cross-domain-policies] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:clear-site-data] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:cross-origin-opener-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:referrer-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[http-missing-security-headers:cross-origin-embedder-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training
+[INF] Scan completed in 35.185209756s. 12 matches found.
+How we can find the template usage in nuclei scanning?
+
+You can find the answer after you have analyzed scanning result in JSON output above.
+
+Let’s move to the next step.
+```
+```markdown
+Run Nuclei using Docker
+In this step we want to run nuclei scanner using Docker. Why?
+
+By using Docker, it will be easier for us to run the program without installing the binary on our local system. This method is effective, especially if we want to run nuclei in the CI/CD pipeline, making the process work efficiently without having to install the nuclei binary.
+
+First, we can pull the docker image.
+
+docker pull projectdiscovery/nuclei:v3.4.4
+
+Next, let’s initiate command to run nuclei command from docker.
+
+In this scenario, we will run with the json output file.
+
+Before that we should remove previous nuclei-output.json and make sure the file is already removed before we generate new nuclei-output.json file.
+
+cd /
+rm nuclei-output.json && ls
+
+Let’s run the nuclei docker command.
+
+docker run --user $(id -u):$(id -g) -w /nuclei -v $(pwd):/nuclei:rw --rm projectdiscovery/nuclei:v3.4.4 -u https://prod-kr6k1mdm.lab.practical-devsecops.training -j -o nuclei-output.json
+
+Command Output
+
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[INF] nuclei-templates are not installed, installing...
+[INF] Successfully installed nuclei-templates at /root/nuclei-templates
+[WRN] Found 1 templates with syntax error (use -validate flag for further examination)
+[WRN] Found 9 templates with runtime error (use -validate flag for further examination)
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 8263
+[WRN] Loading 203 unsigned templates for scan. Use with caution.
+[INF] Executing 8060 signed templates from projectdiscovery/nuclei-templates
+[INF] Targets loaded for current scan: 1
+[INF] Templates clustered: 1777 (Reduced 1671 Requests)
+
+...[SNIP]...
+The nuclei-output.json file is recreated in the current directory. You can verify the existence of the output file with ls -l command.
+
+Let’s check the result.
+
+cat nuclei-output.json | jq
+
+Command Output
+{
+  "template-id": "email-extractor",
+  "template-path": "/root/nuclei-templates/miscellaneous/email-extractor.yaml",
+  "info": {
+    "name": "Email Extractor",
+    "author": [
+      "panch0r3d"
+    ],
+    "tags": [
+      "misc",
+      "email"
+    ],
+    "reference": null,
+    "severity": "info"
+},
+  "type": "http",
+  "host": "https://prod-kr6k1mdm.lab.practical-devsecops.training",
+  "matched-at": "https://prod-kr6k1mdm.lab.practical-devsecops.training",
+  "extracted-results": [
+    "info@tm.com"
+  ],
+  "ip": "143.244.212.229",
+  "timestamp": "2023-04-10T07:50:19.997443542Z",
+  "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2226.0 Safari/537.36' 'https://prod-kr6k1mdm.lab.practical-devsecops.training'",
+  "matcher-status": true,
+  "matched-line": null
+
+...[SNIP]...
+We can summarize that using both binary and Docker yields similar results. However, the most effective method depends on the specific scenario. For instance, running nuclei in Docker can help reduce the installation process, making it more efficient in certain situations.
+```
+```markdown
+How To Embed Nuclei Into GitLab
+A Simple CI/CD Pipeline
+Considering your DevOps team created a simple CI pipeline with the following contents.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+We have two jobs in the above pipeline, the build job and the test job. As a security engineer, I do not care what they are doing as part of these jobs. Why? Imagine having to learn every build/testing tool used by your DevOps team. It will be a nightmare! Instead, rely on the DevOps team for help.
+
+Let’s log into GitLab using the following details and execute this pipeline.
+
+GitLab CI/CD Machine
+Name	Value
+Link	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content.
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline run
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Challenge
+We will use the nuclei Vulnerability Scanner to scan applications for security issues and then embed it into CI/CD using nuclei Scan docker image.
+
+Use https://prod-kr6k1mdm.lab.practical-devsecops.training as the endpoint for nuclei Scanning  
+Remember to follow all best practices while adding the vulnerability scan to CI/CD pipeline  
+
+Please try to do this exercise without looking at the solution on the next page.
+```
+```markdown
+Embed nuclei in CI/CD pipeline
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise  
+After two hours, in case of a 404, you need to refresh the exercise page and click on Start the Exercise button to continue working  
+
+As discussed in the Dynamic Analysis using nuclei exercises, we can put nuclei in our CI/CD pipeline. However, remember that it’s important to locally test a tool before integrating it into the pipeline. Troubleshooting a tool manually in a local environment is much easier compared to troubleshooting it in a CI/CD system. Additionally, manually exploring the tool in a local environment helps you become familiar with the tool’s options and features. We need to embed this into CI/CD pipeline now using the same command.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+nuclei:
+  stage: integration
+  script:
+    - docker run --user $(id -u):$(id -g) -w /nuclei -v $(pwd):/nuclei:rw --rm projectdiscovery/nuclei:v2.9.6 -u https://prod-kr6k1mdm.lab.practical-devsecops.training -j -o nuclei-output.json
+  artifacts:
+    paths: [nuclei-output.json]
+    when: always # What does this do?
+  allow_failure: true
+
+You can try changing allow_failure: true to allow_failure: false and see what happens.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+- Native Installation:  
+  Directly installing the tool on the system.  
+
+- Package Manager or Binary:  
+  Installing via a package manager or using the binary file.  
+
+- Docker:  
+  Running the tool within a Docker container.  
+
+In summary:
+
+- All methods are suitable for CI/CD integration.  
+- Docker is recommended for CI/CD as it operates smoothly without dependencies.  
+- Using the binary file is efficient, avoiding additional dependencies.  
+- Ultimately, you can choose either method based on your specific situation.  
+
+We can see the results of this pipeline by visiting  
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.  
+
+Click on the appropriate job name to see the output.
+```
+```markdown
+Hunting Vulnerability Using Nuclei
+Nuclei Vulnerability Scanner
+Nuclei can help you ensure the security of complex networks. With vulnerability scans, nuclei can identify security issues on your network. Once configured, nuclei can provide detailed information on each vulnerability, including Severity, Impact, and Recommended remediation.
+
+Source: nuclei.
+
+In this exercise, we will use nuclei scanner to find security issues passively.
+
+Before that, let’s install nuclei binary from source.
+
+wget https://github.com/projectdiscovery/nuclei/releases/download/v3.4.4/nuclei_3.4.4_linux_amd64.zip
+unzip nuclei_3.4.4_linux_amd64.zip
+mv nuclei /usr/local/bin/nuclei
+
+Let’s see the usage of nuclei Scan.
+
+nuclei --help
+
+Command Output
+Nuclei is a fast, template based vulnerability scanner focusing
+on extensive configurability, massive extensibility and ease of use.
+
+Usage:
+  nuclei [flags]
+
+Flags:
+TARGET:
+   -u, -target string[]       target URLs/hosts to scan
+   -l, -list string           path to file containing a list of target URLs/hosts to scan (one per line)
+   -resume string             resume scan using resume.cfg (clustering will be disabled)
+   -sa, -scan-all-ips         scan all the IP's associated with dns record
+   -iv, -ip-version string[]  IP version to scan of hostname (4,6) - (default 4)
+
+TEMPLATES:
+   -nt, -new-templates                    run only new templates added in latest nuclei-templates release
+   -ntv, -new-templates-version string[]  run new templates added in specific version
+   -as, -automatic-scan                   automatic web scan using wappalyzer technology detection to tags mapping
+   -t, -templates string[]                list of template or template directory to run (comma-separated, file)
+   -tu, -template-url string[]            list of template urls to run (comma-separated, file)
+   -w, -workflows string[]                list of workflow or workflow directory to run (comma-separated, file)
+   -wu, -workflow-url string[]            list of workflow urls to run (comma-separated, file)
+   -validate                              validate the passed templates to nuclei
+   -nss, -no-strict-syntax                disable strict syntax check on templates
+   -td, -template-display                 displays the templates content
+   -tl                                    list all available templates
+
+FILTERING:
+   -a, -author string[]               templates to run based on authors (comma-separated, file)
+   -tags string[]                     templates to run based on tags (comma-separated, file)
+   -etags, -exclude-tags string[]     templates to exclude based on tags (comma-separated, file)
+   -itags, -include-tags string[]     tags to be executed even if they are excluded either by default or configuration
+   -id, -template-id string[]         templates to run based on template ids (comma-separated, file)
+   -eid, -exclude-id string[]         templates to exclude based on template ids (comma-separated, file)
+   -it, -include-templates string[]   templates to be executed even if they are excluded either by default or configuration
+   -et, -exclude-templates string[]   template or template directory to exclude (comma-separated, file)
+   -em, -exclude-matchers string[]    template matchers to exclude in result
+   -s, -severity value[]              templates to run based on severity. Possible values: info, low, medium, high, critical, unknown
+   -es, -exclude-severity value[]     templates to exclude based on severity. Possible values: info, low, medium, high, critical, unknown
+   -pt, -type value[]                 templates to run based on protocol type. Possible values: dns, file, http, headless, tcp, workflow, ssl, websocket, whois
+   -ept, -exclude-type value[]        templates to exclude based on protocol type. Possible values: dns, file, http, headless, tcp, workflow, ssl, websocket, whois
+   -tc, -template-condition string[]  templates to run based on expression condition
+
+OUTPUT:
+   -o, -output string            output file to write found issues/vulnerabilities
+   -sresp, -store-resp           store all request/response passed through nuclei to output directory
+   -srd, -store-resp-dir string  store all request/response passed through nuclei to custom directory (default "output")
+   -silent                       display findings only
+   -nc, -no-color                disable output content coloring (ANSI escape codes)
+   -j, -jsonl                    write output in JSONL(lines) format
+   -irr, -include-rr             include request/response pairs in the JSONL output (for findings only)
+   -nm, -no-meta                 disable printing result metadata in cli output
+   -ts, -timestamp               enables printing timestamp in cli output
+   -rdb, -report-db string       nuclei reporting database (always use this to persist report data)
+   -ms, -matcher-status          display match failure status
+   -me, -markdown-export string  directory to export results in markdown format
+   -se, -sarif-export string     file to export results in SARIF format
+   -je, -json-export string      file to export results in JSON format
+   -jle, -jsonl-export string    file to export results in JSONL(ine) format
+
+CONFIGURATIONS:
+   -config string                 path to the nuclei configuration file
+   -fr, -follow-redirects         enable following redirects for http templates
+   -fhr, -follow-host-redirects   follow redirects on the same host
+   -mr, -max-redirects int        max number of redirects to follow for http templates (default 10)
+   -dr, -disable-redirects        disable redirects for http templates
+   -rc, -report-config string     nuclei reporting module configuration file
+   -H, -header string[]           custom header/cookie to include in all http request in header:value format (cli, file)
+   -V, -var value                 custom vars in key=value format
+   -r, -resolvers string          file containing resolver list for nuclei
+   -sr, -system-resolvers         use system DNS resolving as error fallback
+   -dc, -disable-clustering       disable clustering of requests
+   -passive                       enable passive HTTP response processing mode
+   -fh2, -force-http2             force http2 connection on requests
+   -ev, -env-vars                 enable environment variables to be used in template
+   -cc, -client-cert string       client certificate file (PEM-encoded) used for authenticating against scanned hosts
+   -ck, -client-key string        client key file (PEM-encoded) used for authenticating against scanned hosts
+   -ca, -client-ca string         client certificate authority file (PEM-encoded) used for authenticating against scanned hosts
+   -sml, -show-match-line         show match lines for file templates, works with extractors only
+   -ztls                          use ztls library with autofallback to standard one for tls13
+   -sni string                    tls sni hostname to use (default: input domain name)
+   -sandbox                       sandbox nuclei for safe templates execution
+   -i, -interface string          network interface to use for network scan
+   -at, -attack-type string       type of payload combinations to perform (batteringram,pitchfork,clusterbomb)
+   -sip, -source-ip string        source ip address to use for network scan
+   -config-directory string       override the default config path ($home/.config)
+   -rsr, -response-size-read int  max response size to read in bytes (default 10485760)
+   -rss, -response-size-save int  max response size to read in bytes (default 1048576)
+   -reset                         reset removes all nuclei configuration and data files (including nuclei-templates)
+
+INTERACTSH:
+   -iserver, -interactsh-server string  interactsh server url for self-hosted instance (default: oast.pro,oast.live,oast.site,oast.online,oast.fun,oast.me)
+   -itoken, -interactsh-token string    authentication token for self-hosted interactsh server
+   -interactions-cache-size int         number of requests to keep in the interactions cache (default 5000)
+   -interactions-eviction int           number of seconds to wait before evicting requests from cache (default 60)
+   -interactions-poll-duration int      number of seconds to wait before each interaction poll request (default 5)
+   -interactions-cooldown-period int    extra time for interaction polling before exiting (default 5)
+   -ni, -no-interactsh                  disable interactsh server for OAST testing, exclude OAST based templates
+
+FUZZING:
+   -ft, -fuzzing-type string  overrides fuzzing type set in template (replace, prefix, postfix, infix)
+   -fm, -fuzzing-mode string  overrides fuzzing mode set in template (multiple, single)
+
+UNCOVER:
+   -uc, -uncover                  enable uncover engine
+   -uq, -uncover-query string[]   uncover search query
+   -ue, -uncover-engine string[]  uncover search engine (shodan,censys,fofa,shodan-idb,quake,hunter,zoomeye,netlas,criminalip,publicwww,hunterhow) (default shodan)
+   -uf, -uncover-field string     uncover fields to return (ip,port,host) (default "ip:port")
+   -ul, -uncover-limit int        uncover results to return (default 100)
+   -ur, -uncover-ratelimit int    override ratelimit of engines with unknown ratelimit (default 60 req/min) (default 60)
+
+RATE-LIMIT:
+   -rl, -rate-limit int               maximum number of requests to send per second (default 150)
+   -rlm, -rate-limit-minute int       maximum number of requests to send per minute
+   -bs, -bulk-size int                maximum number of hosts to be analyzed in parallel per template (default 25)
+   -c, -concurrency int               maximum number of templates to be executed in parallel (default 25)
+   -hbs, -headless-bulk-size int      maximum number of headless hosts to be analyzed in parallel per template (default 10)
+   -headc, -headless-concurrency int  maximum number of headless templates to be executed in parallel (default 10)
+
+OPTIMIZATIONS:
+   -timeout int                        time to wait in seconds before timeout (default 10)
+   -retries int                        number of times to retry a failed request (default 1)
+   -ldp, -leave-default-ports          leave default HTTP/HTTPS ports (eg. host:80,host:443)
+   -mhe, -max-host-error int           max errors for a host before skipping from scan (default 30)
+   -te, -track-error string[]          adds given error to max-host-error watchlist (standard, file)
+   -nmhe, -no-mhe                      disable skipping host from scan based on errors
+   -project                            use a project folder to avoid sending same request multiple times
+   -project-path string                set a specific project path (default "/tmp")
+   -spm, -stop-at-first-match          stop processing HTTP requests after the first match (may break template/workflow logic)
+   -stream                             stream mode - start elaborating without sorting the input
+   -ss, -scan-strategy value           strategy to use while scanning(auto/host-spray/template-spray) (default auto)
+   -irt, -input-read-timeout duration  timeout on input read (default 3m0s)
+   -nh, -no-httpx                      disable httpx probing for non-url input
+   -no-stdin                           disable stdin processing
+
+HEADLESS:
+   -headless                    enable templates that require headless browser support (root user on Linux will disable sandbox)
+   -page-timeout int            seconds to wait for each page in headless mode (default 20)
+   -sb, -show-browser           show the browser on the screen when running templates with headless mode
+   -sc, -system-chrome          use local installed Chrome browser instead of nuclei installed
+   -lha, -list-headless-action  list available headless actions
+
+DEBUG:
+   -debug                    show all requests and responses
+   -dreq, -debug-req         show all sent requests
+   -dresp, -debug-resp       show all received responses
+   -p, -proxy string[]       list of http/socks5 proxy to use (comma separated or file input)
+   -pi, -proxy-internal      proxy all internal requests
+   -ldf, -list-dsl-function  list all supported DSL function signatures
+   -tlog, -trace-log string  file to write sent requests trace log
+   -elog, -error-log string  file to write sent requests error log
+   -version                  show nuclei version
+   -hm, -hang-monitor        enable nuclei hang monitoring
+   -v, -verbose              show verbose output
+   -profile-mem string       optional nuclei memory profile dump file
+   -vv                       display templates loaded for scan
+   -svd, -show-var-dump      show variables dump for debugging
+   -ep, -enable-pprof        enable pprof debugging server
+   -tv, -templates-version   shows the version of the installed nuclei-templates
+   -hc, -health-check        run diagnostic check up
+
+UPDATE:
+   -up, -update                      update nuclei engine to the latest released version
+   -ut, -update-templates            update nuclei-templates to latest released version
+   -ud, -update-template-dir string  custom directory to install / update nuclei-templates
+   -duc, -disable-update-check       disable automatic nuclei/templates update check
+
+STATISTICS:
+   -stats                    display statistics about the running scan
+   -sj, -stats-json          display statistics in JSONL(lines) format
+   -si, -stats-interval int  number of seconds to wait between showing a statistics update (default 5)
+   -m, -metrics              expose nuclei metrics on a port
+   -mp, -metrics-port int    port to expose nuclei metrics on (default 9092)
+
+CLOUD:
+   -cloud                              run scan on nuclei cloud
+   -ads, -add-datasource string        add specified data source (s3,github)
+   -atr, -add-target string            add target(s) to cloud
+   -atm, -add-template string          add template(s) to cloud
+   -lsn, -list-scan                    list previous cloud scans
+   -lso, -list-output string           list scan output by scan id
+   -ltr, -list-target                  list cloud target by id
+   -ltm, -list-template                list cloud template by id
+   -lds, -list-datasource              list cloud datasource by id
+   -lrs, -list-reportsource            list reporting sources
+   -dsn, -delete-scan string           delete cloud scan by id
+   -dtr, -delete-target string         delete target(s) from cloud
+   -dtm, -delete-template string       delete template(s) from cloud
+   -dds, -delete-datasource string     delete specified data source
+   -drs, -disable-reportsource string  disable specified reporting source
+   -ers, -enable-reportsource string   enable specified reporting source
+   -gtr, -get-target string            get target content by id
+   -gtm, -get-template string          get template content by id
+   -nos, -no-store                     disable scan/output storage on cloud
+   -no-tables                          do not display pretty-printed tables
+   -limit int                          limit the number of output to display (default 100)
+
+Let’s move to the next step.
+```
+```markdown
+Setup the Application
+Before moving forward, we will set up our application in sandbox server to perform scans in a running application, and analyze the results to fix issues.
+
+Let’s login in to sandbox server.
+
+ssh root@sandbox-kr6k1mdm
+
+Type ‘yes’ when prompted to continue with the SSH connection.
+
+Note
+
+Sandbox machine already has docker installed, we will use it to run the application.
+
+Install Nginx as a reverse proxy to expose our application to the outside world.
+
+apt update && apt install -y nginx
+
+Next, clone the project from git repository.
+
+git clone https://gitlab.practical-devsecops.training/pdso/vuln-api.git
+
+Command Output
+Cloning into 'vuln-api'...
+remote: Enumerating objects: 45, done.
+remote: Total 45 (delta 0), reused 0 (delta 0), pack-reused 45
+Unpacking objects: 100% (45/45), done.
+
+Let’s cd into the application so we can run the application.
+
+cd vuln-api
+
+We are now in the app directory, let’s build the Docker image.
+
+docker build -t vuln-api .
+
+Command Output
+Sending build context to Docker daemon  4.585MB
+Step 1/6 : FROM python:3.9-alpine3.14
+3.9-alpine3.14: Pulling from library/python
+97518928ae5f: Pull complete 
+2a8c531cb7db: Pull complete 
+1ebf5da3a9b3: Pull complete 
+452f665b8e68: Pull complete 
+887b3f547972: Pull complete 
+Digest: sha256:12cc31f641a89b1e4a4c8b9ff24360fab2d69016b706a9765b957ad9bfdc2375
+Status: Downloaded newer image for python:3.9-alpine3.14
+ ---> 63ffcb113f6d
+Step 2/6 : COPY . /app
+ ---> dafc2f4ea76a
+Step 3/6 : WORKDIR /app
+ ---> Running in ef6ea0730e1f
+
+...[SNIP]...
+
+Step 6/6 : CMD [ "python", "api/api-sqlite.py" ]
+ ---> Running in 97df1a8a88d5
+Removing intermediate container 97df1a8a88d5
+ ---> d16619dccdb2
+Successfully built d16619dccdb2
+Successfully tagged vuln-api:latest
+
+Once done, we can execute the following command to run the application.
+
+docker run -d --name flask -p 5000:5000 vuln-api
+
+Note
+
+Please notice the application runs on port 5000 by default. If you want to change its default port, you can either modify the source code or use the docker run command to bind the container port to a different host port.
+
+You can see the response from the application in the host machine by curl command.
+
+curl localhost:5000
+
+Command Output
+<h1>Practical DevSecOps TODOs API</h1>
+
+This application can only be accessed on its machine through localhost. We will configure Nginx to expose our app publicly. Please execute the following command to replace the existing config at /etc/nginx/sites-available/default, or you can use any text editor to modify the file.
+
+cat > /etc/nginx/sites-available/default<<EOF
+server{
+    listen      80;
+    server_name sandbox-kr6k1mdm.lab.practical-devsecops.training;
+
+    access_log  /var/log/nginx/flask_access.log;
+    error_log   /var/log/nginx/flask_error.log;
+
+    proxy_buffers 16 64k;
+    proxy_buffer_size 128k;
+
+    location / {
+        proxy_pass  http://localhost:5000;
+        proxy_redirect off;
+
+        proxy_set_header    Host            \$host;
+        proxy_set_header    X-Real-IP       \$remote_addr;
+        proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto http;
+    }
+}
+EOF
+
+Restart the nginx service.
+
+systemctl restart nginx
+
+Now, you can access the application by visiting https://sandbox-kr6k1mdm.lab.practical-devsecops.training.
+
+Exit from sandbox machine.
+
+exit
+
+Let’s move to the next step.
+```
+```markdown
+HTTP Header scanning
+In this step we want to analyze if there are misconfigurations on an applications HTTP headers.
+
+Let’s create http-header.yaml template.
+
+cat > http_header.yaml << EOF
+id: http-header
+
+info:
+  name: HTTP Missing Security Headers
+  author: Practical DevSecOps
+  severity: medium
+  tags: headers, http
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    host-redirects: true
+    max-redirects: 3
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: header
+        words:
+          - Set-Cookie
+          - HttpOnly
+        condition: and
+        case-insensitive: true
+
+      - type: dsl
+        name: strict-transport-security
+        dsl:
+          - "!regex('(?i)strict-transport-security', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: content-security-policy
+        dsl:
+          - "!regex('(?i)content-security-policy', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: permissions-policy
+        dsl:
+          - "!regex('(?i)permissions-policy', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: x-frame-options
+        dsl:
+          - "!regex('(?i)x-frame-options', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: x-content-type-options
+        dsl:
+          - "!regex('(?i)x-content-type-options', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: x-permitted-cross-domain-policies
+        dsl:
+          - "!regex('(?i)x-permitted-cross-domain-policies', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: referrer-policy
+        dsl:
+          - "!regex('(?i)referrer-policy', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: clear-site-data
+        dsl:
+          - "!regex('(?i)clear-site-data', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: cross-origin-embedder-policy
+        dsl:
+          - "!regex('(?i)cross-origin-embedder-policy', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: cross-origin-opener-policy
+        dsl:
+          - "!regex('(?i)cross-origin-opener-policy', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: cross-origin-resource-policy
+        dsl:
+          - "!regex('(?i)cross-origin-resource-policy', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: access-control-allow-origin
+        dsl:
+          - "!regex('(?i)access-control-allow-origin', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: access-control-allow-credentials
+        dsl:
+          - "!regex('(?i)access-control-allow-credentials', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: access-control-expose-headers
+        dsl:
+          - "!regex('(?i)access-control-expose-headers', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: access-control-max-age
+        dsl:
+          - "!regex('(?i)access-control-max-age', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: access-control-allow-methods
+        dsl:
+          - "!regex('(?i)access-control-allow-methods', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+
+      - type: dsl
+        name: access-control-allow-headers
+        dsl:
+          - "!regex('(?i)access-control-allow-headers', all_headers)"
+          - "status_code != 301 && status_code != 302"
+        condition: and
+EOF
+
+Let’s run the below command to inspect if the target website has HTTP header misconfigurations.
+
+nuclei -u https://sandbox-kr6k1mdm.lab.practical-devsecops.training -t http_header.yaml
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[INF] nuclei-templates are not installed, installing...
+[INF] Successfully installed nuclei-templates at /root/nuclei-templates
+[WRN] Found 1 templates loaded with deprecated protocol syntax, update before v3 for continued support.
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 1
+[WRN] Loading 1 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+[http-header:referrer-policy] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:cross-origin-opener-policy] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:access-control-allow-origin] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:access-control-expose-headers] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:content-security-policy] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:x-frame-options] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:x-content-type-options] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:x-permitted-cross-domain-policies] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:cross-origin-embedder-policy] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:cross-origin-resource-policy] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:access-control-allow-credentials] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:access-control-max-age] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:access-control-allow-headers] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:strict-transport-security] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:clear-site-data] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:access-control-allow-methods] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[http-header:permissions-policy] [http] [medium] https://sandbox-kr6k1mdm.lab.practical-devsecops.training
+[INF] Scan completed in 890.151885ms. 17 matches found.
+
+If we ask for nuclei results in JSON format, there will be little more information about the identified misconfigurations.
+
+nuclei -u https://sandbox-kr6k1mdm.lab.practical-devsecops.training -t http_header.yaml -j | jq
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[WRN] Found 1 templates loaded with deprecated protocol syntax, update before v3 for continued support.
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 1
+[WRN] Loading 1 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+{
+  "template-id": "http-header",
+  "template-path": "http_header.yaml",
+  "info": {
+    "name": "HTTP Missing Security Headers",
+    "author": [
+      "practical devsecops"
+    ],
+    "tags": [
+      "headers",
+      "http"
+    ],
+    "reference": null,
+    "severity": "medium"
+  },
+  "matcher-name": "permissions-policy",
+  "type": "http",
+  "host": "https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/",
+  "matched-at": "https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/",
+  "ip": "143.244.212.229",
+  "timestamp": "2023-04-16T04:04:39.435349433Z",
+  "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36' 'https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/'",
+  "matcher-status": true,
+  "matched-line": null
+}
+
+......[SNIP]......
+
+Based on the severity, we set the severity level to medium. Since these issues flag missing security headers, it indicates that the website might be susceptible to certain security vulnerabilities, such as XSS, clickjacking or other potential attacks. While missing headers don’t directly cause these vulnerabilities, they make it easier for attackers to exploit existing vulnerabilities in the application.
+
+However, keep in mind that the severity level is subjective and depends on our specific application’s requirements and risk tolerance.
+
+Let’s move to the next step.
+```
+```markdown
+SQL Injection Scanning
+In this step, we will scan the test application for SQL injection.
+
+Let’s start by creating a template rule that will scan for SQL injection.
+
+cat > sql-injection.yaml << EOF
+id: sqli
+
+info:
+  name: SQL Injection
+  author: Practical DevSecOps
+  severity: High
+
+requests:
+  - method: GET
+
+    path:
+      - "{{BaseURL}} %22%22|0;#"
+      - "{{BaseURL}} %22 OR 1 = 1 -- -#"
+      - "{{BaseURL}} OR 1=1"
+      - "{{BaseURL}} 1' ORDER BY 1,2,3--+"
+      - "{{BaseURL}} 1' GROUP BY 1,2,3--+"
+
+    extractors:
+      - type: regex
+        part: body
+        regex:
+          - "SQLite/JDBCDriver|SQLite.Exception|System.Data.SQLite.SQLiteException|Warning.*sqlite_.*|Warning.*SQLite3::|SQLITE_ERROR|sqlite3.*|\\\[|null"
+EOF
+
+We can add more SQLi payloads in path field to do fuzzing.
+
+Let’s run the command to inspect the SQL Injection vulnerability to the target.
+
+nuclei -u https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/ -t sql-injection.yaml
+
+Command Output
+
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[WRN] Found 1 templates loaded with deprecated protocol syntax, update before v3 for continued support.
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 1
+[WRN] Loading 1 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+[sqli] [http] [high] https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%20%22%22%7C0; ["null"]
+[sqli] [http] [high] https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%20%22%20OR%201%20=%201%20--%20- ["sqlite3.OperationalError</h1>","sqlite3.OperationalError: unrecognized token: &quot;&quot; OR 1 = 1 -- -&quot;</p>","[","sqlite3.OperationalError: unrecognized token: &quot;&quot; OR 1 = 1 -- -&quot;</blockquote>","sqlite3.OperationalError: unrecognized token: &quot;&quot; OR 1 = 1 -- -&quot;</textarea>","sqlite3.OperationalError: unrecognized token: "" OR 1 = 1 - -"","sqlite3.OperationalError: unrecognized token: &quot;&quot; OR 1 = 1 -- -&quot; // Werkzeug Debugger</title>"]
+[sqli] [http] [high] https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%20OR%201=1 ["sqlite3.OperationalError: near &quot;OR&quot;: syntax error // Werkzeug Debugger</title>","sqlite3.OperationalError</h1>","sqlite3.OperationalError: near &quot;OR&quot;: syntax error</p>","[","sqlite3.OperationalError: near &quot;OR&quot;: syntax error</blockquote>","sqlite3.OperationalError: near &quot;OR&quot;: syntax error</textarea>","sqlite3.OperationalError: near "OR": syntax error"]
+[sqli] [http] [high] https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%201%27%20ORDER%20BY%201,2,3--+ ["sqlite3.OperationalError</h1>","sqlite3.OperationalError: unrecognized token: &quot;' ORDER BY 1,2,3--+&quot;</p>","[","sqlite3.OperationalError: unrecognized token: &quot;' ORDER BY 1,2,3--+&quot;</blockquote>","sqlite3.OperationalError: unrecognized token: &quot;' ORDER BY 1,2,3--+&quot;</textarea>","sqlite3.OperationalError: unrecognized token: "' ORDER BY 1,2,3-+"","sqlite3.OperationalError: unrecognized token: &quot;' ORDER BY 1,2,3--+&quot; // Werkzeug Debugger</title>"]
+[sqli] [http] [high] https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%201%27%20GROUP%20BY%201,2,3--+ ["[","sqlite3.OperationalError: unrecognized token: &quot;' GROUP BY 1,2,3--+&quot;</blockquote>","sqlite3.OperationalError: unrecognized token: &quot;' GROUP BY 1,2,3--+&quot;</textarea>","sqlite3.OperationalError: unrecognized token: "' GROUP BY 1,2,3-+"","sqlite3.OperationalError: unrecognized token: &quot;' GROUP BY 1,2,3--+&quot; // Werkzeug Debugger</title>","sqlite3.OperationalError</h1>","sqlite3.OperationalError: unrecognized token: &quot;' GROUP BY 1,2,3--+&quot;</p>"]
+[INF] Scan completed in 4.914518793s. 5 matches found.
+
+These findings indicate that the application may be vulnerable to SQL Injection attacks.
+
+The scanner detected a potential SQLi vulnerability by using an encoded payload “%20%22%22%7C0;, but no specific error message was retrieved ([null]).
+
+Furthermore, The second and third lines represent SQLi attacks where the payloads %20%22%20OR%201%20=%201%20–%20- and %20OR%201=1 were used, causing sqlite3.OperationalError messages in the application’s response.
+
+The error messages suggest that the application may not be sanitizing the input properly, allowing SQLi attacks to occur. Those also similar for fourth and fifth lines.
+
+nuclei results in JSON format will include some additional information about the scanning template and the scan results.
+
+nuclei -u https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/ -t sql-injection.yaml -j | jq
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[WRN] Found 1 templates loaded with deprecated protocol syntax, update before v3 for continued support.
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 1
+[WRN] Loading 1 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+{
+  "template-id": "sqli",
+  "template-path": "/sql-injection.yaml",
+  "info": {
+    "name": "SQL Injection",
+    "author": [
+      "practical devsecops"
+    ],
+    "tags": null,
+    "reference": null,
+    "severity": "high"
+  },
+  "type": "http",
+  "host": "https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/",
+  "matched-at": "https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%20%22%22%7C0;",
+  "extracted-results": [
+    "null"
+  ],
+  "ip": "143.244.212.229",
+  "timestamp": "2023-04-16T05:05:03.027613087Z",
+  "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/44.0.2403.155 Safari/537.36' 'https://sandbox-kr6k1mdm.lab.practical-devsecops.training/api/v1/resources/todos/%20%22%22%7C0;'",
+  "matcher-status": true,
+  "matched-line": null
+}
+
+......[SNIP]......
+```
+```markdown
+Identifying More Targets Using Katana
+Installing Katana
+Katana is a next-generation crawling and spidering framework.
+
+katana
+
+Spidering is the act of crawling the webapp in a systematic and methodological way. From attackers perspective the more endpoints, URLs and web pages we discover the bigger attack surface we have at our disposal.
+The goal of spidering a web application is to discover as much of the applications attack surface as possible. The more endpoints an attacker discovers, the more opportunities he or she has to exploit them.
+
+Let’s install katana binary from source.
+
+wget https://github.com/projectdiscovery/katana/releases/download/v1.0.3/katana_1.0.3_linux_amd64.zip
+unzip katana_1.0.3_linux_amd64.zip
+mv katana /usr/bin/
+
+Let’s see the usage of katana using the --help option.
+
+katana --help
+
+Command Output
+Katana is a fast crawler focused on execution in automation
+pipelines offering both headless and non-headless crawling.
+
+Usage:
+  katana [flags]
+
+Flags:
+INPUT:
+   -u, -list string[]  target url / list to crawl
+
+CONFIGURATION:
+   -r, -resolvers string[]       list of custom resolver (file or comma separated)
+   -d, -depth int                maximum depth to crawl (default 3)
+   -jc, -js-crawl                enable endpoint parsing / crawling in javascript file
+   -jsl, -jsluice                enable jsluice parsing in javascript file (memory intensive)
+   -ct, -crawl-duration value    maximum duration to crawl the target for (s, m, h, d) (default s)
+   -kf, -known-files string      enable crawling of known files (all,robotstxt,sitemapxml)
+   -mrs, -max-response-size int  maximum response size to read (default 9223372036854775807)
+   -timeout int                  time to wait for request in seconds (default 10)
+   -aff, -automatic-form-fill    enable automatic form filling (experimental)
+   -fx, -form-extraction         extract form, input, textarea & select elements in jsonl output
+   -retry int                    number of times to retry the request (default 1)
+   -proxy string                 http/socks5 proxy to use
+   -H, -headers string[]         custom header/cookie to include in all http request in header:value format (file)
+   -config string                path to the katana configuration file
+   -fc, -form-config string      path to custom form configuration file
+   -flc, -field-config string    path to custom field configuration file
+   -s, -strategy string          Visit strategy (depth-first, breadth-first) (default "depth-first")
+   -iqp, -ignore-query-params    Ignore crawling same path with different query-param values
+   -tlsi, -tls-impersonate       enable experimental client hello (ja3) tls randomization
+
+DEBUG:
+   -health-check, -hc        run diagnostic check up
+   -elog, -error-log string  file to write sent requests error log
+
+HEADLESS:
+   -hl, -headless                    enable headless hybrid crawling (experimental)
+   -sc, -system-chrome               use local installed chrome browser instead of katana installed
+   -sb, -show-browser                show the browser on the screen with headless mode
+   -ho, -headless-options string[]   start headless chrome with additional options
+   -nos, -no-sandbox                 start headless chrome in --no-sandbox mode
+   -cdd, -chrome-data-dir string     path to store chrome browser data
+   -scp, -system-chrome-path string  use specified chrome browser for headless crawling
+   -noi, -no-incognito               start headless chrome without incognito mode
+   -cwu, -chrome-ws-url string       use chrome browser instance launched elsewhere with the debugger listening at this URL
+   -xhr, -xhr-extraction             extract xhr request url,method in jsonl output
+
+SCOPE:
+   -cs, -crawl-scope string[]       in scope url regex to be followed by crawler
+   -cos, -crawl-out-scope string[]  out of scope url regex to be excluded by crawler
+   -fs, -field-scope string         pre-defined scope field (dn,rdn,fqdn) (default "rdn")
+   -ns, -no-scope                   disables host based default scope
+   -do, -display-out-scope          display external endpoint from scoped crawling
+
+FILTER:
+   -mr, -match-regex string[]       regex or list of regex to match on output url (cli, file)
+   -fr, -filter-regex string[]      regex or list of regex to filter on output url (cli, file)
+   -f, -field string                field to display in output (url,path,fqdn,rdn,rurl,qurl,qpath,file,ufile,key,value,kv,dir,udir)
+   -sf, -store-field string         field to store in per-host output (url,path,fqdn,rdn,rurl,qurl,qpath,file,ufile,key,value,kv,dir,udir)
+   -em, -extension-match string[]   match output for given extension (eg, -em php,html,js)
+   -ef, -extension-filter string[]  filter output for given extension (eg, -ef png,css)
+   -mdc, -match-condition string    match response with dsl based condition
+   -fdc, -filter-condition string   filter response with dsl based condition
+
+RATE-LIMIT:
+   -c, -concurrency int          number of concurrent fetchers to use (default 10)
+   -p, -parallelism int          number of concurrent inputs to process (default 10)
+   -rd, -delay int               request delay between each request in seconds
+   -rl, -rate-limit int          maximum requests to send per second (default 150)
+   -rlm, -rate-limit-minute int  maximum number of requests to send per minute
+
+UPDATE:
+   -up, -update                 update katana to latest version
+   -duc, -disable-update-check  disable automatic katana update check
+
+OUTPUT:
+   -o, -output string                file to write output to
+   -sr, -store-response              store http requests/responses
+   -srd, -store-response-dir string  store http requests/responses to custom directory
+   -or, -omit-raw                    omit raw requests/responses from jsonl output
+   -ob, -omit-body                   omit response body from jsonl output
+   -j, -jsonl                        write output in jsonl format
+   -nc, -no-color                    disable output content coloring (ANSI escape codes)
+   -silent                           display output only
+   -v, -verbose                      display verbose output
+   -debug                            display debug output
+   -version                          display project version
+
+Please take a few minutes to review the comprehensive help menu. We will be delving into some of those options in the upcoming steps.
+
+Let’s move to the next step.
+```
+```markdown
+Spidering a Web App Using Katana
+Katana will take the URL as a command line argument which it will use as starting point to crawl a specific web application. URL can be provided to katana using the -u parameter. Let’s see katana in action.
+
+katana -u https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+Command Output
+   __        __                
+  / /_____ _/ /____ ____  ___ _
+ /  '_/ _  / __/ _  / _ \/ _  /
+/_/\_\\_,_/\__/\_,_/_//_/\_,_/                                                   
+
+                projectdiscovery.io
+
+[INF] Current katana version v1.0.3 (latest)
+[INF] Started standard crawling for => https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/font-awesome.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/login
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/register
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/style.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.min.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/respond.min.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/common-scripts.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/jquery.scrollTo.min.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/jquery.dcjqaccordion.2.7.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/jquery.customSelect.min.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/railscasts.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/style-responsive.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/highlight.pack.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/slidebars.min.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/xregexp.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/components/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/access/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/redirects/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/csrf/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/bootstrap.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/style.css
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/jquery.nicescroll.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/idor/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/exposure/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/forgot_password
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/misconfig/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/xss/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/brokenauth/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/register/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/taskManager/login/
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/backend/jquery.sparkline.js
+https://devsecops-box-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/jquery-1.8.3.min.js
+
+As you can see Katana was able to spider the application successfully and identify more endpoints which means bigger attack surface at our disposal.
+
+The more endpoints an attacker discovers, the more opportunities he or she has to exploit them.
+```
+```markdown
+Fuzzing Using Nuclei
+What Is Fuzzing?
+Fuzzing, also known as fuzz testing or fuzzing testing, is a software testing technique used to discover vulnerabilities, bugs, and weaknesses in software applications, including web applications. It involves providing the application with a large volume of unexpected, random, or malformed inputs to see how the application handles them. The goal is to find points of failure, such as crashes, security vulnerabilities, or unexpected behavior.
+
+In the context of web application testing, fuzzing involves sending various types of input data to the web application, such as HTTP requests, form submissions, URL parameters, and more. This input data is deliberately crafted to be invalid, incorrect, or unconventional, aiming to trigger unexpected behaviors or vulnerabilities in the application’s code.
+
+Uses of Fuzzing
+Common uses of fuzzing in the context of web application testing include:
+
+| Common Use              | Description                                                                 |
+|--------------------------|-----------------------------------------------------------------------------|
+| Input Validation Testing | Fuzzing assists in assessing how well an application handles various forms of input, mitigating vulnerabilities like SQL injection or command injection. |
+| File Upload Testing      | Fuzzing evaluates how effectively the application manages different types of files during uploads, thwarting vulnerabilities such as file-based attacks. |
+| Authentication Testing   | Fuzzing uncovers potential weaknesses in authentication mechanisms by testing them against unexpected inputs. |
+| Authorization Testing    | Fuzzing helps identify flaws in authorization mechanisms by subjecting them to unexpected inputs for assessment. |
+| Parameter Testing        | Fuzzing targets various parameters within URLs, forms, and headers to uncover vulnerabilities caused by improper handling of user input. |
+| Error Handling Testing   | Fuzzing assesses how well the application manages unexpected errors and whether it discloses sensitive information to attackers through error messages. |
+
+Fuzzing goes beyond web application security testing; its applications extend to identifying bugs in various areas such as file formats, protocols, web browsers, and binaries. Its versatility makes it a valuable technique for bug discovery and vulnerability assessment.
+
+Fuzzing can be performed manually or using automated tools specifically designed for fuzz testing. Automated fuzzing tools can generate a wide variety of inputs and test scenarios more efficiently than manual testing. However, both approaches can be valuable in a comprehensive web application testing strategy.
+```
+```markdown
+Installing Nuclei
+Nuclei can help you ensure the security of complex networks. With vulnerability scans, nuclei can identify security issues on your network. Once configured, nuclei can provide detailed information on each vulnerability, including Severity, Impact, and Recommended remediation.
+
+Source: nuclei.
+
+Let’s start by installing Nuclei binary from source.
+
+wget https://github.com/projectdiscovery/nuclei/releases/download/v3.4.4/nuclei_3.4.4_linux_amd64.zip
+unzip nuclei_3.4.4_linux_amd64.zip
+mv nuclei /usr/bin/
+nuclei
+
+Let’s see the usage of nuclei using the --help option.
+
+nuclei --help
+
+Command Output
+Nuclei is a fast, template based vulnerability scanner focusing
+on extensive configurability, massive extensibility and ease of use.
+
+Usage:
+  nuclei [flags]
+
+Flags:
+TARGET:
+   -u, -target string[]       target URLs/hosts to scan
+   -l, -list string           path to file containing a list of target URLs/hosts to scan (one per line)
+   -resume string             resume scan using resume.cfg (clustering will be disabled)
+   -sa, -scan-all-ips         scan all the IP's associated with dns record
+   -iv, -ip-version string[]  IP version to scan of hostname (4,6) - (default 4)
+
+TEMPLATES:
+   -nt, -new-templates                    run only new templates added in latest nuclei-templates release
+   -ntv, -new-templates-version string[]  run new templates added in specific version
+   -as, -automatic-scan                   automatic web scan using wappalyzer technology detection to tags mapping
+   -t, -templates string[]                list of template or template directory to run (comma-separated, file)
+   -tu, -template-url string[]            list of template urls to run (comma-separated, file)
+   -w, -workflows string[]                list of workflow or workflow directory to run (comma-separated, file)
+   -wu, -workflow-url string[]            list of workflow urls to run (comma-separated, file)
+   -validate                              validate the passed templates to nuclei
+   -nss, -no-strict-syntax                disable strict syntax check on templates
+   -td, -template-display                 displays the templates content
+   -tl                                    list all available templates
+
+FILTERING:
+   -a, -author string[]               templates to run based on authors (comma-separated, file)
+   -tags string[]                     templates to run based on tags (comma-separated, file)
+   -etags, -exclude-tags string[]     templates to exclude based on tags (comma-separated, file)
+   -itags, -include-tags string[]     tags to be executed even if they are excluded either by default or configuration
+   -id, -template-id string[]         templates to run based on template ids (comma-separated, file, allow-wildcard)
+   -eid, -exclude-id string[]         templates to exclude based on template ids (comma-separated, file)
+   -it, -include-templates string[]   templates to be executed even if they are excluded either by default or configuration
+   -et, -exclude-templates string[]   template or template directory to exclude (comma-separated, file)
+   -em, -exclude-matchers string[]    template matchers to exclude in result
+   -s, -severity value[]              templates to run based on severity. Possible values: info, low, medium, high, critical, unknown
+   -es, -exclude-severity value[]     templates to exclude based on severity. Possible values: info, low, medium, high, critical, unknown
+   -pt, -type value[]                 templates to run based on protocol type. Possible values: dns, file, http, headless, tcp, workflow, ssl, websocket, whois
+   -ept, -exclude-type value[]        templates to exclude based on protocol type. Possible values: dns, file, http, headless, tcp, workflow, ssl, websocket, whois
+   -tc, -template-condition string[]  templates to run based on expression condition
+
+OUTPUT:
+   -o, -output string            output file to write found issues/vulnerabilities
+   -sresp, -store-resp           store all request/response passed through nuclei to output directory
+   -srd, -store-resp-dir string  store all request/response passed through nuclei to custom directory (default "output")
+   -silent                       display findings only
+   -nc, -no-color                disable output content coloring (ANSI escape codes)
+   -j, -jsonl                    write output in JSONL(ines) format
+   -irr, -include-rr -omit-raw   include request/response pairs in the JSON, JSONL, and Markdown outputs (for findings only) [DEPRECATED use -omit-raw] (default true)
+   -or, -omit-raw                omit request/response pairs in the JSON, JSONL, and Markdown outputs (for findings only)
+   -nm, -no-meta                 disable printing result metadata in cli output
+   -ts, -timestamp               enables printing timestamp in cli output
+   -rdb, -report-db string       nuclei reporting database (always use this to persist report data)
+   -ms, -matcher-status          display match failure status
+   -me, -markdown-export string  directory to export results in markdown format
+   -se, -sarif-export string     file to export results in SARIF format
+   -je, -json-export string      file to export results in JSON format
+   -jle, -jsonl-export string    file to export results in JSONL(ine) format
+
+[[[....SNIPPED....]]]
+Please take a few minutes to review the comprehensive help menu. We will be delving into some of those options in the upcoming steps.
+
+Let’s move to the next step.
+```
+```markdown
+Installing Katana
+Katana is a next-generation crawling and spidering framework.
+
+katana
+
+Spidering is the act of crawling the webapp in a systematic and methodological way. From the attacker’s perspective, the more endpoints, URLs, and web pages we discover, the bigger attack surface we have at our disposal.  
+The goal of spidering a web application is to discover as much of the applications attack surface as possible. The more endpoints an attacker discovers, the more opportunities he or she has to exploit them.
+
+Let’s install katana binary from source.
+
+wget https://github.com/projectdiscovery/katana/releases/download/v1.1.3/katana_1.1.3_linux_amd64.zip
+unzip katana_1.1.3_linux_amd64.zip
+mv katana /usr/bin/
+
+Let’s see the usage of katana using the --help option.
+
+katana --help
+
+Command Output
+Katana is a fast crawler focused on execution in automation
+pipelines offering both headless and non-headless crawling.
+
+Usage:
+  katana [flags]
+
+Flags:
+INPUT:
+   -u, -list string[]  target url / list to crawl
+
+CONFIGURATION:
+   -r, -resolvers string[]       list of custom resolver (file or comma separated)
+   -d, -depth int                maximum depth to crawl (default 3)
+   -jc, -js-crawl                enable endpoint parsing / crawling in javascript file
+   -jsl, -jsluice                enable jsluice parsing in javascript file (memory intensive)
+   -ct, -crawl-duration value    maximum duration to crawl the target for (s, m, h, d) (default s)
+   -kf, -known-files string      enable crawling of known files (all,robotstxt,sitemapxml)
+   -mrs, -max-response-size int  maximum response size to read (default 9223372036854775807)
+   -timeout int                  time to wait for request in seconds (default 10)
+   -aff, -automatic-form-fill    enable automatic form filling (experimental)
+   -fx, -form-extraction         extract form, input, textarea & select elements in jsonl output
+   -retry int                    number of times to retry the request (default 1)
+   -proxy string                 http/socks5 proxy to use
+   -H, -headers string[]         custom header/cookie to include in all http request in header:value format (file)
+   -config string                path to the katana configuration file
+   -fc, -form-config string      path to custom form configuration file
+   -flc, -field-config string    path to custom field configuration file
+   -s, -strategy string          Visit strategy (depth-first, breadth-first) (default "depth-first")
+   -iqp, -ignore-query-params    Ignore crawling same path with different query-param values
+   -tlsi, -tls-impersonate       enable experimental client hello (ja3) tls randomization
+
+DEBUG:
+   -health-check, -hc        run diagnostic check up
+   -elog, -error-log string  file to write sent requests error log
+
+HEADLESS:
+   -hl, -headless                    enable headless hybrid crawling (experimental)
+   -sc, -system-chrome               use local installed chrome browser instead of katana installed
+   -sb, -show-browser                show the browser on the screen with headless mode
+   -ho, -headless-options string[]   start headless chrome with additional options
+   -nos, -no-sandbox                 start headless chrome in --no-sandbox mode
+   -cdd, -chrome-data-dir string     path to store chrome browser data
+   -scp, -system-chrome-path string  use specified chrome browser for headless crawling
+   -noi, -no-incognito               start headless chrome without incognito mode
+   -cwu, -chrome-ws-url string       use chrome browser instance launched elsewhere with the debugger listening at this URL
+   -xhr, -xhr-extraction             extract xhr request url,method in jsonl output
+
+SCOPE:
+   -cs, -crawl-scope string[]       in scope url regex to be followed by crawler
+   -cos, -crawl-out-scope string[]  out of scope url regex to be excluded by crawler
+   -fs, -field-scope string         pre-defined scope field (dn,rdn,fqdn) (default "rdn")
+   -ns, -no-scope                   disables host based default scope
+   -do, -display-out-scope          display external endpoint from scoped crawling
+
+FILTER:
+   -mr, -match-regex string[]       regex or list of regex to match on output url (cli, file)
+   -fr, -filter-regex string[]      regex or list of regex to filter on output url (cli, file)
+   -f, -field string                field to display in output (url,path,fqdn,rdn,rurl,qurl,qpath,file,ufile,key,value,kv,dir,udir)
+   -sf, -store-field string         field to store in per-host output (url,path,fqdn,rdn,rurl,qurl,qpath,file,ufile,key,value,kv,dir,udir)
+   -em, -extension-match string[]   match output for given extension (eg, -em php,html,js)
+   -ef, -extension-filter string[]  filter output for given extension (eg, -ef png,css)
+   -mdc, -match-condition string    match response with dsl based condition
+   -fdc, -filter-condition string   filter response with dsl based condition
+
+RATE-LIMIT:
+   -c, -concurrency int          number of concurrent fetchers to use (default 10)
+   -p, -parallelism int          number of concurrent inputs to process (default 10)
+   -rd, -delay int               request delay between each request in seconds
+   -rl, -rate-limit int          maximum requests to send per second (default 150)
+   -rlm, -rate-limit-minute int  maximum number of requests to send per minute
+
+UPDATE:
+   -up, -update                 update katana to latest version
+   -duc, -disable-update-check  disable automatic katana update check
+
+OUTPUT:
+   -o, -output string                file to write output to
+   -sr, -store-response              store http requests/responses
+   -srd, -store-response-dir string  store http requests/responses to custom directory
+   -or, -omit-raw                    omit raw requests/responses from jsonl output
+   -ob, -omit-body                   omit response body from jsonl output
+   -j, -jsonl                        write output in jsonl format
+   -nc, -no-color                    disable output content coloring (ANSI escape codes)
+   -silent                           display output only
+   -v, -verbose                      display verbose output
+   -debug                            display debug output
+   -version                          display project version
+
+Please take a few minutes to review the comprehensive help menu. We will be delving into some of those options in the upcoming steps.
+
+Let’s move to the next step.
+```
+```markdown
+Identifying More Targets for Scanning With Katana
+The very first step is to enumerate endpoints which can be fuzzed using nuclei. Enumerating endpoints can be done by leveraging katana. We will be passing our target URL using the -u command line parameter. Katana is capable of enumerating all the URLs with query parameters using -f qurl option.
+
+| FIELD | DESCRIPTION           | EXAMPLE                                                                 |
+|-------|-----------------------|-------------------------------------------------------------------------|
+| qurl  | URL including query param | https://admin.projectdiscovery.io/admin/login.php?user=admin&password=admin |
+
+GitHub - projectdiscovery/katana: A next-generation crawling and spidering framework.
+
+katana -u https://public-firing-range.appspot.com/ -f qurl
+
+This scanning process is estimated to take 1 minute or more, depending on the complexity of the website.
+
+Command Output
+
+   __        __                
+  / /_____ _/ /____ ____  ___ _
+ /  '_/ _  / __/ _  / _ \/ _  /
+/_/\_\\_,_/\__/\_,_/_//_/\_,_/                                                   
+
+                projectdiscovery.io
+
+[INF] Current katana version v1.1.3 (outdated)
+[INF] Started standard crawling for => https://public-firing-range.appspot.com/
+https://public-firing-range.appspot.com/tags/multiline?q=a
+https://public-firing-range.appspot.com/urldom/jsonp?callback=foobar
+https://public-firing-range.appspot.com/reflected/filteredstrings/body/caseInsensitive/script?q=a
+https://public-firing-range.appspot.com/redirect/meta?q=/
+https://public-firing-range.appspot.com/flashinjection/callbackIsEchoedBack?callback=func
+https://public-firing-range.appspot.com/flashinjection/callbackParameterDoesNothing?callback=func
+https://public-firing-range.appspot.com/remoteinclude/parameter/script?q=https://google.com
+https://public-firing-range.appspot.com/remoteinclude/parameter/object/application_x-shockwave-flash?q=https://google.com
+https://public-firing-range.appspot.com/remoteinclude/parameter/object_raw?q=https://google.com
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/OtherParameter/WithXFO/?q=%26callback%3Dfoo%23
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/InCallback/WithXFO/?q=foo
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/InCallback/WithoutXFO/?q=foo
+https://public-firing-range.appspot.com/redirect/parameter?url=/
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/OtherParameter/WithoutXFO/?q=%26callback%3Dfoo%23
+
+...[SNIP]...
+
+We would want to save the enumerated URLs in a text file which we can use later as an input to nuclei for fuzzing using the -o option to save the output to a file named endpoints.txt
+
+katana -u https://public-firing-range.appspot.com/ -f qurl -o endpoints.txt
+
+Command Output
+
+   __        __                
+  / /_____ _/ /____ ____  ___ _
+ /  '_/ _  / __/ _  / _ \/ _  /
+/_/\_\\_,_/\__/\_,_/_//_/\_,_/                                                   
+
+                projectdiscovery.io
+
+[INF] Current katana version v1.1.3 (outdated)
+[INF] Started standard crawling for => https://public-firing-range.appspot.com/
+https://public-firing-range.appspot.com/urldom/jsonp?callback=foobar
+https://public-firing-range.appspot.com/tags/multiline?q=a
+https://public-firing-range.appspot.com/reflected/filteredstrings/body/caseInsensitive/script?q=a
+https://public-firing-range.appspot.com/flashinjection/callbackParameterDoesNothing?callback=func
+https://public-firing-range.appspot.com/redirect/meta?q=/
+https://public-firing-range.appspot.com/flashinjection/callbackIsEchoedBack?callback=func
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/OtherParameter/WithXFO/?q=%26callback%3Dfoo%23
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/InCallback/WithXFO/?q=foo
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/OtherParameter/WithoutXFO/?q=%26callback%3Dfoo%23
+https://public-firing-range.appspot.com/reverseclickjacking/multipage/ParameterInQuery/InCallback/WithoutXFO/?q=foo
+https://public-firing-range.appspot.com/reverseclickjacking/singlepage/ParameterInQuery/OtherParameter/?q=%26callback%3Durc_button.click%23
+https://public-firing-range.appspot.com/tags/expression?q=a
+https://public-firing-range.appspot.com/reverseclickjacking/singlepage/ParameterInQuery/InCallback/?q=urc_button.click
+https://public-firing-range.appspot.com/reverseclickjacking/jsonpendpoint?q=&callback=foo
+https://public-firing-range.appspot.com/tags/tag/body/onload?q=a
+https://public-firing-range.appspot.com/tags/tag/a/href?q=a
+https://public-firing-range.appspot.com/reverseclickjacking/jsonpendpoint?q=&callback=urc_button.click
+https://public-firing-range.appspot.com/tags/tag/a/style?q=a
+https://public-firing-range.appspot.com/tags/tag/script/src?q=a
+https://public-firing-range.appspot.com/tags/tag/iframe?q=a
+https://public-firing-range.appspot.com/tags/tag/div/style?q=a
+https://public-firing-range.appspot.com/redirect/parameter/NOSTARTSWITHJS?url=/
+https://public-firing-range.appspot.com/tags/tag/style?q=a
+https://public-firing-range.appspot.com/tags/tag/meta?q=a
+https://public-firing-range.appspot.com/tags/tag?q=a
+https://public-firing-range.appspot.com/tags/tag/img?q=a
+https://public-firing-range.appspot.com/tags/tag/div?q=a
+https://public-firing-range.appspot.com/redirect/parameter?url=/
+https://public-firing-range.appspot.com/urldom/location/search/frame.src?//example.org
+https://public-firing-range.appspot.com/urldom/location/search/location.assign?//example.org
+https://public-firing-range.appspot.com/urldom/location/search/area.href?//example.org
+https://public-firing-range.appspot.com/urldom/location/search/button.formaction?//example.org
+https://public-firing-range.appspot.com/urldom/location/search/svg.a?//example.org
+...[SNIP]...
+
+The endpoints.txt file is in the current directory.
+
+You can verify the existence of the output file with ls -l command.
+
+The output file has some unnecessary new lines which we will clean up using the sed command.
+
+sed -i '/^$/d' endpoints.txt
+
+Let’s move to the next step.
+```
+```markdown
+Fuzzing Endpoints Using Nuclei
+Let’s first clone the repository of fuzzing-templates. This project consists of fuzzing templates for commonly occurring vulnerabilities such as XSS, XXE, SSRF, SSTI, SQLi, RFI, LFI etc.
+
+git clone https://github.com/projectdiscovery/fuzzing-templates.git
+
+Command Output
+Cloning into 'fuzzing-templates'...
+remote: Enumerating objects: 197, done.
+remote: Counting objects: 100% (118/118), done.
+remote: Compressing objects: 100% (78/78), done.
+remote: Total 197 (delta 51), reused 64 (delta 32), pack-reused 79
+Receiving objects: 100% (197/197), 58.27 KiB | 7.28 MiB/s, done.
+Resolving deltas: 100% (66/66), done.
+
+We will use these templates with nuclei against our previous enumerated endpoints using katana.
+
+In the previous step we had successfully spidered the application and saved the results in the file called endpoints.txt. We can pass the file to nuclei using the -list parameter along with the cloned fuzzing-templates using the -t command line parameter. Nuclei will fuzz each and every URL that we provide with the fuzzing templates to see if uncovers any bugs. Let’s see it in action.
+
+nuclei -list endpoints.txt -t fuzzing-templates/ -dast
+
+This scanning process is estimated to take 1 minute or more, depending on the complexity of the website.
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 21
+[WRN] Loading 21 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 146
+[INF] Using Interactsh Server: oast.site
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/escape/js/html_escape?q=a'"><55484 [query:q] [GET]
+[open-redirect] [http] [medium] https://public-firing-range.appspot.com/redirect/parameter?url=https://evil.com [query:url] [GET]
+[open-redirect] [http] [medium] https://public-firing-range.appspot.com/urldom/redirect?url=https://evil.com [query:url] [GET]
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/escape/js/escape?q=a'"><55484 [query:q] [GET]
+[open-redirect] [http] [medium] https://public-firing-range.appspot.com/urldom/redirect?url=https://evil.com [query:url] [GET]
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/escape/js/encodeURIComponent?q=a'"><55484 [query:q] [GET]
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/reflected/filteredstrings/body/caseInsensitive/script?q=a'"><55484 [query:q] [GET]
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/reflected/filteredstrings/body/caseSensitive/SCRIPT?q=a'"><55484 [query:q] [GET]
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/reflected/parameter/attribute_name?q=a'"><55484 [query:q] [GET]
+...[SNIP]...
+[INF] Scan completed in 37.093361873s. 40 matches found.
+
+You can see from the above output that the nuclei was successfully able to fuzz the parameters and enumerate reflected-xss and open-redirect vulnerabilities.
+
+We can use the -verbose option to see what request are being sent by nuclei.
+
+nuclei -list endpoints.txt -t fuzzing-templates/ -dast -verbose
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[WRN] Headless flag is required for headless template /fuzzing-templates/csti/angular-client-side-template-injection.yaml
+[WRN] Headless flag is required for headless template /fuzzing-templates/xss/dom-xss.yaml
+[INF] Current nuclei version: v2.9.12 (latest)
+[INF] Current nuclei-templates version: v9.6.2 (latest)
+[INF] New templates added in latest release: 61
+[INF] Templates loaded for current scan: 19
+[INF] Targets loaded for current scan: 144
+[VER] [linux-lfi-fuzz] Sent HTTP request to https://public-firing-range.appspot.com/angular/angular_body/1.1.5?q=/etc/passwd
+[VER] [CVE-2018-19518] Sent HTTP request to https://public-firing-range.appspot.com/escape/js/html_escape?q=x+-oProxyCommand=echo+bnNsb29rdXArJTdCJTdCaW50ZXJhY3RzaC11cmwlN0QlN0Q=|base64+-d|sh}
+[VER] [reflection-ssti] Sent HTTP request to https://public-firing-range.appspot.com/angular/angular_body_raw_escaped/1.4.0?q=test${3266*7997}
+[VER] [linux-lfi-fuzz] Sent HTTP request to https://public-firing-range.appspot.com/angular/angular_body_alt_symbols_raw/1.6.0?q=/etc/passwd
+...[SNIP]...
+[reflected-xss] [http] [medium] https://public-firing-range.appspot.com/escape/js/escape?q=a'"><63613
+...[SNIP]...
+
+You can see a whole bunch of payloads being tried against query parameters.
+```
+```markdown
+Using Nuclei Workflows for DAST scanning
+Installing Nuclei
+Nuclei can help you ensure the security of complex networks. With vulnerability scans, nuclei can identify security issues on your network. Once configured, nuclei can provide detailed information on each vulnerability, including Severity, Impact, and Recommended remediation.
+
+Source: nuclei.
+
+Let’s start by installing Nuclei binary from source.
+
+wget https://github.com/projectdiscovery/nuclei/releases/download/v3.4.4/nuclei_3.4.4_linux_amd64.zip
+unzip nuclei_3.4.4_linux_amd64.zip
+mv nuclei /usr/bin/
+nuclei
+
+Let’s see the usage of nuclei using the --help option.
+
+nuclei --help
+
+Command Output
+Nuclei is a fast, template based vulnerability scanner focusing
+on extensive configurability, massive extensibility and ease of use.
+
+Usage:
+  nuclei [flags]
+
+Flags:
+TARGET:
+   -u, -target string[]          target URLs/hosts to scan
+   -l, -list string              path to file containing a list of target URLs/hosts to scan (one per line)
+   -eh, -exclude-hosts string[]  hosts to exclude to scan from the input list (ip, cidr, hostname)
+   -resume string                resume scan using resume.cfg (clustering will be disabled)
+   -sa, -scan-all-ips            scan all the IP's associated with dns record
+   -iv, -ip-version string[]     IP version to scan of hostname (4,6) - (default 4)
+
+TARGET-FORMAT:
+   -im, -input-mode string        mode of input file (list, burp, jsonl, yaml, openapi, swagger) (default "list")
+   -ro, -required-only            use only required fields in input format when generating requests
+   -sfv, -skip-format-validation  skip format validation (like missing vars) when parsing input file
+
+TEMPLATES:
+   -nt, -new-templates                    run only new templates added in latest nuclei-templates release
+   -ntv, -new-templates-version string[]  run new templates added in specific version
+   -as, -automatic-scan                   automatic web scan using wappalyzer technology detection to tags mapping
+   -t, -templates string[]                list of template or template directory to run (comma-separated, file)
+   -turl, -template-url string[]          template url or list containing template urls to run (comma-separated, file)
+   -ai, -prompt string                    generate and run template using ai prompt
+   -w, -workflows string[]                list of workflow or workflow directory to run (comma-separated, file)
+   -wurl, -workflow-url string[]          workflow url or list containing workflow urls to run (comma-separated, file)
+   -validate                              validate the passed templates to nuclei
+   -nss, -no-strict-syntax                disable strict syntax check on templates
+   -td, -template-display                 displays the templates content
+   -tl                                    list all available templates
+   -tgl                                   list all available tags
+   -sign                                  signs the templates with the private key defined in NUCLEI_SIGNATURE_PRIVATE_KEY env variable
+   -code                                  enable loading code protocol-based templates
+   -dut, -disable-unsigned-templates      disable running unsigned templates or templates with mismatched signature
+   -esc, -enable-self-contained           enable loading self-contained templates
+   -egm, -enable-global-matchers          enable loading global matchers templates
+   -file                                  enable loading file templates
+
+...[SNIPPED]...
+
+Please take a few minutes to review the comprehensive help menu. We will be delving into some of those options in the upcoming steps.
+
+Let’s move to the next step.
+```
+```markdown
+Understanding Workflows
+Workflows aid us to define a series of templates that need to be run based on a condition.
+
+Workflows are defined in YAML just like templates.
+
+A Nuclei template is a YAML file that contains markup data. This markup data instructs Nuclei on what to send to a host and how to analyze the host’s response. By doing so, Nuclei can determine if the host is vulnerable to a specific issue.
+When we embed Nuclei for DAST scanning in our CI/CD pipeline then it might take a lot of time depending on how many templates we execute.
+
+We can use workflows instead to define the specific templates that we want to run which will drastically cut down the number of unwanted templates that might be run which might not be relevant to our application.
+As we already know our target application when we run a DAST scan in CI/CD, a customized workflow will make more sense.
+
+There are 2 types of templates.
+
+Generic workflows
+A generic workflow will run all the templates that are defined under the workflow section.
+
+In the below example only the specified templates and the templates pertaining to the tags xss,ssrf,cve,lfi will run.
+
+workflows:
+  - template: files/git-config.yaml
+  - template: files/svn-config.yaml
+  - template: files/env-file.yaml
+  - template: files/backup-files.yaml
+  - tags: xss,ssrf,cve,lfi
+
+Conditional workflows
+A conditional workflow will only run specific templates if the defined condition is met.
+
+In the below example if the parent template technologies/tech-detect.yaml detects vbulletin then it will run exploits/vbulletin-exp1.yaml and exploits/vbulletin-exp2.yaml. The same would go for jboss. If none of these technologies are detected then no templates will be executed against the target
+
+workflows:
+  - template: technologies/tech-detect.yaml
+    matchers:
+      - name: vbulletin
+        subtemplates:
+          - template: exploits/vbulletin-exp1.yaml
+          - template: exploits/vbulletin-exp2.yaml
+      - name: jboss
+        subtemplates:
+          - template: exploits/jboss-exp1.yaml
+          - template: exploits/jboss-exp2.yaml
+
+Let’s move to the next step.
+```
+```markdown
+Writing Our Workflow
+As our target application is Django based, let’s create a workflow file which will be tailored for our application.
+
+As you can see we are using tech-detect.yaml as our root template. We have defined the name matcher as nginx.
+
+So, initially, the tech-detect.yaml template will run, and if the server stack is detected as nginx, then the subtemplates would run.
+
+The subtemplates in this django-workflow.yaml template aim to identify vulnerabilities relating to a Django based application.
+
+cat > django-workflow.yaml << EOF
+id: my-custom-workflow
+
+info:
+  name: Django workflow
+  author: pdso
+
+workflows:
+  - template: http/technologies/tech-detect.yaml
+    matchers:
+      - name: nginx
+        subtemplates:
+          - template: http/exposed-panels/django-admin-panel.yaml
+          - template: http/misconfiguration/django-debug-config-enabled.yaml
+          - template: http/technologies/default-django-page.yaml
+          - template: http/exposures/files/django-secret-key.yaml
+          - template: http/exposures/configs/django-variables-exposed.yaml
+          - template: http/exposures/logs/django-debug-exposure.yaml
+          - template: file/logs/django-framework-exceptions.yaml
+EOF
+
+Let’s validate the workflow and check if it is error free using the -validate flag.
+
+nuclei -w django-workflow.yaml -validate
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[VER] Started metrics server at localhost:9092
+[INF] All templates validated successfully
+The workflow file looks good.
+
+Let’s run this against the django.nv application. We can pass the previously created workflow file to nuclei using the -w parameter.
+
+nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training/ -w django-workflow.yaml
+
+Command Output
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] Workflows loaded for current scan: 1
+[INF] Executing 8 signed templates from projectdiscovery/nuclei-templates
+[INF] Targets loaded for current scan: 1
+[django-debug-config-enabled] [http] [medium] https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[INF] Scan completed in 5.097974254s. 1 matches found.
+Our workflow file ran 7 sub-templates out of which 2 of them returned positive results namely http/exposed-panels/django-admin-panel.yaml and http/misconfiguration/django-debug-detect.yaml. Let’s use the -v verbose option to understand the output better.
+
+nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training/ -w django-workflow.yaml -v
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[VER] Started metrics server at localhost:9092
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] Workflows loaded for current scan: 1
+[INF] Executing 8 signed templates from projectdiscovery/nuclei-templates
+[INF] Targets loaded for current scan: 1
+[VER] [tech-detect] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[VER] [django-debug-exposure] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/admin/login/?next=/admin/
+[VER] [django-debug-config-enabled] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[django-debug-config-enabled] [http] [medium] https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[VER] [django-secret-key] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/manage.py
+[VER] [django-admin-panel] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/admin/login/
+[VER] [django-variables-exposed] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[VER] [default-django-page] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[VER] [django-secret-key] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/settings.py
+[VER] [django-secret-key] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/app/settings.py
+[VER] [django-secret-key] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/django/settings.py
+[VER] [django-secret-key] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/settings/settings.py
+[VER] [django-secret-key] Sent HTTP request to https://prod-kr6k1mdm.lab.practical-devsecops.training/web/settings/settings.py
+[WRN] [django-secret-key] Could not make http request for https://prod-kr6k1mdm.lab.practical-devsecops.training/: unresolved variables found: app_name
+[INF] Scan completed in 4.906960089s. 1 matches found.
+Form the verbose output we can deduce that http/technologies/tech-detect.yaml template ran successfully and it did detect nginx hence all of our sub-templates ran. You can see the endpoints that were accessed when each template was run.
+
+As a general guideline, it is advisable to avoid running scans for extended periods. Nowadays, most teams have incorporated DAST scanning into their CI/CD pipeline. Therefore, if our scans take too long, it would increase the overall execution time of the pipeline. Prolonged durations for DAST scanning may even result in its removal from the CI/CD pipeline altogether.
+
+Let’s see by utilizing workflows how much time do we save when we replace workflows with templates.
+
+To benchmark the execution duration of our scan, we’ll utilize the time command on Linux. This will allow us to optimize our performance and gather valuable insights.
+
+Time for nuclei scan utilizing workflows
+Let’s use nuclei workflows using the -w parameter and calculate the amount of time taken to run the scan.
+
+time nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training/ -w django-workflow.yaml
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] Workflows loaded for current scan: 1
+[INF] Executing 8 signed templates from projectdiscovery/nuclei-templates
+[INF] Targets loaded for current scan: 1
+[django-debug-config-enabled] [http] [medium] https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[INF] Scan completed in 4.878722649s. 1 matches found.
+
+real    0m5.488s
+user    0m0.332s
+sys     0m0.135s
+Workflow based nuclei scan took less than a minute to finish. This is pretty impressive!!
+
+Note:
+
+Refer to the real value in the output of the time command.
+The value represents the time that passed between pressing the enter key and termination of the program.
+Your real time could slightly differ from the time shown in the output here.
+
+Time for nuclei scan utilizing templates
+Now let’s repeat the same but instead of workflows let’s use templates using the -t parameter.
+
+time nuclei -u https://prod-kr6k1mdm.lab.practical-devsecops.training/ -t /root/nuclei-templates/
+
+Command Output
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.4.4
+
+                projectdiscovery.io
+
+[WRN] Found 1 templates with syntax error (use -validate flag for further examination)
+[WRN] Found 2 templates with runtime error (use -validate flag for further examination)
+[INF] Current nuclei version: v3.4.4 (outdated)
+[INF] Current nuclei-templates version: v10.2.7 (latest)
+[WRN] Scan results upload to cloud is disabled.
+[INF] New templates added in latest release: 55
+[INF] Templates loaded for current scan: 8263
+[INF] Executing 8060 signed templates from projectdiscovery/nuclei-templates
+[WRN] Loading 203 unsigned templates for scan. Use with caution.
+[INF] Targets loaded for current scan: 1
+[INF] Templates clustered: 1777 (Reduced 1671 Requests)
+[INF] Using Interactsh Server: oast.online
+[missing-sri] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/ ["http://fonts.googleapis.com/css?family=PT+Sans:300,400,400italic,700","http://fonts.googleapis.com/css?family=Ubuntu:300,400,400italic,700"]
+[waf-detect:nginxgeneric] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[tls-version] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["tls12"]
+[tls-version] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training/:443 ["tls13"]
+[email-extractor] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/ ["info@tm.com"]
+[nginx-version] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/ ["nginx/1.18.0"]
+[tech-detect:font-awesome] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[tech-detect:bootstrap] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[tech-detect:google-font-api] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[tech-detect:nginx] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[django-debug-config-enabled] [http] [medium] https://prod-kr6k1mdm.lab.practical-devsecops.training/NON_EXISTING_PATH/
+[http-missing-security-headers:content-security-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:permissions-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:x-content-type-options] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:referrer-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:clear-site-data] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:cross-origin-embedder-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:cross-origin-opener-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:cross-origin-resource-policy] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:strict-transport-security] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[http-missing-security-headers:x-permitted-cross-domain-policies] [http] [info] https://prod-kr6k1mdm.lab.practical-devsecops.training/
+[caa-fingerprint] [dns] [info] prod-kr6k1mdm.lab.practical-devsecops.training
+[ssl-issuer] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["Let's Encrypt"]
+[ssl-dns-names] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["*.lab.practical-devsecops.training"]
+[wildcard-tls] [ssl] [info] prod-kr6k1mdm.lab.practical-devsecops.training:443 ["SAN: [*.lab.practical-devsecops.training]","CN: *.lab.practical-devsecops.training"]
+[INF] Scan completed in 4m. 25 matches found.
+
+real    5m1.264s
+user    1m7.868s
+sys     0m16.630s
+Template based nuclei scan took 5 mins and 1.264 seconds to finish. Your scanning time could slightly differ from the time shown in the output here.
+
+As you can see, we have significantly reduced the execution time just by utilizing workflows.
+```
+```markdown
+Tracking Issues Using OWASP ZAP Progress File
+OWASP Zed Attack Proxy Tool
+ZAP is an open-source web application security scanner to perform security testing (Dynamic Testing) on web applications. OWASP ZAP is the flagship OWASP project used extensively by penetration testers. ZAP can also run in a daemon mode for hands-off scans for CI/CD pipeline and provides extensive API (SDK) and a REST API to help users create custom scripts.
+
+Source: https://www.zaproxy.org/getting-started/
+
+In this exercise, we will use ZAP Baseline Scan to find security issues passively.
+
+Passive scanning with ZAP involves quietly observing all messages sent to the web app without altering them, keeping things safe and not slowing down the app’s exploration.
+
+Let’s see the usage of ZAP Docker for Baseline Scan.
+
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py --help
+
+Command Output
+Usage: zap-baseline.py -t <target> [options]
+    -t target         target URL including the protocol, e.g. https://www.example.com
+Options:
+    -h                print this help message
+    -c config_file    config file to use to INFO, IGNORE or FAIL warnings
+    -u config_url     URL of config file to use to INFO, IGNORE or FAIL warnings
+    -g gen_file       generate default config file (all rules set to WARN)
+    -m mins           the number of minutes to spider for (default 1)
+    -r report_html    file to write the full ZAP HTML report
+    -w report_md      file to write the full ZAP Wiki (Markdown) report
+    -x report_xml     file to write the full ZAP XML report
+    -J report_json    file to write the full ZAP JSON document
+    -a                include the alpha passive scan rules as well
+    -d                show debug messages
+    -P                specify listen port
+    -D secs           delay in seconds to wait for passive scanning
+    -i                default rules not in the config file to INFO
+    -I                do not return failure on warning
+    -j                use the Ajax spider in addition to the traditional one
+    -l level          minimum level to show: PASS, IGNORE, INFO, WARN or FAIL, use with -s to hide example URLs
+    -n context_file   context file which will be loaded prior to spidering the target
+    -p progress_file  progress file which specifies issues that are being addressed
+    -s                short output format - dont show PASSes or example URLs
+    -T mins           max time in minutes to wait for ZAP to start and the passive scan to run
+    -U user           username to use for authenticated scans - must be defined in the given context file
+    -z zap_options    ZAP command line options e.g. -z "-config aaa=bbb -config ccc=ddd"
+    --hook            path to python file that define your custom hooks
+    --auto            use the automation framework if supported for the given parameters (this is now the default)
+    --autooff         do not use the automation framework even if supported for the given parameters
+
+For more details see https://www.zaproxy.org/docs/docker/baseline-scan/
+
+Note
+
+Did you notice that we did not pull the image at the beginning? The image is automatically pulled if it does not exist, without using docker pull.
+
+Let’s move to the next step.
+```
+```markdown
+Running the Scanner
+As we have learned in the DevSecOps Gospel, we should save the output in the machine-readable format like JSON, CSV or XML.
+
+Let’s run zap-baseline.py with basic options.
+
+Variable Scan Results
+
+Your results might slightly vary because of the dynamic landscape of changing vulnerabilities, and security updates.
+
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training
+
+Note
+
+The ZAP scanning process may take more than 5 minutes to complete. Please be patient.
+
+Command Output
+Using the Automation Framework
+Total of 59 URLs
+PASS: In Page Banner Information Leak [10009]
+PASS: Cookie No HttpOnly Flag [10010]
+PASS: Cookie Without Secure Flag [10011]
+PASS: Content-Type Header Missing [10019]
+PASS: Information Disclosure - Debug Error Messages [10023]
+PASS: Information Disclosure - Sensitive Information in URL [10024]
+PASS: Information Disclosure - Sensitive Information in HTTP Referrer Header [10025]
+PASS: HTTP Parameter Override [10026]
+PASS: Open Redirect [10028]
+PASS: Cookie Poisoning [10029]
+PASS: User Controllable Charset [10030]
+PASS: User Controllable HTML Element Attribute (Potential XSS) [10031]
+PASS: Viewstate [10032]
+PASS: Directory Browsing [10033]
+PASS: Heartbleed OpenSSL Vulnerability (Indicative) [10034]
+PASS: Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s) [10037]
+PASS: X-Backend-Server Header Information Leak [10039]
+PASS: HTTP to HTTPS Insecure Transition in Form Post [10041]
+PASS: HTTPS to HTTP Insecure Transition in Form Post [10042]
+PASS: User Controllable JavaScript Event (XSS) [10043]
+PASS: Big Redirect Detected (Potential Sensitive Information Leak) [10044]
+PASS: Retrieved from Cache [10050]
+PASS: X-ChromeLogger-Data (XCOLD) Header Information Leak [10052]
+PASS: Cookie without SameSite Attribute [10054]
+PASS: CSP [10055]
+PASS: X-Debug-Token Information Leak [10056]
+PASS: Username Hash Found [10057]
+PASS: X-AspNet-Version Response Header [10061]
+PASS: PII Disclosure [10062]
+PASS: Timestamp Disclosure [10096]
+PASS: Hash Disclosure [10097]
+PASS: Cross-Domain Misconfiguration [10098]
+PASS: Weak Authentication Method [10105]
+PASS: Reverse Tabnabbing [10108]
+PASS: Modern Web Application [10109]
+PASS: Session Management Response Identified [10112]
+PASS: Verification Request Identified [10113]
+PASS: Private IP Disclosure [2]
+PASS: Session ID in URL Rewrite [3]
+PASS: Script Passive Scan Rules [50001]
+PASS: Stats Passive Scan Rule [50003]
+PASS: Insecure JSF ViewState [90001]
+PASS: Java Serialization Object [90002]
+PASS: Insufficient Site Isolation Against Spectre Vulnerability [90004]
+PASS: Charset Mismatch [90011]
+PASS: Application Error Disclosure [90022]
+PASS: WSDL File Detection [90030]
+PASS: Loosely Scoped Cookie [90033]
+
+...[SNIP]...
+
+WARN-NEW: Strict-Transport-Security Header Not Set [10035] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css (200 OK)
+WARN-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field [10036] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css (200 OK)
+
+...[SNIP]...
+
+WARN-NEW: Permissions Policy Header Not Set [10063] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/bootstrap.min.js (404 Not Found)
+WARN-NEW: Source Code Disclosure - SQL [10099] x 1
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/ (200 OK)
+
+...[SNIP]....
+
+FAIL-NEW: 0     FAIL-INPROG: 0  WARN-NEW: 17    WARN-INPROG: 0  INFO: 0 IGNORE: 0       PASS: 48
+The output may vary as it is dynamic.
+
+If you want the output in JSON format, you can use the -J option.
+
+docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+
+Note
+
+Remember, you can always use the Explain To Me feature to get an explanation.
+
+You can verify the existence of the output file with cat zap-output.json command.
+
+Let’s move to the next step.
+```
+```markdown
+Analyzing False Positives
+After the ZAP scan is completed, it is important to review the WARN and WARN-NEW alerts to determine which ones are false positives and which are real issues.
+
+This involves looking into the unique ID of each alert to understand more about it.
+
+For more information on ZAP Alerts, please refer to the ZAP Alert Details.
+
+We will focus on investigating three specific issues highlighted by the ZAP scan:
+
+- Strict-Transport-Security Header Not Set [10035]
+- Server Leaks Version Information via “Server” HTTP Response Header Field [10036]
+- Source Code Disclosure - SQL [10099]
+
+Our goal is to analyze these findings to differentiate between false positives and real issues.
+
+---
+
+Command Output
+```
+
+WARN-NEW: Strict-Transport-Security Header Not Set \[10035] x 15
+[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt](https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml](https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/style-responsive.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/style-responsive.css) (200 OK)
+
+```
+
+To analyze [10035], we can delve into more detailed information available under alert ID 10035-1.
+
+The documentation for each ZAP alert ID provides concise information, making it easier to access additional details for each specific alert directly.
+
+Let’s take a closer look at the 10035-1 page, we will find the following sections:
+
+- Summary  
+- Solution  
+- Other Info  
+- Reference  
+- Code  
+
+These sections provide a clear explanation of the issue and potential solution to resolve it.
+
+---
+
+Next, verify the HTTP header of the production machine based on the first issue using the following curl command.
+
+**What is cURL?**
+
+```
+
+curl -I [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+```
+
+Command Output
+```
+
+HTTP/2 200
+server: nginx/1.18.0 (Ubuntu)
+date: Thu, 02 May 2024 17:18:31 GMT
+content-type: text/html; charset=utf-8
+vary: Cookie
+x-frame-options: ALLOWALL
+
+```
+
+Using curl -I, it sends a special request to the web server, asking only for the headers, not the full page content.
+
+These headers contain important details about the webpage, such as the status code, server information, content type, and more, without the need to download the entire page.
+
+It’s like peeking at the table of contents of a book to see the title and chapter names without reading through every page.
+
+The output of the curl command shows that the HTTP response headers do not include the Strict-Transport-Security header. Therefore, the alert ID 10035 is a real issue and not a false positive.
+
+---
+
+Let’s look at the next alert ID.
+
+Command Output
+```
+
+WARN-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field \[10036] x 12
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt](https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml](https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.min.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.min.css) (200 OK)
+
+```
+
+For alert ID 10036, more specific information can be found at:  
+https://www.zaproxy.org/docs/alerts/10036-2/
+
+Let’s verify the header using the same command as in the previous finding.
+
+```
+
+curl -I [https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css)
+
+```
+
+Command Output
+```
+
+HTTP/2 200
+server: nginx/1.18.0 (Ubuntu)
+date: Thu, 02 May 2024 17:19:29 GMT
+content-type: text/css
+content-length: 6914
+last-modified: Sun, 05 Mar 2023 10:43:16 GMT
+
+```
+
+The output confirms that the server header is present and discloses specific server details, which could potentially expose the server to security risks.
+
+In conclusion, the issue identified by alert ID 10036 is a real issue.
+
+---
+
+Let’s go to the next alert ID.
+
+Command Output
+```
+
+WARN-NEW: Source Code Disclosure - SQL \[10099] x 1
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/](https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/) (200 OK)
+
+```
+
+For alert ID [10099], we can refer to [10099].
+
+Let’s verify it by visiting the following link:  
+https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/
+
+**SQL-page**
+
+The ZAP tool has accurately identified the disclosure of the source code. After navigating to the URL where a Source Code Disclosure vulnerability was identified, we observed actual SQL source code on the webpage.
+
+---
+
+### About Task Manager application
+From the perspective of the Task Manager application, the Source Code Disclosure vulnerability is not an actual issue that needs to be addressed.
+
+Therefore, [10099] is a **False Positive (FP).**
+
+---
+
+It’s important to document these findings and discuss potential solutions with the development team to address the vulnerability.
+
+Let’s move to the next step.
+```
+````markdown
+Tracking Scan Progress using The Progress File
+Learn more the ZAP Progress file here.
+
+After taking note of potential issues from the previous step, you can bring your notes and discuss them with the development team to address the issues.
+
+Let’s imagine that some issues are already being addressed by the developers, and you need to run the scan again, but you want it to be easily recognizable.
+
+This is where the ZAP Progress File comes in handy.
+
+The purpose of Progress File is to list vulnerabilities, enabling quick identification of whether an issue is new or already being addressed.
+
+By marking known issues as IN-PROGRESS in the scan output, it simplifies the process of spotting new issues.
+
+The dojo link are only for examples
+
+---
+
+Let’s start by creating a progress-file.json to keep track of known issues:
+
+```bash
+cat > progress-file.json << EOL
+{
+    "site": "https://prod-kr6k1mdm.lab.practical-devsecops.training",
+    "issues": [
+        {
+            "id": "10099",
+            "name": "Source Code Disclosure - SQL",
+            "state": "inprogress",
+            "link": "[FP] INTDENDED VULNERALBILITES, A FALSE POSITIVE [FP]"
+
+        },
+        {
+            "id": "10063",
+            "name": "[EXAMPLE] Insert the issue name here! [EXAMPLE]",
+            "state": "inprogress",
+            "link": "[EXAMPLE] Insert tracked / on progress issue here! [EXAMPLE]"
+        },
+        {
+            "id": "10036",
+            "name": "Server Leaks Version Information via \"Server\" HTTP Response Header Field",
+            "state": "inprogress",
+            "link": "https://dojo-kr6k1mdm.lab.practical-devsecops.training/finding/4"
+        },
+        {
+            "id": "10035",
+            "name": "Strict-Transport-Security Header Not Set",
+            "state": "inprogress",
+            "link": "https://dojo-kr6k1mdm.lab.practical-devsecops.training/finding/3"
+        }
+    ]
+}
+EOL
+````
+
+---
+
+### Running the Scan with Progress File
+
+To run the ZAP scan with the progress file, use the `-p` option and point it to the file:
+
+```bash
+docker run -it -v $(pwd):/zap/wrk hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -p progress-file.json
+```
+
+The `-v $(pwd):/zap/wrk` part of the command mounts the current directory from your host system to `/zap/wrk` inside the container, allowing the container to access `progress-file.json`.
+
+---
+
+### Command Output (Snippet)
+
+```
+Total of 70 URLs
+...
+WARN-IN_PROGRESS: Strict-Transport-Security Header Not Set [10035] x 13
+        Progress link: https://dojo-oka42537.lab.practical-devsecops.training/finding/3
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+...
+WARN-IN_PROGRESS: Server Leaks Version Information via "Server" HTTP Response Header Field [10036] x 12
+        Progress link: https://dojo-oka42537.lab.practical-devsecops.training/finding/4
+...
+WARN-IN_PROGRESS: Permissions Policy Header Not Set [10063] x 11
+        Progress link: [EXAMPLE] Insert tracked / on progress issue here! [EXAMPLE]
+...
+WARN-IN_PROGRESS: Source Code Disclosure - SQL [10099] x 1
+        Progress link: [FP] INTDENDED VULNERALBILITES, A FALSE POSITIVE [FP]
+...
+FAIL-NEW: 0     FAIL-INPROG: 0  WARN-NEW: 12    WARN-INPROG: 4  INFO: 0 IGNORE: 0       PASS: 48
+```
+
+---
+
+### Understanding the Progress File Tags
+
+| Field   | Explanation                                                                           |
+| ------- | ------------------------------------------------------------------------------------- |
+| `id`    | Uniquely identifies the security issue or vulnerability.                              |
+| `name`  | Describes the nature of the security concern.                                         |
+| `state` | Indicates the issue is currently being addressed but not yet resolved (`inprogress`). |
+| `link`  | Contains URL(s) pointing to where the issue is discussed or tracked.                  |
+
+---
+
+### Comparing Scan Results
+
+**Without Progress File**
+
+```
+WARN-NEW: Strict-Transport-Security Header Not Set [10035] x 12
+...
+WARN-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field [10036] x 14
+...
+WARN-NEW: Permissions Policy Header Not Set [10063] x 11
+...
+WARN-NEW: Source Code Disclosure - SQL [10099] x 1
+...
+FAIL-NEW: 0     FAIL-INPROG: 0  WARN-NEW: 17    WARN-INPROG: 0  INFO: 0 IGNORE: 0       PASS: 48
+```
+
+**With Progress File**
+
+```
+WARN-IN_PROGRESS: Strict-Transport-Security Header Not Set [10035] x 12
+WARN-IN_PROGRESS: Server Leaks Version Information via "Server" HTTP Response Header Field [10036] x 11
+WARN-IN_PROGRESS: Permissions Policy Header Not Set [10063] x 11
+WARN-IN_PROGRESS: Source Code Disclosure - SQL [10099] x 1
+FAIL-NEW: 0     FAIL-INPROG: 0  WARN-NEW: 12    WARN-INPROG: 4  INFO: 0 IGNORE: 0       PASS: 48
+```
+
+---
+
+### Key Observations
+
+* Issues previously marked as **WARN-NEW** are now flagged as **WARN-IN\_PROGRESS**.
+* This shows they are being tracked and worked on.
+* The number of **WARN-INPROG** increased, while **WARN-NEW** decreased.
+
+---
+
+### Saving the Output
+
+You can save the output to JSON for easier sharing or automation:
+
+```bash
+docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm  hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -p progress-file.json -J zap-output.json
+```
+
+---
+
+This method ensures a more organized approach to handling and tracking security vulnerabilities.
+
+Later in the course, we will explore how to integrate the process with Vulnerability Management tools such as **DefectDojo**.
+
+This integration allows for a more streamlined and efficient way to manage, track, and remediate vulnerabilities identified during scans.
+
+```
+```
+````markdown
+# Tracking Issues using OWASP ZAP Config File
+
+### OWASP Zed Attack Proxy Tool
+**ZAP** is an open-source web application security scanner to perform **Dynamic Application Security Testing (DAST)** on web applications.  
+
+- It is the **flagship OWASP project** used extensively by penetration testers.  
+- ZAP can also run in **daemon mode** for hands-off scans in CI/CD pipelines.  
+- It provides both an **SDK** and a **REST API**, making it customizable for automation.  
+
+📖 Source: [OWASP ZAP Getting Started](https://www.zaproxy.org/getting-started/)
+
+---
+
+### Passive Scanning with ZAP
+- Passive scanning means observing **HTTP requests and responses** without altering them.  
+- This makes it **safe** (does not impact the target system) and **efficient** (no extra load).  
+- It is best suited for **baseline scanning** to identify low-hanging issues.  
+
+---
+
+### Running ZAP Baseline Scan with Docker
+You don’t need to pull the image manually. Docker will pull it automatically on the first run.
+
+```bash
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py --help
+````
+
+---
+
+### Command Output (Important Flags)
+
+```
+Usage: zap-baseline.py -t <target> [options]
+    -t target         target URL including the protocol, e.g. https://www.example.com
+Options:
+    -c config_file    config file to use to INFO, IGNORE or FAIL warnings
+    -u config_url     URL of config file to use to INFO, IGNORE or FAIL warnings
+    -g gen_file       generate default config file (all rules set to WARN)
+    -m mins           the number of minutes to spider for (default 1)
+    -r report_html    file to write the full ZAP HTML report
+    -w report_md      file to write the full ZAP Wiki (Markdown) report
+    -x report_xml     file to write the full ZAP XML report
+    -J report_json    file to write the full ZAP JSON document
+    -a                include the alpha passive scan rules as well
+    -i                default rules not in the config file to INFO
+    -I                do not return failure on warning
+    -p progress_file  progress file which specifies issues that are being addressed
+```
+
+---
+
+### Key Flag for Config File Tracking
+
+* **`-c config_file`** → Use a configuration file to classify findings as:
+
+  * `INFO` → Informational only
+  * `IGNORE` → Suppress known false positives
+  * `FAIL` → Mark as fail if found
+
+This helps in **customizing how issues are reported** and aligns with organizational policies.
+
+---
+
+✅ Next, we will generate a **default config file** and customize it for tracking issues (similar to how we used the progress file earlier).
+
+Would you like me to show you how to **generate a default config file (`-g`)** and then update it for your Django app scan?
+
+````markdown
+# Running the Scanner
+
+As we have learned in the **DevSecOps Gospel**, we should always save the output in a **machine-readable format** (such as JSON, CSV, or XML) so that results can be integrated into automation pipelines and vulnerability management systems.
+
+---
+
+### Running ZAP Baseline Scan
+Let’s run `zap-baseline.py` with basic options:
+
+```bash
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training
+````
+
+⚠️ **Note**:
+
+* The ZAP scanning process may take **5+ minutes** to complete.
+* Please be patient.
+
+---
+
+### Example Command Output
+
+```
+Using the Automation Framework
+Total of 59 URLs
+PASS: In Page Banner Information Leak [10009]
+PASS: Cookie No HttpOnly Flag [10010]
+PASS: Cookie Without Secure Flag [10011]
+PASS: Content-Type Header Missing [10019]
+PASS: Information Disclosure - Debug Error Messages [10023]
+PASS: Information Disclosure - Sensitive Information in URL [10024]
+PASS: Information Disclosure - Sensitive Information in HTTP Referrer Header [10025]
+PASS: HTTP Parameter Override [10026]
+PASS: Open Redirect [10028]
+PASS: Cookie Poisoning [10029]
+PASS: User Controllable Charset [10030]
+PASS: User Controllable HTML Element Attribute (Potential XSS) [10031]
+PASS: Viewstate [10032]
+PASS: Directory Browsing [10033]
+PASS: Heartbleed OpenSSL Vulnerability (Indicative) [10034]
+PASS: Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s) [10037]
+PASS: X-Backend-Server Header Information Leak [10039]
+...
+```
+
+---
+
+### Example WARN Findings
+
+```
+WARN-NEW: Strict-Transport-Security Header Not Set [10035] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt (404 Not Found)
+
+WARN-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field [10036] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml (404 Not Found)
+
+WARN-NEW: Permissions Policy Header Not Set [10063] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/js/bootstrap.min.js (404 Not Found)
+
+WARN-NEW: Source Code Disclosure - SQL [10099] x 1
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/ (200 OK)
+```
+
+---
+
+### Summary of Results
+
+```
+FAIL-NEW: 0     
+FAIL-INPROG: 0  
+WARN-NEW: 17    
+WARN-INPROG: 0  
+INFO: 0         
+IGNORE: 0       
+PASS: 48
+```
+
+---
+
+### Exporting Results in JSON Format
+
+If you want the output in **JSON**, use the `-J` option:
+
+```bash
+docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 \
+zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+```
+
+* `-v $(pwd):/zap/wrk:rw` → Mounts the current directory into the container to store reports.
+* `zap-output.json` → Output file containing results.
+
+You can check the file contents with:
+
+```bash
+cat zap-output.json
+```
+
+---
+
+✅ At this point, we have successfully **run a ZAP baseline scan**, reviewed the findings, and stored them in JSON format for further processing.
+
+👉 Next, we’ll look at **using a ZAP Config File (`-c`)** to customize how issues are marked (INFO / WARN / FAIL / IGNORE).
+
+```
+```
+```markdown
+Analyzing False Positives  
+After the ZAP scan is completed, it is important to review the WARN and WARN-NEW alerts to determine which ones are false positives and which are real issues.  
+
+This involves looking into the unique ID of each alert to understand more about it.  
+
+For more information on ZAP Alerts, please refer to the ZAP Alert Details.  
+
+We will focus on investigating three specific issues highlighted by the ZAP scan:  
+
+- Strict-Transport-Security Header Not Set [10035]  
+- Server Leaks Version Information via “Server” HTTP Response Header Field [10036]  
+- Source Code Disclosure - SQL [10099]  
+
+Our goal is to analyze these findings to differentiate between false positives and real issues.  
+
+---
+
+### Command Output
+```
+
+WARN-NEW: Strict-Transport-Security Header Not Set \[10035] x 15
+[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt](https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml](https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/style-responsive.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/style-responsive.css) (200 OK)
+
+```
+
+To analyze [10035], we can delve into more detailed information available under alert ID 10035-1.  
+
+The documentation for each ZAP alert ID provides concise information, making it easier to access additional details for each specific alert directly.  
+
+Let’s take a closer look at the 10035-1 page, we will find the following sections:  
+
+- Summary  
+- Solution  
+- Other Info  
+- Reference  
+- Code  
+
+These sections provide a clear explanation of the issue and potential solution to resolve it.  
+
+---
+
+Next, verify the HTTP header of the production machine based on the first issue using the following curl command.  
+
+**What is cURL?**
+
+```
+
+curl -I [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+```
+
+---
+
+### Command Output
+```
+
+HTTP/2 200
+server: nginx/1.18.0 (Ubuntu)
+date: Thu, 02 May 2024 17:18:31 GMT
+content-type: text/html; charset=utf-8
+vary: Cookie
+x-frame-options: ALLOWALL
+
+```
+
+Using curl `-I`, it sends a special request to the web server, asking only for the headers, not the full page content.  
+
+These headers contain important details about the webpage, such as the status code, server information, content type, and more, without the need to download the entire page.  
+
+It’s like peeking at the table of contents of a book to see the title and chapter names without reading through every page.  
+
+The output of the curl command shows that the HTTP response headers do not include the **Strict-Transport-Security** header. Therefore, the alert ID 10035 is a real issue and not a false positive.  
+
+---
+
+Let’s look at the next alert ID.  
+
+### Command Output
+```
+
+WARN-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field \[10036] x 12
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt](https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml](https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml) (404 Not Found)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css) (200 OK)
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.min.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.min.css) (200 OK)
+
+```
+
+For alert ID 10036, more specific information can be found at:  
+https://www.zaproxy.org/docs/alerts/10036-2/  
+
+Let’s verify the header using the same command as in the previous finding.  
+
+```
+
+curl -I [https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css](https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/backend/bootstrap-reset.css)
+
+```
+
+---
+
+### Command Output
+```
+
+HTTP/2 200
+server: nginx/1.18.0 (Ubuntu)
+date: Thu, 02 May 2024 17:19:29 GMT
+content-type: text/css
+content-length: 6914
+last-modified: Sun, 05 Mar 2023 10:43:16 GMT
+
+```
+
+The output confirms that the **server header is present** and discloses specific server details, which could potentially expose the server to security risks.  
+
+**Conclusion**: The issue identified by alert ID 10036 is a **real issue**.  
+
+---
+
+Let’s go to the next alert ID.  
+
+### Command Output
+```
+
+WARN-NEW: Source Code Disclosure - SQL \[10099] x 1
+[https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/](https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/) (200 OK)
+
+````
+
+For alert ID [10099], we can refer to [10099].  
+
+Let’s verify it by visiting the following link:  
+https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/  
+
+**SQL-page**  
+
+The ZAP tool has accurately identified the disclosure of the source code. After navigating to the URL where a Source Code Disclosure vulnerability was identified, we observed actual SQL source code on the webpage.  
+
+---
+
+### About Task Manager application
+From the perspective of the Task Manager application, the Source Code Disclosure vulnerability is not an actual issue that needs to be addressed.  
+
+Therefore, [10099] is a **False Positive (FP)**.  
+
+---
+
+It’s important to document these findings and discuss potential solutions with the development team to address the vulnerability.  
+
+**Let’s move to the next step.**
+```markdown
+````
+```markdown
+Using the Config File to Track Issue Status  
+Learn more the ZAP Config file here.  
+
+---
+
+### Variable Scan Results
+Your results might slightly vary because of the dynamic landscape of changing vulnerabilities, and security updates.  
+
+In the previous step, we looked into the false positives for [10035], [10036], and [10099]. We’ll tackle these issues by taking the details of our findings and discussing them with the development team.  
+
+Please make sure to complete the **Tracking Issues Using OWASP ZAP Progress File** exercise if you haven’t done so already.  
+
+In the previous exercise, we learned how to use a progress file to track issues the development team is currently working to fix. Now, imagine if the development team wanted us to ignore false positives and fail the scan when certain issues shows up.  
+
+Specifying the issue in the Progress File will only result in WARN-IN_PROGRESS and will not be excluded from the results. If you want to exclude specific issues from the results, you can exclude the issues by modifying the status of the issues in the Config File.  
+
+So, let’s say after our discussion with the developers, their requests were as follows:  
+
+- Fail the scan if **10035** and **10036** issue still persist.  
+- Ignore the False positives of the **10099** issue in the scan result.  
+- Ignore all `.css` issues for the time being.  
+
+How do we do that?  
+
+This is where we use **ZAP Config File**. The Config File organizes issues into WARN, FAIL, and OUTOFSCOPE categories, simplifying analysis to distinguish between new problems and those already under attention.  
+
+By appropriately marking known issues in the scan results, the process of spotting new problems becomes easier.  
+
+---
+
+Have you taken a look at the ZAP Baseline source code?  
+Let’s begin by creating a Config File named `default.conf` from the results of the scan using the `-g` option with the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -g default.conf
+
+```
+
+`-g` - Generate default config file (all rules set to WARN).  
+
+---
+
+**Note**  
+The ZAP scanning process may take more than 5 minutes to complete. Please be patient.  
+
+**Note**  
+Remember, you can always use the *Explain To Me* feature to get an explanation.  
+
+---
+
+After waiting for a while, you might wonder why the command only shows the typical scan output. This is because we need to identify all error IDs before generating the configuration file.  
+
+Let’s verify whether `default.conf` exists using the following command:  
+
+```
+
+cat default.conf
+
+```
+
+---
+
+### Command Output
+```
+
+# zap-baseline rule configuration file
+
+# Change WARN to IGNORE to ignore rule or FAIL to fail if rule matches
+
+# Only the rule identifiers are used - the names are just for info
+
+# You can add your own messages to each rule by appending them after a tab on each line.
+
+10003   WARN    (Vulnerable JS Library (Powered by Retire.js))
+10009   WARN    (In Page Banner Information Leak)
+10010   WARN    (Cookie No HttpOnly Flag)
+10011   WARN    (Cookie Without Secure Flag)
+...
+10035   WARN    (Strict-Transport-Security Header)
+10036   WARN    (HTTP Server Response Header)
+...
+10099   WARN    (Source Code Disclosure)
+...
+90033   WARN    (Loosely Scoped Cookie)
+
+```
+
+As you can see, `default.conf` is present, including instructions on how to change WARN to IGNORE or FAIL, along with all the WARN-level issues ready for adjustment.  
+
+Let’s go ahead and make the tweaks the development team requested.  
+
+---
+
+### Let’s use nano to modify default.conf:
+
+#### FAIL the scan if [10035] and [10036] still persist
+To change the issue’s status, we can refer to the following example:  
+
+```
+
+# Usage:
+
+<rule-id>    WARN/FAIL/IGNORE    <issue>        <message>
+
+10035   FAIL    (Strict-Transport-Security Header)      \[HIGH PRIORITY]
+10036   FAIL    (HTTP Server Response Header)   \[HIGH PRIORITY]
+
+```
+
+---
+
+#### Ignore the False positives [10099] on the scan result
+To ignore the false positives, we can refer to the ZAP documentation for the specific usage as shown below:  
+
+```
+
+# Ignore the specified URL
+
+10099    OUTOFSCOPE      [https://prod-kr6k1mdm.lab.practical-devsecops.training/](https://prod-kr6k1mdm.lab.practical-devsecops.training/) taskManager/tutorials/injection/
+
+```
+
+---
+
+#### Ignore all .css issues for the time being
+To ignore all `.css` files, we can follow usage as shown below:  
+
+```
+
+# Ignore all URLS containing ‘.js’ for all scan rules
+
+* OUTOFSCOPE    .\*.css\$
+
+```
+
+---
+
+After spending time modifying `default.conf`, the content of config file will look like the following:  
+
+### Command Output
+```
+
+# zap-baseline rule configuration file
+
+# Change WARN to IGNORE to ignore rule or FAIL to fail if rule matches
+
+# Only the rule identifiers are used - the names are just for info
+
+# You can add your own messages to each rule by appending them after a tab on each line.
+
+* ```
+    OUTOFSCOPE      .*\.css$
+  ```
+
+...
+10035   FAIL    (Strict-Transport-Security Header)      \[HIGH PRIORITY]
+10036   FAIL    (HTTP Server Response Header)   \[HIGH PRIORITY]
+...
+10099   OUTOFSCOPE      [https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/](https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/)
+...
+
+```
+
+---
+
+**Note**  
+Seeing the following error message might indicate that there is a blank space within the config file. Separate the value with tabs (`\t`) only.  
+
+```
+
+2024-06-26 18:27:13,334 Failed to load config file /zap/wrk/default.conf not enough values to unpack (expected 3, got 1)
+
+```
+
+---
+
+Now that we have modified the `default.conf`, let’s test the config file on the next scan and observe the output using the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -c default.conf
+
+```
+
+`-c` - Specify a config file to be used to mark output with INFO, IGNORE or FAIL warnings  
+
+---
+
+### Command Output
+```
+
+Using the Automation Framework
+Total of 52 URLs
+
+\[...SNIP...]
+
+PASS: Source Code Disclosure \[10099]
+
+\[...SNIP...]
+
+FAIL-NEW: Strict-Transport-Security Header Not Set \[10035] x 12 \[HIGH PRIORITY]
+...
+FAIL-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field \[10036] x 11 \[HIGH PRIORITY]
+...
+
+```
+
+Whoa! Based on the scan result, we’ve successfully:  
+
+- Issues like [10035] and [10036] are now marked as **FAIL** for further attention.  
+- Issue [10099] has been appropriately ignored.  
+- All `.css` files no longer appear in the scan results.  
+
+---
+
+Interesting observation! It appears that issue [10099] is now marked as **PASS** because we previously blocked the single problematic link using OUTOFSCOPE and a regular expression.  
+
+If you want to block multiple links, you can either define a new line or use regex in a creative way, for example:  
+
+```
+
+# Ignore all URL in the issues
+
+10036    OUTOFSCOPE      [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+```
+
+Try adding the above to the config file and run the scan again to see what happens!  
+
+---
+
+With so many scans and results, do you feel overwhelmed? Here’s how to filter them down to just **FAIL** statuses using the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -c default.conf -l FAIL
+
+```
+
+`-l` - Filter output with minimum warning level: PASS, IGNORE, INFO, WARN or FAIL. Add `-s` to hide example URLs.  
+
+---
+
+### Command Output
+```
+
+Total of 63 URLs
+FAIL-NEW: Strict-Transport-Security Header Not Set \[10035] x 8
+...
+FAIL-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field \[10036] x 7
+...
+FAIL-NEW: 2     FAIL-INPROG: 0  WARN-NEW: 14    WARN-INPROG: 0  INFO: 0 IGNORE: 0       PASS: 48
+
+```
+
+---
+
+Looks great!, but does this filtering affect the JSON output? Let’s save the output using the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -g default.conf -J zap-output.json
+
+```
+
+Let’s take a look at the output file:  
+
+```
+
+vi zap-output.json
+
+```
+
+Usually, we open the output in a code editor for better clarity during analysis. However, in this case, we’ll use `vi` because `vi` handles long horizontal values well, unlike nano.  
+
+To find specific texts using vi, type `/10099_`.  
+
+---
+
+### Command Output
+```
+
+{
+"pluginid": "10099",
+"alertRef": "10099",
+"alert": "Source Code Disclosure - SQL",
+"name": "Source Code Disclosure - SQL",
+"riskcode": "2",
+"confidence": "2",
+"riskdesc": "Medium (Medium)",
+"desc": "<p>Application Source Code was disclosed by the web server - SQL</p>",
+"instances":\[
+{
+"uri": "[https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/](https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/)",
+"method": "GET",
+"param": "",
+"attack": "",
+"evidence": "SELECT 1 FROM USER WHERE user\_id ",
+"otherinfo": ""
+}
+],
+"count": "1",
+"solution": "<p>Ensure that application Source Code is not available with alternative extensions, and ens>
+"otherinfo": "",
+"reference": "<p>[https://www.wsj.com/articles/BL-CIOB-2999](https://www.wsj.com/articles/BL-CIOB-2999)</p>",
+"cweid": "540",
+"wascid": "13",
+"sourceid": "40"
+},
+
+```
+
+---
+
+Surprisingly, the output remains unaffected. However, the scan output still contains a wealth of valuable details we can use to troubleshoot the problem. For example:  
+
+- **Risk Description**  
+- **Description**  
+- **Solution**  
+- **Vulnerability Database Reference**  
+
+By combining config file with progress file, you gain a powerful way to track and analyze each security issue. This streamlined approach ensures more efficient management and monitoring of vulnerabilities.  
+
+---
+
+### In summary, our observations on ZAP configuration file behavior include:
+
+- **Generating the config file**: Generate the config file with `-g config_file` based on the scan output.  
+- **Using the config file**: Track issues using `-c config_file`.  
+- **Filter issues by status**: Use `-l WARN/FAIL/IGNORE`.  
+- **Editing the config file**: Use editors like `nano` or `vi` to modify the config_file file and manage issues.  
+- **Config file specifics**: Issues can only be changed from WARN to IGNORE, FAIL, or OUTOFSCOPE. Regex patterns are necessary for filtering URLs. Ensure correct formatting; errors occur due to the existence of blank spaces ( ) instead of tabs (\t).  
+- **Impact on scan results**: The `zap-output.json` file remains unaffected by the config file.  
+
+---
+
+Have you figured out what the difference is between **IGNORE** and **OUTOFSCOPE**?  
+
+Later in the course, we will explore how to integrate this process with Vulnerability Management tools such as **DefectDojo**. This integration provides a more streamlined approach to managing, tracking, and remediating vulnerabilities identified during scans.  
+```
+```markdown
+Using the Config File to Track Issue Status  
+Learn more the ZAP Config file here.  
+
+---
+
+### Variable Scan Results
+Your results might slightly vary because of the dynamic landscape of changing vulnerabilities, and security updates.  
+
+In the previous step, we looked into the false positives for [10035], [10036], and [10099]. We’ll tackle these issues by taking the details of our findings and discussing them with the development team.  
+
+Please make sure to complete the **Tracking Issues Using OWASP ZAP Progress File** exercise if you haven’t done so already.  
+
+In the previous exercise, we learned how to use a progress file to track issues the development team is currently working to fix. Now, imagine if the development team wanted us to ignore false positives and fail the scan when certain issues shows up.  
+
+Specifying the issue in the Progress File will only result in WARN-IN_PROGRESS and will not be excluded from the results. If you want to exclude specific issues from the results, you can exclude the issues by modifying the status of the issues in the Config File.  
+
+So, let’s say after our discussion with the developers, their requests were as follows:  
+
+- Fail the scan if **10035** and **10036** issue still persist.  
+- Ignore the False positives of the **10099** issue in the scan result.  
+- Ignore all `.css` issues for the time being.  
+
+How do we do that?  
+
+This is where we use **ZAP Config File**. The Config File organizes issues into WARN, FAIL, and OUTOFSCOPE categories, simplifying analysis to distinguish between new problems and those already under attention.  
+
+By appropriately marking known issues in the scan results, the process of spotting new problems becomes easier.  
+
+---
+
+Have you taken a look at the ZAP Baseline source code?  
+Let’s begin by creating a Config File named `default.conf` from the results of the scan using the `-g` option with the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -g default.conf
+
+```
+
+`-g` - Generate default config file (all rules set to WARN).  
+
+---
+
+**Note**  
+The ZAP scanning process may take more than 5 minutes to complete. Please be patient.  
+
+**Note**  
+Remember, you can always use the *Explain To Me* feature to get an explanation.  
+
+---
+
+After waiting for a while, you might wonder why the command only shows the typical scan output. This is because we need to identify all error IDs before generating the configuration file.  
+
+Let’s verify whether `default.conf` exists using the following command:  
+
+```
+
+cat default.conf
+
+```
+
+---
+
+### Command Output
+```
+
+# zap-baseline rule configuration file
+
+# Change WARN to IGNORE to ignore rule or FAIL to fail if rule matches
+
+# Only the rule identifiers are used - the names are just for info
+
+# You can add your own messages to each rule by appending them after a tab on each line.
+
+10003   WARN    (Vulnerable JS Library (Powered by Retire.js))
+10009   WARN    (In Page Banner Information Leak)
+10010   WARN    (Cookie No HttpOnly Flag)
+10011   WARN    (Cookie Without Secure Flag)
+...
+10035   WARN    (Strict-Transport-Security Header)
+10036   WARN    (HTTP Server Response Header)
+...
+10099   WARN    (Source Code Disclosure)
+...
+90033   WARN    (Loosely Scoped Cookie)
+
+```
+
+As you can see, `default.conf` is present, including instructions on how to change WARN to IGNORE or FAIL, along with all the WARN-level issues ready for adjustment.  
+
+Let’s go ahead and make the tweaks the development team requested.  
+
+---
+
+### Let’s use nano to modify default.conf:
+
+#### FAIL the scan if [10035] and [10036] still persist
+To change the issue’s status, we can refer to the following example:  
+
+```
+
+# Usage:
+
+<rule-id>    WARN/FAIL/IGNORE    <issue>        <message>
+
+10035   FAIL    (Strict-Transport-Security Header)      \[HIGH PRIORITY]
+10036   FAIL    (HTTP Server Response Header)   \[HIGH PRIORITY]
+
+```
+
+---
+
+#### Ignore the False positives [10099] on the scan result
+To ignore the false positives, we can refer to the ZAP documentation for the specific usage as shown below:  
+
+```
+
+# Ignore the specified URL
+
+10099    OUTOFSCOPE      [https://prod-kr6k1mdm.lab.practical-devsecops.training/](https://prod-kr6k1mdm.lab.practical-devsecops.training/) taskManager/tutorials/injection/
+
+```
+
+---
+
+#### Ignore all .css issues for the time being
+To ignore all `.css` files, we can follow usage as shown below:  
+
+```
+
+# Ignore all URLS containing ‘.js’ for all scan rules
+
+* OUTOFSCOPE    .\*.css\$
+
+```
+
+---
+
+After spending time modifying `default.conf`, the content of config file will look like the following:  
+
+### Command Output
+```
+
+# zap-baseline rule configuration file
+
+# Change WARN to IGNORE to ignore rule or FAIL to fail if rule matches
+
+# Only the rule identifiers are used - the names are just for info
+
+# You can add your own messages to each rule by appending them after a tab on each line.
+
+* ```
+    OUTOFSCOPE      .*\.css$
+  ```
+
+...
+10035   FAIL    (Strict-Transport-Security Header)      \[HIGH PRIORITY]
+10036   FAIL    (HTTP Server Response Header)   \[HIGH PRIORITY]
+...
+10099   OUTOFSCOPE      [https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/](https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/)
+...
+
+```
+
+---
+
+**Note**  
+Seeing the following error message might indicate that there is a blank space within the config file. Separate the value with tabs (`\t`) only.  
+
+```
+
+2024-06-26 18:27:13,334 Failed to load config file /zap/wrk/default.conf not enough values to unpack (expected 3, got 1)
+
+```
+
+---
+
+Now that we have modified the `default.conf`, let’s test the config file on the next scan and observe the output using the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -c default.conf
+
+```
+
+`-c` - Specify a config file to be used to mark output with INFO, IGNORE or FAIL warnings  
+
+---
+
+### Command Output
+```
+
+Using the Automation Framework
+Total of 52 URLs
+
+\[...SNIP...]
+
+PASS: Source Code Disclosure \[10099]
+
+\[...SNIP...]
+
+FAIL-NEW: Strict-Transport-Security Header Not Set \[10035] x 12 \[HIGH PRIORITY]
+...
+FAIL-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field \[10036] x 11 \[HIGH PRIORITY]
+...
+
+```
+
+Whoa! Based on the scan result, we’ve successfully:  
+
+- Issues like [10035] and [10036] are now marked as **FAIL** for further attention.  
+- Issue [10099] has been appropriately ignored.  
+- All `.css` files no longer appear in the scan results.  
+
+---
+
+Interesting observation! It appears that issue [10099] is now marked as **PASS** because we previously blocked the single problematic link using OUTOFSCOPE and a regular expression.  
+
+If you want to block multiple links, you can either define a new line or use regex in a creative way, for example:  
+
+```
+
+# Ignore all URL in the issues
+
+10036    OUTOFSCOPE      [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+```
+
+Try adding the above to the config file and run the scan again to see what happens!  
+
+---
+
+With so many scans and results, do you feel overwhelmed? Here’s how to filter them down to just **FAIL** statuses using the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -c default.conf -l FAIL
+
+```
+
+`-l` - Filter output with minimum warning level: PASS, IGNORE, INFO, WARN or FAIL. Add `-s` to hide example URLs.  
+
+---
+
+### Command Output
+```
+
+Total of 63 URLs
+FAIL-NEW: Strict-Transport-Security Header Not Set \[10035] x 8
+...
+FAIL-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field \[10036] x 7
+...
+FAIL-NEW: 2     FAIL-INPROG: 0  WARN-NEW: 14    WARN-INPROG: 0  INFO: 0 IGNORE: 0       PASS: 48
+
+```
+
+---
+
+Looks great!, but does this filtering affect the JSON output? Let’s save the output using the following command:  
+
+```
+
+docker run --user \$(id -u):\$(id -g) -w /zap -v \$(pwd):/zap/wrk\:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) -g default.conf -J zap-output.json
+
+```
+
+Let’s take a look at the output file:  
+
+```
+
+vi zap-output.json
+
+```
+
+Usually, we open the output in a code editor for better clarity during analysis. However, in this case, we’ll use `vi` because `vi` handles long horizontal values well, unlike nano.  
+
+To find specific texts using vi, type `/10099_`.  
+
+---
+
+### Command Output
+```
+
+{
+"pluginid": "10099",
+"alertRef": "10099",
+"alert": "Source Code Disclosure - SQL",
+"name": "Source Code Disclosure - SQL",
+"riskcode": "2",
+"confidence": "2",
+"riskdesc": "Medium (Medium)",
+"desc": "<p>Application Source Code was disclosed by the web server - SQL</p>",
+"instances":\[
+{
+"uri": "[https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/](https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/)",
+"method": "GET",
+"param": "",
+"attack": "",
+"evidence": "SELECT 1 FROM USER WHERE user\_id ",
+"otherinfo": ""
+}
+],
+"count": "1",
+"solution": "<p>Ensure that application Source Code is not available with alternative extensions, and ens>
+"otherinfo": "",
+"reference": "<p>[https://www.wsj.com/articles/BL-CIOB-2999](https://www.wsj.com/articles/BL-CIOB-2999)</p>",
+"cweid": "540",
+"wascid": "13",
+"sourceid": "40"
+},
+
+```
+
+---
+
+Surprisingly, the output remains unaffected. However, the scan output still contains a wealth of valuable details we can use to troubleshoot the problem. For example:  
+
+- **Risk Description**  
+- **Description**  
+- **Solution**  
+- **Vulnerability Database Reference**  
+
+By combining config file with progress file, you gain a powerful way to track and analyze each security issue. This streamlined approach ensures more efficient management and monitoring of vulnerabilities.  
+
+---
+
+### In summary, our observations on ZAP configuration file behavior include:
+
+- **Generating the config file**: Generate the config file with `-g config_file` based on the scan output.  
+- **Using the config file**: Track issues using `-c config_file`.  
+- **Filter issues by status**: Use `-l WARN/FAIL/IGNORE`.  
+- **Editing the config file**: Use editors like `nano` or `vi` to modify the config_file file and manage issues.  
+- **Config file specifics**: Issues can only be changed from WARN to IGNORE, FAIL, or OUTOFSCOPE. Regex patterns are necessary for filtering URLs. Ensure correct formatting; errors occur due to the existence of blank spaces ( ) instead of tabs (\t).  
+- **Impact on scan results**: The `zap-output.json` file remains unaffected by the config file.  
+
+---
+
+Have you figured out what the difference is between **IGNORE** and **OUTOFSCOPE**?  
+
+Later in the course, we will explore how to integrate this process with Vulnerability Management tools such as **DefectDojo**. This integration provides a more streamlined approach to managing, tracking, and remediating vulnerabilities identified during scans.  
+```
+````markdown
+Dynamic Analysis Using ZAP GUI  
+
+---
+
+### Installing OWASP ZAP
+ZAP is an open-source web application security scanner to perform security testing (Dynamic Testing) on web applications. OWASP ZAP is the flagship OWASP project used extensively by penetration testers. ZAP can also run in a daemon mode for hands-off scans for CI/CD pipeline and provides extensive API (SDK) and a REST API to help users create custom scripts.  
+
+Source: https://www.zaproxy.org/getting-started/  
+
+---
+
+### Steps to Install ZAP
+
+1. **Open the web browser in your Guacamole desktop**  
+   - Open web browser  
+   - Navigate to the ZAP download page: https://www.zaproxy.org/download/  
+   - Download the appropriate installer for Linux (look for the “.tar.gz” file)  
+
+   *ZAP download page*  
+
+2. **Install ZAP in the Terminal**  
+   Once the download is complete, let’s follow these steps to install ZAP:  
+
+   - Open the terminal from your desktop environment  
+   - Go to the Downloads directory:  
+     ```
+     cd ~/Downloads
+     ```  
+
+   - Extract the ZAP archive:  
+     ```
+     tar -xzf ZAP_*.tar.gz
+     ```  
+
+   - Navigate to the extracted directory and run ZAP:  
+     ```
+     cd ZAP_*
+     ./zap.sh
+     ```  
+
+---
+
+### Command Output
+````
+
+Exiting: ZAP requires a minimum of Java 17 to run, found
+
+```
+
+This means that we need to install Java 17. To install Java, just run the below command in your current terminal:  
+
+```
+
+apt update && apt install openjdk-17-jdk -y
+
+```
+
+To verify the installation:  
+```
+
+java -version
+
+```
+
+---
+
+### Starting ZAP
+You should now see the ZAP application starting. If this is your first time running ZAP, you’ll be presented with some initial setup options.  
+
+Re-run the previous command to start ZAP:  
+```
+
+./zap.sh
+
+```
+
+After running the command, you should see the ZAP application starting and you will get prompted with the following dialog:  
+
+**ZAP Persist Session**  
+
+You can choose to persist the session or not for whatever reason you want but for now, let’s select **No, I do not want to persist this session at this moment in time** and click on **Start** button.  
+
+You will then see the **ZAP main window**:  
+
+*ZAP Start*  
+
+---
+
+### Result
+Perfect! You now have ZAP installed and ready to use for Dynamic Analysis.  
+
+Let’s move to the next step.  
+```
+```markdown
+Exploring the ZAP Interface  
+
+---
+
+### The ZAP Interface Overview
+ZAP’s interface consists of several key areas as shown in the image:  
+
+| Component        | Description                                                                 |
+|------------------|-----------------------------------------------------------------------------|
+| Top Menu Bar     | Contains menus like File, Edit, View, Analyse, Report, Tools, Import, Export, Online, and Help |
+| Toolbar          | Quick access icons for frequently used functions                            |
+| Mode Selector    | Allows you to switch between Standard Mode and other modes like Attack Mode, Safe Mode, and Protected Mode |
+| Tree Panel (left side) | Shows Sites, Contexts, and other navigation trees                     |
+| Workspace Panel (center) | Displays the Welcome screen, requests, responses, and other content |
+| Quick Start Tab  | Provides easy access to common tasks with options for Automated Scan, Manual Explore, and Learn More |
+| Bottom Panel     | Contains tabs for History, Search, Alerts, and Output                       |
+| Status Bar       | Shows information about alerts, proxy status, and other ZAP states          |
+
+---
+
+### Understanding Key Components
+
+#### **Sites Tree**
+The *Sites* tree on the left shows all the URLs visited during a session organized by domain. This is where you’ll see the structure of the website being tested.  
+
+#### **Contexts**
+The *Contexts* section allows you to define different testing contexts. By default, you’ll see “Default Context” which can be expanded to configure scope settings.  
+
+#### **Alerts Tab**
+The *Alerts* tab in the bottom panel shows all the potential vulnerabilities that ZAP has identified, categorized by risk level (High, Medium, Low, Informational).  
+
+#### **History Tab**
+The *History* tab shows all the HTTP requests and responses that have been captured by ZAP during your session.  
+
+#### **Quick Start Options**
+The Welcome screen displays three main options:  
+- **Automated Scan** - Runs automated tests against a target URL  
+- **Manual Explore** - Helps you manually explore an application  
+- **Learn More** - Provides additional learning resources  
+
+#### **Spider Tool**
+The *Spider* is used to automatically discover new resources (URLs) on a site. You can find this under the **Automated Scan** button in the toolbar.  
+
+#### **Active Scanner**
+The *Active Scanner* actively attempts to find potential vulnerabilities by using known attack vectors. This can be accessed from the **Scan** menu.  
+
+---
+
+### Setting Up a Context
+Before scanning our target application, let’s create a new context:  
+
+1. Click on the **Contexts folder icon** in the left panel (the icon is highlighted with a green arrow in the screenshot).  
+   *Contexts*  
+2. You’ll see a popup menu - select **New Context…**  
+3. In the **New Context** dialog:  
+   - Enter `Production Scan` in the *Context Name* field  
+   - You can leave the *Top Node* field empty or use the **Select…** button to choose a specific node  
+   - You can add a *Description* if desired  
+   - Make sure *In Scope* is checked  
+   - Click **Save** to create the context  
+
+The context will now appear in your *Contexts* tree. Next, we need to define what URLs to include in this context.  
+
+*New Context*  
+
+---
+
+### What is a Context?
+A **Context** in ZAP defines the scope of what you want to test. It helps you limit your scans to specific URLs or areas of an application, ensuring that your tests are both focused and controlled.  
+
+---
+
+In the next step, we will start to scan our production application to identify security vulnerabilities.  
+
+Let’s move to the next step.  
+```
+```markdown
+Dynamic Analysis Using ZAP GUI  
+
+---
+
+### Performing a Basic Scan
+In this step, we will perform a basic scan using **Automated Scan** on our production application to identify security vulnerabilities.  
+
+1. In ZAP, click on the **Automated Scan** button in the toolbar  
+   *Automated Scan*  
+
+2. In the **URL to attack** field, enter:  
+```
+
+[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+```
+
+3. Make sure **Use traditional spider** is selected.  
+
+4. In the **Spider Engine** dropdown, please select **HTMLunit** as the spider engine instead of Firefox or Chrome.  
+
+5. Click **Attack** button.  
+*Attack*  
+
+---
+
+### Scan Process
+ZAP will scan your website in two steps:  
+
+1. **Explore** – It will explore your website by following links and discovering pages.  
+2. **Check** – It will check all discovered pages for security issues.  
+
+**Note**: The scanning time depends on your website’s size.  
+
+---
+
+### Progress
+You can monitor the progress of the spider in the **Spider tab** that appears in the information panel at the bottom of the screen. When the spider completes, you will see **100%** in the progress bar.  
+
+---
+
+### Reviewing Passive Scan Results
+While the spider runs, ZAP automatically performs **passive scanning**, which analyzes the traffic without sending additional requests.  
+
+To view the results:  
+
+- Click on the **Alerts** tab in the information panel.  
+- You will see a list of potential issues found, organized by risk level (**High, Medium, Low, Informational**).  
+*Alerts*  
+
+Passive scanning can identify issues such as:  
+- Missing security headers  
+- Cookie problems  
+- Information disclosure  
+- Content security policy issues  
+
+After completing your scan, ZAP will display the results in the **Alerts tab** at the bottom panel of the interface.  
+
+These alerts represent potential security vulnerabilities that ZAP has identified during the scanning process.  
+
+---
+
+### Exploring Alert Details
+To understand each vulnerability in depth:  
+
+1. Click on the **Alerts** tab in the bottom panel.  
+2. Alerts are categorized by risk level (**High, Medium, Low, Informational**).  
+3. Expand each category by clicking on the arrow next to it.  
+4. Click on a specific alert to see its details in the right panel.  
+*Alert Details*  
+
+---
+
+### The Alert Information Panel
+When you select an alert, the details panel shows comprehensive information about the vulnerability:  
+
+| Field | Description |
+|-------|-------------|
+| **Description** | Explains what the vulnerability is and how it affects security |
+| **Risk Level** | Indicates severity (High, Medium, Low, Informational) |
+| **Confidence** | Shows how confident ZAP is about this finding (High, Medium, Low) |
+| **Parameter** | Identifies the specific component affected (if applicable) |
+| **URL** | Shows where the vulnerability was found |
+| **Request/Response Evidence** | Shows the specific HTTP traffic that triggered the alert |
+| **Solution** | Provides recommendations on how to fix the vulnerability |
+| **Reference** | Links to external resources and documentation for further reading |
+| **CWE ID** | Common Weakness Enumeration identifier for standardized vulnerability classification |
+
+---
+
+### Handling False Positives
+Not all alerts represent actual vulnerabilities. Some may be false positives, which are incorrectly identified issues:  
+
+- Review each alert carefully, especially **high and medium risk** findings.  
+- Check the evidence to see if the issue is real.  
+- Consider the context of your application when assessing alerts.  
+- Use the **False Positive** button if you determine an alert is not a real issue.  
+
+**Recommendation:**  
+- Fix **high-risk vulnerabilities** first (most critical).  
+- Then address **medium-risk issues**.  
+- Handle **low-risk and informational** alerts later, based on your security needs.  
+
+Look for patterns in the findings; they might reveal bigger issues in your application.  
+
+---
+
+### Common Alert Types You May Encounter
+
+| Alert Type | Description |
+|------------|-------------|
+| **Cross-Site Scripting (XSS)** | When untrusted data can be executed as code in a user’s browser |
+| **SQL Injection** | When user input can manipulate database queries |
+| **Missing HTTP Security Headers** | Such as Content-Security-Policy or X-XSS-Protection |
+| **Information Disclosure** | Sensitive information exposed in responses |
+| **Cross-Site Request Forgery (CSRF)** | When unauthorized commands can be transmitted from a trusted user |
+
+For a complete reference of all ZAP alerts and their meanings, refer to the **ZAP Alerts Documentation**.  
+
+---
+
+### Generating Reports
+After reviewing the alerts, you may want to generate a report to share with your team or stakeholders:  
+
+1. Go to **Report → Generate HTML Report**.  
+*Generate HTML Report*  
+2. Select a location to save the report.  
+3. Open the report in a browser to see a well-formatted summary of all findings.  
+
+---
+
+### Final Step
+After reviewing the ZAP scan results and understanding the vulnerabilities, you can take appropriate steps to secure your application against potential attacks.  
+
+**Let’s move to the next step.**  
+```
+```markdown
+### Conclusion
+
+In our previous exercise, we utilized **OWASP ZAP through its Docker image**, which provides a **CLI-based approach** ideal for integration into **CI/CD pipelines**.  
+
+In this exercise, we explored **ZAP’s GUI interface**, which offers similar functionality but with a more **user-friendly experience**.  
+
+This desktop version is particularly valuable for team members who may not be familiar with command-line tools, making **security testing more accessible to a broader range of users**.  
+```
+````markdown
+### Scanning Analysis Using Gauntlt  
+
+---
+
+### Installing Gauntlt
+**Gauntlt** is a ruggedization framework that provides hooks to a variety of security tools and puts them within reach of security, dev, and ops teams to collaborate to build rugged software. It is built to facilitate testing and communication between groups and create actionable tests that can be hooked into your deployment and testing processes.  
+
+---
+
+### Step 1: Install Dependencies
+First, update the package manager and install Ruby with required dependencies:  
+
+```bash
+apt update && apt install -y ruby-full ruby-dev build-essential libffi-dev
+````
+
+---
+
+### Step 2: Install Gauntlt Gem
+
+Now, install the Gauntlt gem:
+
+```bash
+gem install optimist gauntlt
+```
+
+---
+
+#### Why are we installing `optimist` gem instead of `trollop` gem?
+
+**Deprecation Warning**
+During installation, you might see some deprecation warnings about the `trollop` gem or native extension building messages. These are expected and won’t affect Gauntlt’s functionality.
+
+If you encounter any installation issues, ensure all system dependencies are properly installed. That’s why we are installing **optimist** gem instead of the deprecated **trollop** gem.
+
+**Command Output**
+
+```
+The 'trollop' gem has been deprecated and has been replaced by 'optimist'.
+See: https://rubygems.org/gems/optimist
+And: https://github.com/ManageIQ/optimist
+```
+
+---
+
+### Step 3: Verify Installation
+
+Run:
+
+```bash
+gauntlt -h
+```
+
+If the installation is successful, you should see the following output:
+
+**Command Output**
+
+```
+Usage:
+       gauntlt <path>+ [--tags TAG_EXPRESSION] [--format FORMAT]
+
+Options:
+  -t, --tags=<s>       Only execute specified tags
+  -l, --list           List defined attacks
+  -s, --steps          List the gauntlt step definitions that can be used inside of attack
+                       files
+  -a, --allsteps       List all available step definitions including aruba step definitions
+                       which help with file and parsing operations
+  -f, --format=<s>     Available formats: html, json, junit, progress
+  -o, --outfile=<s>    Pipe run results to file
+  -v, --version        Print version and exit
+  -h, --help           Show this message
+```
+
+---
+
+### Step 4: Check Available Attack Adapters
+
+Run:
+
+```bash
+gauntlt --list
+```
+
+**Command Output**
+
+```
+Defined attacks: 
+  arachni
+  curl
+  dirb
+  garmr
+  gauntlt
+  generic
+  heartbleed
+  nmap
+  sqlmap
+  sslyze
+```
+
+---
+
+### Notes
+
+* The above list shows the **available attack adapters** that Gauntlt supports and we can use to create our own custom attacks.
+* Gauntlt allows you to write security tests using **Gherkin syntax** (similar to Cucumber).
+* It supports various security tools like **nmap, sslyze, sqlmap, and more**.
+
+---
+
+✅ Gauntlt is now installed and ready for use.
+
+**Let’s move to the next step.**
+
+```
+```
+````markdown
+### Basic Security Testing with Gauntlt  
+
+---
+
+### Objective
+In this step, we will start with a **basic security test** to check **HTTP security headers**.  
+
+These headers are critical because they provide an additional layer of security at the **HTTP protocol level**.  
+
+---
+
+### What Will We Check in This Attack File?
+- **X-Frame-Options**  
+  - Prevents clickjacking attacks by controlling whether the page can be embedded in frames  
+  - Risk: Without this, attackers could embed your site in a malicious webpage and trick users into clicking unintended elements  
+
+- **X-Content-Type-Options**  
+  - Stops browsers from MIME-sniffing responses away from the declared content-type  
+  - Risk: Attackers can disguise malicious files (e.g., JavaScript as an image)  
+
+- **X-XSS-Protection**  
+  - Enables browser’s built-in XSS filtering capabilities  
+  - Risk: Missing this header makes reflected XSS attacks easier in older browsers  
+
+- **Server Header Exposure**  
+  - Ensures server software/version information is not leaked  
+  - Risk: Exposed version information helps attackers exploit known vulnerabilities  
+
+---
+
+### Create the Attack File
+```bash
+cat > http_security.attack <<EOF
+Feature: HTTP Security Headers Check
+  Scenario: Verify server is accessible
+    Given "curl" is installed
+    When I launch a "generic" attack with:
+      """
+      curl -sI https://prod-kr6k1mdm.lab.practical-devsecops.training
+      """
+    Then the output should contain "HTTP/2 200"
+
+  Scenario: Verify security headers are properly configured
+    Given "curl" is installed
+    When I launch a "generic" attack with:
+      """
+      curl -sI https://prod-kr6k1mdm.lab.practical-devsecops.training | tr '[:upper:]' '[:lower:]'
+      """
+    Then the output should contain "x-frame-options"
+    And the output should contain "x-content-type-options"
+    And the output should contain "x-xss-protection"
+    And the output should not contain "server: apache"
+EOF
+````
+
+---
+
+### Run the Security Headers Check
+
+```bash
+gauntlt http_security.attack
+```
+
+---
+
+### Understanding the Security Headers
+
+| Header                     | Protects Against            | Example Attack                                                 | Recommended Value      |
+| -------------------------- | --------------------------- | -------------------------------------------------------------- | ---------------------- |
+| **X-Frame-Options**        | Clickjacking attacks        | Attacker embeds your site in an invisible frame to trick users | `DENY` or `SAMEORIGIN` |
+| **X-Content-Type-Options** | MIME-type confusion attacks | Uploading malicious JavaScript disguised as an image           | `nosniff`              |
+| **X-XSS-Protection**       | Cross-site scripting (XSS)  | Injecting malicious scripts via URL parameters                 | `1; mode=block`        |
+
+---
+
+### What Issues Did We Find?
+
+**Command Output**
+
+```
+Current Headers Found:
+HTTP/2 200 
+server: nginx/1.18.0 (Ubuntu)
+date: Wed, 15 Jan 2025 04:44:44 GMT
+content-type: text/html; charset=utf-8
+content-length: 5300
+x-frame-options: ALLOWALL
+vary: Cookie
+```
+
+---
+
+#### **Security Issues Identified**
+
+* **Missing Headers:**
+  ❌ X-Content-Type-Options is missing
+  ❌ X-XSS-Protection is missing
+
+  **Risk:** Vulnerable to MIME-sniffing and XSS attacks
+  **Why it matters:**
+
+  * Without `X-Content-Type-Options`, attackers could upload files like `profile.jpg` containing malicious JavaScript that browsers might execute.
+  * Missing `X-XSS-Protection` removes an additional layer of defense against cross-site scripting, particularly important for users with older browsers.
+
+---
+
+* **Misconfigured Headers:**
+  ⚠️ X-Frame-Options set to **ALLOWALL**
+
+  **Risk:** Site is vulnerable to clickjacking attacks
+  **Why it matters:**
+
+  * `ALLOWALL` permits any website to embed this page in an iframe.
+  * Attackers could overlay invisible buttons over legitimate content, tricking users into unintended actions.
+  * Dangerous for sensitive pages like **payments** or **admin panels**.
+
+---
+
+* **Information Disclosure:**
+  ⚠️ Server version exposed (**nginx/1.18.0**)
+
+  **Risk:** Version information helps attackers target known vulnerabilities
+  **Why it matters:**
+
+  * This nginx version (1.18.0, April 2020) has known vulnerabilities:
+
+    * CVE-2021-23017 (CVSS 8.2, buffer overflow)
+    * CVE-2021-3618 (CVSS 5.3, HTTP request smuggling)
+  * Exposing version information helps attackers identify and exploit these weaknesses.
+  * The server should be **upgraded to 1.24.0** or newer, and version info should be hidden.
+
+---
+
+### ✅ Recommended Actions (Priority Order)
+
+1. **Upgrade nginx** to the latest version or hide version information.
+2. **Change X-Frame-Options** to `DENY` or `SAMEORIGIN`.
+3. **Add X-Content-Type-Options:** `nosniff`.
+4. **Add X-XSS-Protection:** `1; mode=block`.
+
+---
+
+### Summary
+
+This test helps ensure **basic security headers** are in place to prevent common web attacks such as:
+
+* Clickjacking
+* Cross-Site Scripting (XSS)
+* MIME-type sniffing
+* Exploiting outdated server versions
+
+---
+
+👉 Let’s move to the next step.
+
+```
+```
+````markdown
+### Advanced Web Application Security Testing  
+
+---
+
+### Objective
+In this step, we’ll perform a **comprehensive security assessment** covering multiple aspects of web application security.  
+
+---
+
+### What Will We Check in These Attack Files?
+1. **Security Headers** – Proper configuration of HTTP security headers.  
+2. **HTTP Methods** – Checking for dangerous HTTP methods.  
+   - **PUT**: Could allow attackers to upload malicious files.  
+   - **DELETE**: Could enable unauthorized deletion of resources.  
+   - **TRACE**: Can expose sensitive header information.  
+   - **OPTIONS**: If not properly restricted, reveals available methods.  
+   - **CONNECT**: Could be misused for proxy tunneling attacks.  
+   - ✅ Only **GET** and **POST** should typically be enabled for most web applications.  
+3. **Common Vulnerabilities** – Testing for common security misconfigurations.  
+4. **SSL/TLS Security** – Verifying proper SSL implementation.  
+
+---
+
+### Create the Attack File
+```bash
+cat > webapp_security.attack <<EOF
+Feature: Advanced Web Application Security Testing
+
+  Background:
+    Given "curl" is installed
+    And the following profile:
+      | name    | value                                              |
+      | target  | prod-kr6k1mdm.lab.practical-devsecops.training    |
+
+  Scenario: Test Web Security Headers
+    When I launch a "generic" attack with:
+      """
+      curl -sk -I https://<target>
+      """
+    Then the output should contain "x-frame-options"
+    And the output should not contain "ALLOWALL"
+
+  Scenario: Test HTTP Methods
+    When I launch a "generic" attack with:
+      """
+      curl -sk -X OPTIONS https://<target> -i
+      """
+    Then the output should contain "Allow:"
+    And the output should not contain "PUT"
+    And the output should not contain "DELETE"
+
+  Scenario: Test for Common Vulnerabilities
+    When I launch a "generic" attack with:
+      """
+      curl -sk -I https://<target>/admin
+      curl -sk -I https://<target>/phpinfo.php
+      curl -sk -I https://<target>/wp-admin
+      """
+    Then the output should contain "404"
+
+  Scenario: Test SSL Configuration
+    When I launch a "generic" attack with:
+      """
+      curl -vk https://<target> 2>&1
+      """
+    Then the output should contain "SSL connection"
+EOF
+````
+
+---
+
+### Run the Security Test
+
+```bash
+gauntlt webapp_security.attack
+```
+
+---
+
+### Understanding the Test Results
+
+**Command Output**
+
+```
+Current Response Headers:
+HTTP/2 200 
+server: nginx/1.18.0 (Ubuntu)
+date: Wed, 15 Jan 2025 07:13:02 GMT
+content-type: text/html; charset=utf-8
+content-length: 5300
+x-frame-options: ALLOWALL
+vary: Cookie
+```
+
+---
+
+#### Security Issues Identified
+
+1. **X-Frame-Options Misconfiguration**
+
+   * ⚠️ Current setting: **ALLOWALL**
+   * **Risk:** Vulnerable to clickjacking attacks.
+   * **Recommendation:** Change to `DENY` or `SAMEORIGIN`.
+
+---
+
+2. **HTTP Methods Security**
+
+   * ❌ Missing **Allow** header in OPTIONS response.
+   * **Risk:** Potential for unauthorized HTTP methods.
+   * **Recommendation:** Configure proper HTTP method restrictions.
+
+---
+
+3. **Directory Access Control**
+
+   * ⚠️ Inconsistent error responses.
+   * **Risk:** Information disclosure through error messages.
+   * **Recommendation:** Implement consistent **404 responses**.
+
+---
+
+4. **SSL/TLS Configuration**
+
+   * ✅ SSL connection established successfully.
+   * **Status:** Properly configured.
+
+---
+
+### Understanding the Attack Scenarios
+
+* **Security Headers Test (`curl -sk -I https://`)**
+
+  * Checks for `X-Frame-Options` header.
+  * **Finding:** `ALLOWALL` detected.
+  * **Impact:** Site could be embedded in malicious iframes → clickjacking risk.
+
+---
+
+* **HTTP Methods Test (`curl -sk -X OPTIONS https:// -i`)**
+
+  * Checks which HTTP methods are allowed.
+  * **Finding:** Missing Allow header; potentially dangerous methods enabled.
+  * **Impact:** If **PUT/DELETE** allowed:
+
+    * Upload malicious files (`PUT`).
+    * Delete content (`DELETE`).
+    * Modify server resources.
+
+---
+
+* **Common Vulnerabilities Test (`/admin`, `/phpinfo.php`, `/wp-admin`)**
+
+  * Probes for sensitive endpoints.
+  * **Finding:** Inconsistent error responses.
+  * **Impact:** Attackers can:
+
+    * Map app structure.
+    * Identify which paths exist.
+    * Focus attacks on discovered endpoints.
+
+---
+
+* **SSL/TLS Security Test (`curl -vk https://`)**
+
+  * Verifies SSL implementation.
+  * **Finding:** SSL properly configured.
+  * **Protection:** Prevents MITM, data interception, and session hijacking.
+
+---
+
+### ✅ Remediation Priority
+
+1. 🚨 Fix **X-Frame-Options** header (**High Risk**).
+2. 🚨 Disable dangerous **HTTP methods** (**High Risk**).
+3. ⚠️ Standardize **error responses** (**Medium Risk**).
+4. ✅ Maintain **current SSL configuration** (Already Secure).
+
+---
+
+📌 For more Gauntlt scanning techniques, check out the official **Gauntlt examples on GitHub**.
+
+**Let’s move on to the next step.**
+
+```
+```
+```markdown
+### Conclusion  
+
+Throughout this exercise, we’ve explored **Gauntlt** as a powerful security testing framework.  
+
+---
+
+### What We Learned  
+
+#### **Gauntlt’s Versatility**
+- Easy-to-write security tests using **Gherkin syntax**  
+- Support for multiple security tools (**nmap, sqlmap, sslyze, etc.**)  
+- Flexible attack definitions for various security scenarios  
+
+#### **Security Testing Automation**
+- Automated **header security checks**  
+- **Vulnerability scanning** capabilities  
+- Integration with existing security tools  
+
+#### **Real-world Application**
+- Practical **security header testing**  
+- Detection of **common vulnerabilities**  
+- **SSL/TLS configuration** verification  
+
+---
+
+### Benefits of Using Gauntlt  
+
+#### **Developer-Friendly**
+- Human-readable test syntax using **Gherkin format** (Given–When–Then)  
+- Easy integration with CI/CD pipelines through:  
+  - Simple **command-line interface**  
+  - **Docker container** support  
+  - Native **Jenkins, GitLab CI, and GitHub Actions** integration  
+  - Straightforward **YAML configuration files**  
+- Clear and actionable test results with **detailed reports** and failure explanations  
+
+---
+
+#### **Comprehensive Coverage**
+- Multiple attack vectors testing through built-in attack adapters  
+- Various security tool integrations with popular tools like:  
+  - **Nmap** for network scanning  
+  - **SSLyze** for SSL/TLS analysis  
+  - **SQLmap** for SQL injection testing  
+  - **Arachni** for web application scanning  
+- Customizable test scenarios using **custom attack files** and **Ruby steps**  
+
+---
+
+#### **Time and Resource Efficiency**
+- Automated security testing that runs without manual intervention  
+- **Reusable test cases** through modular attack definitions  
+- Quick vulnerability detection with **parallel test execution**  
+- Reduced **false positives** through customizable verification steps  
+- **Cost-effective** by leveraging existing open-source security tools  
+
+---
+```
+```markdown
+Scanning SSL Weaknesses Using testssl.sh
+Introduction to SSL/TLS Security
+Before we dive into the tools, let’s understand what SSL/TLS is and why it matters.
+
+What is SSL/TLS?
+SSL (Secure Sockets Layer) and its successor TLS (Transport Layer Security) are cryptographic protocols that provide secure communication over a computer network. Think of it as a secure tunnel that protects your data as it travels between your browser and a website.
+
+SSL/TLS is crucial for secure web communications as it provides multiple layers of protection. It encrypts data during transmission to keep sensitive information secure, authenticates server identities to ensure users connect to legitimate websites, builds user trust through visual indicators like the browser padlock, and helps organizations meet regulatory compliance requirements for data security.
+
+Common SSL/TLS Issues
+You might be surprised how often SSL/TLS issues occur in real-world deployments. Common problems include expired certificates that haven’t been renewed, weak encryption algorithms that can be easily broken, misconfigured protocols that leave systems vulnerable, insecure cipher suites that compromise data security, and missing security headers that fail to provide proper protection. These issues can leave systems exposed to various security threats and should be regularly monitored and addressed.
+
+This is where the tools come in handy.
+
+Meet testssl.sh
+testssl.sh is like having a security expert in your pocket. It’s a free, open-source command-line tool that:
+
+Tests SSL/TLS configurations
+Identifies vulnerabilities
+Checks certificate validity
+Verifies protocol support
+Tests cipher suite strength
+Let’s move to the next step to see how we can use testssl.sh to test the SSL/TLS configuration of a website.
+```
+```markdown
+Run the Scan
+In this step, we will see how to use testssl.sh to test the SSL/TLS configuration of a website.
+
+Exploring testssl.sh
+Before we install it, let’s see what it can do. The help command is your best friend:
+
+docker run --rm -ti drwetter/testssl.sh --help
+
+Why we are using docker?
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+Command Output
+     "testssl.sh [options] <URI>"    or    "testssl.sh <options>"
+
+"testssl.sh <option>", where <option> is mostly standalone and one of:
+
+     --help                        what you're looking at
+     -b, --banner                  displays banner + version of testssl.sh
+     -v, --version                 same as previous
+     -V, --local [pattern]         pretty print all local ciphers (of openssl only). If search pattern supplied: it is an
+                                   an ignore case word pattern of cipher hexcode or any other string in its name, kx or bits
+
+"testssl.sh [options] <URI>", where <URI> is:
+
+     <URI>                         host|host:port|URL|URL:port   port 443 is default, URL can only contain HTTPS as a protocol
+
+  and [options] is/are:
+
+     -t, --starttls <protocol>     Does a run against a STARTTLS enabled service which is one of ftp, smtp, lmtp, pop3, imap,
+                                   xmpp, xmpp-server, telnet, ldap, nntp, sieve, postgres, mysql
+     --xmpphost <to_domain>        For STARTTLS xmpp or xmpp-server checks it supplies the domainname (like SNI)
+     --mx <domain/host>            Tests MX records from high to low priority (STARTTLS, port 25)
+     --file/-iL <fname>            Mass testing option: Reads one testssl.sh command line per line from <fname>.
+                                   Can be combined with --serial or --parallel. Implicitly turns on "--warnings batch".
+                                   Text format 1: Comments via # allowed, EOF signals end of <fname>
+                                   Text format 2: nmap output in greppable format (-oG), 1 port per line allowed
+     --mode <serial|parallel>      Mass testing to be done serial (default) or parallel (--parallel is shortcut for the latter)
+     --warnings <batch|off>        "batch" doesn't continue when a testing error is encountered, off continues and skips warnings
+     --connect-timeout <seconds>   useful to avoid hangers. Max <seconds> to wait for the TCP socket connect to return
+     --openssl-timeout <seconds>   useful to avoid hangers. Max <seconds> to wait before openssl connect will be terminated
+
+single check as <options>  ("testssl.sh URI" does everything except -E and -g):
+     -e, --each-cipher             checks each local cipher remotely
+     -E, --cipher-per-proto        checks those per protocol
+     -s, --std, --categories       tests standard cipher categories by strength
+     -f, --fs, --forward-secrecy   checks forward secrecy settings
+     -p, --protocols               checks TLS/SSL protocols (including SPDY/HTTP2)
+     -g, --grease                  tests several server implementation bugs like GREASE and size limitations
+     -S, --server-defaults         displays the server's default picks and certificate info
+     -P, --server-preference       displays the server's picks: protocol+cipher
+     -x, --single-cipher <pattern> tests matched <pattern> of ciphers
+                                   (if <pattern> not a number: word match)
+     -c, --client-simulation       test client simulations, see which client negotiates with cipher and protocol
+     -h, --header, --headers       tests HSTS, HPKP, server/app banner, security headers, cookie, reverse proxy, IPv4 address
+
+     -U, --vulnerable              tests all (of the following) vulnerabilities (if applicable)
+     -H, --heartbleed              tests for Heartbleed vulnerability
+     -I, --ccs, --ccs-injection    tests for CCS injection vulnerability
+     -T, --ticketbleed             tests for Ticketbleed vulnerability in BigIP loadbalancers
+     --BB, --robot                 tests for Return of Bleichenbacher's Oracle Threat (ROBOT) vulnerability
+     --SI, --starttls-injection    tests for STARTTLS injection issues
+     -R, --renegotiation           tests for renegotiation vulnerabilities
+     -C, --compression, --crime    tests for CRIME vulnerability (TLS compression issue)
+     -B, --breach                  tests for BREACH vulnerability (HTTP compression issue)
+     -O, --poodle                  tests for POODLE (SSL) vulnerability
+     -Z, --tls-fallback            checks TLS_FALLBACK_SCSV mitigation
+     -W, --sweet32                 tests 64 bit block ciphers (3DES, RC2 and IDEA): SWEET32 vulnerability
+     -A, --beast                   tests for BEAST vulnerability
+     -L, --lucky13                 tests for LUCKY13
+     -WS, --winshock               tests for winshock vulnerability
+     -F, --freak                   tests for FREAK vulnerability
+     -J, --logjam                  tests for LOGJAM vulnerability
+     -D, --drown                   tests for DROWN vulnerability
+     -4, --rc4, --appelbaum        which RC4 ciphers are being offered?
+
+tuning / connect options (most also can be preset via environment variables):
+     -9, --full                    includes tests for implementation bugs and cipher per protocol (could disappear)
+     --bugs                        enables the "-bugs" option of s_client, needed e.g. for some buggy F5s
+     --assume-http                 if protocol check fails it assumes HTTP protocol and enforces HTTP checks
+     --ssl-native                  use OpenSSL where sockets are normally used. Faster but inaccurate, avoid it if possible
+     --openssl <PATH>              use this openssl binary (default: look in $PATH, $RUN_DIR of testssl.sh)
+     --proxy <host:port|auto>      (experimental) proxy connects via <host:port>, auto: values from $env ($http(s)_proxy)
+     -6                            also use IPv6. Works only with supporting OpenSSL version and IPv6 connectivity
+     --ip <ip>                     a) tests the supplied <ip> v4 or v6 address instead of resolving host(s) in URI
+                                   b) "one" means: just test the first DNS returns (useful for multiple IPs)
+                                   c) "proxy" means: dns resolution via proxy. Needed when host has no DNS.
+     -n, --nodns <min|none>        if "none": do not try any DNS lookups, "min" queries A, AAAA and MX records
+     --sneaky                      leave less traces in target logs: user agent, referer
+     --user-agent <user agent>     set a custom user agent instead of the standard user agent
+     --ids-friendly                skips a few vulnerability checks which may cause IDSs to block the scanning IP
+     --phone-out                   allow to contact external servers for CRL download and querying OCSP responder
+     --add-ca <CA files|CA dir>    path to <CAdir> with *.pem or a comma separated list of CA files to include in trust check
+     --mtls <CLIENT CERT file>     path to <CLIENT CERT> file in PEM format containing unencrypted certificate key (beta)
+     --basicauth <user:pass>       provide HTTP basic auth information
+     --reqheader <header>          add custom http request headers
+
+output options (can also be preset via environment variables):
+     --quiet                       don't output the banner. By doing this you acknowledge usage terms normally appearing in the banner
+     --wide                        wide output for tests like RC4, BEAST. FS also with hexcode, kx, strength, RFC name
+     --show-each                   for wide outputs: display all ciphers tested -- not only succeeded ones
+     --mapping <openssl|           openssl: use the OpenSSL cipher suite name as the primary name cipher suite name form (default)
+                iana|rfc             -> use the IANA/(RFC) cipher suite name as the primary name cipher suite name form
+                no-openssl|          -> don't display the OpenSSL cipher suite name, display IANA/(RFC) names only
+                no-iana|no-rfc>      -> don't display the IANA/(RFC) cipher suite name, display OpenSSL names only
+     --color <0|1|2|3>             0: no escape or other codes,  1: b/w escape codes,  2: color (default), 3: extra color (color all ciphers)
+     --colorblind                  swap green and blue in the output
+     --debug <0-6>                 1: screen output normal but keeps debug output in /tmp/.  2-6: see "grep -A 5 '^DEBUG=' testssl.sh"
+     --disable-rating              Explicitly disables the rating output
+
+file output options (can also be preset via environment variables)
+     --log, --logging              logs stdout to '${NODE}-p${port}${YYYYMMDD-HHMM}.log' in current working directory (cwd)
+     --logfile|-oL <logfile>       logs stdout to 'dir/${NODE}-p${port}${YYYYMMDD-HHMM}.log'. If 'logfile' is a dir or to a specified 'logfile'
+     --json                        additional output of findings to flat JSON file '${NODE}-p${port}${YYYYMMDD-HHMM}.json' in cwd
+     --jsonfile|-oj <jsonfile>     additional output to the specified flat JSON file or directory, similar to --logfile
+     --json-pretty                 additional JSON structured output of findings to a file '${NODE}-p${port}${YYYYMMDD-HHMM}.json' in cwd
+     --jsonfile-pretty|-oJ <jsonfile>  additional JSON structured output to the specified file or directory, similar to --logfile
+     --csv                         additional output of findings to CSV file '${NODE}-p${port}${YYYYMMDD-HHMM}.csv' in cwd or directory
+     --csvfile|-oC <csvfile>       additional output as CSV to the specified file or directory, similar to --logfile
+     --html                        additional output as HTML to file '${NODE}-p${port}${YYYYMMDD-HHMM}.html'
+     --htmlfile|-oH <htmlfile>     additional output as HTML to the specified file or directory, similar to --logfile
+     --out(f,F)ile|-oa/-oA <fname> log to a LOG,JSON,CSV,HTML file (see nmap). -oA/-oa: pretty/flat JSON.
+                                   "auto" uses '${NODE}-p${port}${YYYYMMDD-HHMM}'. If fname is a dir uses 'dir/${NODE}-p${port}${YYYYMMDD-HHMM}'
+     --hints                       additional hints to findings
+     --severity <severity>         severities with lower level will be filtered for CSV+JSON, possible values <LOW|MEDIUM|HIGH|CRITICAL>
+     --append                      if (non-empty) <logfile>, <csvfile>, <jsonfile> or <htmlfile> exists, append to file. Omits any header
+     --overwrite                   if <logfile>, <csvfile>, <jsonfile> or <htmlfile> exists it overwrites it without any warning
+     --outprefix <fname_prefix>    before  '${NODE}.' above prepend <fname_prefix>
+
+
+Options requiring a value can also be called with '=' e.g. testssl.sh -t=smtp --wide --openssl=/usr/bin/openssl <URI>.
+<URI> always needs to be the last parameter.
+This will show you all the amazing things testssl.sh can do.
+
+Let’s back to the topic. We’ll begin our SSL/TLS security assessment by examining the target server’s configuration using testssl.sh, a comprehensive SSL/TLS testing tool.
+
+Protocol Analysis
+First, we’ll analyze the supported protocols using the -p option, which specifically tests protocol support:
+
+docker run --rm -ti drwetter/testssl.sh -p https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The command performs the following tests:
+
+SSLv2 and SSLv3 (deprecated protocols)
+TLS 1.0 through TLS 1.3
+NPN/SPDY (older protocol)
+ALPN/HTTP2 (modern protocol)
+The output shows:
+
+Command Output
+Testing protocols via sockets except NPN+ALPN 
+
+SSLv2      not offered (OK)     # Deprecated protocol - properly disabled
+SSLv3      not offered (OK)     # Outdated protocol - correctly disabled
+TLS 1      not offered         # Legacy protocol - appropriately disabled
+TLS 1.1    not offered         # Legacy protocol - correctly disabled
+TLS 1.2    offered (OK)        # Modern protocol - properly enabled
+TLS 1.3    offered (OK): final # Latest protocol - correctly enabled
+NPN/SPDY   not offered         # Deprecated protocol - properly disabled
+ALPN/HTTP2 h2, http/1.1 (offered) # Modern protocol - correctly enabled
+Cipher Suite Assessment
+Next, we’ll evaluate the cipher suite configuration using the -s option, which tests cipher categories:
+
+docker run --rm -ti drwetter/testssl.sh -s https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The output shows:
+
+Command Output
+Testing cipher categories 
+
+NULL ciphers (no encryption)                      not offered (OK)     # Security best practice
+Anonymous NULL Ciphers (no authentication)        not offered (OK)     # Security best practice
+Export ciphers (w/o ADH+NULL)                     not offered (OK)     # Security best practice
+LOW: 64 Bit + DES, RC[2,4], MD5 (w/o export)      not offered (OK)     # Security best practice
+Triple DES Ciphers / IDEA                         not offered          # Security best practice
+Obsoleted CBC ciphers (AES, ARIA etc.)            offered             # Requires attention
+Strong encryption (AEAD ciphers) with no FS       not offered         # Security best practice
+Forward Secrecy strong encryption (AEAD ciphers)  offered (OK)        # Security best practice
+Certificate Analysis
+Let’s examine the server’s certificate configuration using the -S option, which tests server defaults:
+
+docker run --rm -ti drwetter/testssl.sh -S https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The output shows:
+
+Command Output
+Testing server defaults (Server Hello) 
+
+TLS extensions (standard)    "EC point formats/#11" "application layer protocol negotiation/#16" "extended master secret/#23"
+                           "session ticket/#35" "supported versions/#43" "key share/#51" "renegotiation info/#65281"
+Session Ticket RFC 5077 hint no -- no lifetime advertised
+SSL Session ID support       yes
+Session Resumption           Tickets no, ID: no
+TLS clock skew               Random values, no fingerprinting possible 
+Certificate Compression      none
+Client Authentication        none
+Signature Algorithm          SHA256 with RSA
+Server key size              RSA 4096 bits (exponent is 65537)
+Server key usage             Digital Signature, Key Encipherment
+Server extended key usage    TLS Web Server Authentication, TLS Web Client Authentication
+Serial                       06D4F61E365E4991B7EC336B7BCA7A4B691A (OK: length 18)
+Fingerprints                 SHA1 643D60EFD6F75645FDD1ED5671CDE4BE60D2FA0B
+                           SHA256 13268D04AABA51312A3940A96558161FAB31A284CE0C74CBE875261BC5D365A2
+Common Name (CN)             *.lab.practical-devsecops.training  (CN in response to request w/o SNI: TRAEFIK DEFAULT CERT )
+subjectAltName (SAN)         *.lab.practical-devsecops.training 
+Trust (hostname)             Ok via SAN wildcard and CN wildcard (SNI mandatory)
+                           wildcard certificate could be problematic, see other hosts at
+                           https://search.censys.io/search?resource=hosts&virtual_hosts=INCLUDE&q=13268D04AABA51312A3940A96558161FAB31A284CE0C74CBE875261BC5D365A2
+Chain of trust               Ok   
+EV cert (experimental)       no 
+Certificate Validity (UTC)   41 >= 30 days (2025-03-17 06:46 --> 2025-06-15 06:46)
+ETS/"eTLS", visibility info  not present
+Certificate Revocation List  http://r10.c.lencr.org/27.crl
+OCSP URI                     http://r10.o.lencr.org
+OCSP stapling                not offered
+OCSP must staple extension   --
+DNS CAA RR (experimental)    not offered
+Certificate Transparency     yes (certificate extension)
+Certificates provided        2
+Issuer                       R10 (Let's Encrypt from US)
+Intermediate cert validity   #1: ok > 40 days (2027-03-12 23:59). R10 <-- ISRG Root X1
+Intermediate Bad OCSP (exp.) Ok
+Basic Security Headers
+Let’s check the security headers using the -h option, which tests HTTP headers:
+
+docker run --rm -ti drwetter/testssl.sh -h https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The output shows:
+
+Command Output
+Testing HTTP header response @ "/" 
+
+HTTP Status Code             200 OK
+HTTP clock skew              0 sec from localtime
+Strict Transport Security    not offered
+Public Key Pinning           --
+Server banner                nginx/1.18.0 (Ubuntu)
+Application banner           --
+Cookie(s)                    (none issued at "/")
+Security headers             X-Frame-Options: ALLOWALL
+Reverse Proxy banner         --
+Let’s move to the next step
+```
+```markdown
+Vulnerability Testing
+Let’s analyze the vulnerability testing results using specific testssl.sh options.
+
+Comprehensive Vulnerability Scan
+Let’s run a comprehensive vulnerability scan using the -U option, which tests all known vulnerabilities:
+
+docker run --rm -ti drwetter/testssl.sh -U https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The output shows:
+
+Command Output
+Testing vulnerabilities 
+
+ Heartbleed (CVE-2014-0160)                not vulnerable (OK), no heartbeat extension
+ CCS (CVE-2014-0224)                       not vulnerable (OK)
+ Ticketbleed (CVE-2016-9244), experiment.  not vulnerable (OK)
+ ROBOT                                     Server does not support any cipher suites that use RSA key transport
+ Secure Renegotiation (RFC 5746)           supported (OK)
+ Secure Client-Initiated Renegotiation     not vulnerable (OK)
+ CRIME, TLS (CVE-2012-4929)                not vulnerable (OK)
+ BREACH (CVE-2013-3587)                    potentially NOT ok, "gzip" HTTP compression detected. - only supplied "/" tested
+                                           Can be ignored for static pages or if no secrets in the page
+ POODLE, SSL (CVE-2014-3566)               not vulnerable (OK)
+ TLS_FALLBACK_SCSV (RFC 7507)              No fallback possible (OK), no protocol below TLS 1.2 offered
+ SWEET32 (CVE-2016-2183, CVE-2016-6329)    not vulnerable (OK)
+ FREAK (CVE-2015-0204)                     not vulnerable (OK)
+ DROWN (CVE-2016-0800, CVE-2016-0703)      not vulnerable on this host and port (OK)
+                                           make sure you don't use this certificate elsewhere with SSLv2 enabled services, see
+                                           https://search.censys.io/search?resource=hosts&virtual_hosts=INCLUDE&q=13268D04AABA51312A3940A96558161FAB31A284CE0C74CBE875261BC5D365A2
+ LOGJAM (CVE-2015-4000), experimental      not vulnerable (OK): no DH EXPORT ciphers, no DH key detected with <= TLS 1.2
+ BEAST (CVE-2011-3389)                     not vulnerable (OK), no SSL3 or TLS1
+ LUCKY13 (CVE-2013-0169), experimental     potentially VULNERABLE, uses cipher block chaining (CBC) ciphers with TLS. Check patches
+ Winshock (CVE-2014-6321), experimental    not vulnerable (OK)
+ RC4 (CVE-2013-2566, CVE-2015-2808)        no RC4 ciphers detected (OK)
+
+Individual Vulnerability Testing
+You can also test specific vulnerabilities using their respective options:
+
+Heartbleed Test
+Using the -H option to test for Heartbleed vulnerability:
+
+Command Output
+docker run --rm -ti drwetter/testssl.sh -H https://prod-kr6k1mdm.lab.practical-devsecops.training/
+What is Heartbleed?
+
+BREACH Test
+Using the -B option to test for BREACH vulnerability:
+
+Command Output
+docker run --rm -ti drwetter/testssl.sh -B https://prod-kr6k1mdm.lab.practical-devsecops.training/
+What is BREACH?
+
+POODLE Test
+Using the -O option to test for POODLE vulnerability:
+
+Command Output
+docker run --rm -ti drwetter/testssl.sh -O https://prod-kr6k1mdm.lab.practical-devsecops.training/
+What is POODLE?
+
+LUCKY13 Test
+Using the -L option to test for LUCKY13 vulnerability:
+
+Command Output
+docker run --rm -ti drwetter/testssl.sh -L https://prod-kr6k1mdm.lab.practical-devsecops.training/
+What is LUCKY13?
+
+Vulnerability Analysis
+The scan results can be categorized as follows:
+
+Critical Vulnerabilities:
+Heartbleed (CVE-2014-0160): Not vulnerable
+ROBOT: Not vulnerable
+POODLE (CVE-2014-3566): Not vulnerable
+DROWN (CVE-2016-0800): Not vulnerable
+
+Medium Risk Vulnerabilities:
+BREACH (CVE-2013-3587): Potentially vulnerable
+LUCKY13 (CVE-2013-0169): Potentially vulnerable
+
+Configuration Issues:
+Missing HSTS header
+X-Frame-Options set to ALLOWALL
+
+BREACH Vulnerability Analysis
+The scan indicates:
+
+Command Output
+BREACH (CVE-2013-3587)    potentially NOT ok, "gzip" HTTP compression detected.
+The above vulnerability:
+
+Affects HTTP compression
+Can be exploited if sensitive data is present
+Requires specific conditions to be exploitable
+Can be mitigated for dynamic pages
+
+LUCKY13 Vulnerability Analysis
+The scan shows:
+
+Command Output
+LUCKY13 (CVE-2013-0169)   potentially VULNERABLE, uses cipher block chaining (CBC) ciphers with TLS
+The above vulnerability:
+
+Affects CBC cipher implementations
+Exploits timing attacks
+Can be mitigated by disabling CBC ciphers
+Requires careful consideration of compatibility
+
+Let’s move to the next step
+```
+```markdown
+Cipher Suite Analysis
+Let’s analyze the cipher suites supported by our target server using specific testssl.sh options.
+
+TLS 1.2 Cipher Suite Assessment
+Let’s examine the TLS 1.2 cipher suites using the -s option with IANA mapping:
+
+docker run --rm -ti drwetter/testssl.sh -s --mapping=iana https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The output shows:
+
+Command Output
+Testing cipher categories 
+
+NULL ciphers (no encryption)                      not offered (OK)     # Security best practice
+Anonymous NULL Ciphers (no authentication)        not offered (OK)     # Security best practice
+Export ciphers (w/o ADH+NULL)                     not offered (OK)     # Security best practice
+LOW: 64 Bit + DES, RC[2,4], MD5 (w/o export)      not offered (OK)     # Security best practice
+Triple DES Ciphers / IDEA                         not offered          # Security best practice
+Obsoleted CBC ciphers (AES, ARIA etc.)            offered             # Requires attention
+Strong encryption (AEAD ciphers) with no FS       not offered         # Security best practice
+Forward Secrecy strong encryption (AEAD ciphers)  offered (OK)        # Security best practice
+
+Protocol Support Analysis
+Let’s check the protocol support using the -p option with IANA mapping:
+
+docker run --rm -ti drwetter/testssl.sh -p --mapping=iana https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The above command performs the following tests:
+
+SSLv2 and SSLv3 (deprecated protocols)
+TLS 1.0 through TLS 1.3
+NPN/SPDY (older protocol)
+ALPN/HTTP2 (modern protocol)
+The output shows:
+
+Command Output
+Testing protocols via sockets except NPN+ALPN 
+
+SSLv2      not offered (OK)     # Deprecated protocol - properly disabled
+SSLv3      not offered (OK)     # Outdated protocol - correctly disabled
+TLS 1      not offered         # Legacy protocol - appropriately disabled
+TLS 1.1    not offered         # Legacy protocol - correctly disabled
+TLS 1.2    offered (OK)        # Modern protocol - properly enabled
+TLS 1.3    offered (OK): final # Latest protocol - correctly enabled
+NPN/SPDY   not offered         # Deprecated protocol - properly disabled
+ALPN/HTTP2 h2, http/1.1 (offered) # Modern protocol - correctly enabled
+
+Forward Secrecy Verification
+Let’s verify forward secrecy using the -f option:
+
+docker run --rm -ti drwetter/testssl.sh -f https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The above command performs the following tests:
+
+Forward secrecy cipher suites
+Elliptic curve support
+Signature algorithms
+Key exchange methods
+The output shows:
+
+Command Output
+Testing robust forward secrecy (FS) -- omitting Null Authentication/Encryption, 3DES, RC4 
+
+FS is offered (OK)           TLS_AES_256_GCM_SHA384 TLS_CHACHA20_POLY1305_SHA256 ECDHE-RSA-AES256-GCM-SHA384 ECDHE-RSA-AES256-SHA
+                              ECDHE-RSA-AES128-GCM-SHA256 ECDHE-RSA-AES128-SHA 
+Elliptic curves offered:     prime256v1 secp384r1 secp521r1 X25519 
+TLS 1.2 sig_algs offered:    RSA-PSS-RSAE+SHA512 RSA-PSS-RSAE+SHA384 RSA-PSS-RSAE+SHA256 RSA+SHA512 RSA+SHA384 RSA+SHA256 RSA+SHA1 
+TLS 1.3 sig_algs offered:    RSA-PSS-RSAE+SHA512 RSA-PSS-RSAE+SHA384 RSA-PSS-RSAE+SHA256 
+
+Cipher Suite Analysis
+The scan results can be categorized as follows:
+
+Forward Secrecy Implementation:
+All supported ciphers provide forward secrecy (Good)
+Uses ECDHE for key exchange (Good)
+Modern AEAD ciphers are prioritized (Good)
+
+Encryption Strength:
+Mix of 128-bit and 256-bit encryption
+Modern AEAD ciphers are prioritized
+ChaCha20-Poly1305 available for better performance on mobile
+
+Key Exchange Configuration:
+Strong elliptic curves used (P-521, P-256)
+X25519 supported for TLS 1.3
+RSA-PSS signature algorithms supported
+
+Protocol Support:
+Only modern protocols enabled (TLS 1.2 and 1.3)
+HTTP/2 supported via ALPN
+Legacy protocols properly disabled
+
+Let’s move to the next step
+```
+```markdown
+Client Compatibility and Recommendations
+Let’s analyze client compatibility and make security recommendations using specific testssl.sh options.
+
+Client Compatibility Testing
+Let’s test client compatibility using the -c option:
+
+docker run --rm -ti drwetter/testssl.sh -c https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The above command performs the following tests:
+
+Modern browser compatibility
+Mobile client compatibility
+Legacy system compatibility
+Mail client compatibility
+Programming language library compatibility
+The output shows:
+
+Command Output
+Running client simulations (HTTP) via sockets 
+
+Browser                      Protocol  Cipher Suite Name (OpenSSL)       Forward Secrecy
+------------------------------------------------------------------------------------------------
+Android 7.0 (native)         TLSv1.2   ECDHE-RSA-AES128-GCM-SHA256       256 bit ECDH (P-256)    # Modern mobile client
+Android 8.1 (native)         TLSv1.2   ECDHE-RSA-AES128-GCM-SHA256       253 bit ECDH (X25519)   # Modern mobile client
+Android 9.0 (native)         TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern mobile client
+Android 10.0 (native)        TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern mobile client
+Android 11/12 (native)       TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern mobile client
+Android 13/14 (native)       TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern mobile client
+Chrome 101 (Win 10)          TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Chromium 137 (Win 11)        TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Firefox 100 (Win 10)         TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Firefox 137 (Win 11)         TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+IE 8 Win 7                   No connection                              # Legacy browser - properly blocked
+IE 11 Win 7                  TLSv1.2   ECDHE-RSA-AES128-SHA              256 bit ECDH (P-256)    # Legacy browser
+IE 11 Win 8.1                TLSv1.2   ECDHE-RSA-AES128-SHA              256 bit ECDH (P-256)    # Legacy browser
+IE 11 Win Phone 8.1          TLSv1.2   ECDHE-RSA-AES128-SHA              256 bit ECDH (P-256)    # Legacy browser
+IE 11 Win 10                 TLSv1.2   ECDHE-RSA-AES128-GCM-SHA256       256 bit ECDH (P-256)    # Legacy browser
+Edge 15 Win 10               TLSv1.2   ECDHE-RSA-AES128-GCM-SHA256       253 bit ECDH (X25519)   # Modern browser
+Edge 101 Win 10 21H2         TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Edge 133 Win 11 23H2         TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Safari 18.4 (iOS 18.4)       TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern mobile client
+Safari 15.4 (macOS 12.3.1)   TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Safari 18.4 (macOS 15.4)     TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern browser
+Java 7u25                    No connection                              # Legacy client - properly blocked
+Java 8u442 (OpenJDK)         TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+Java 11.0.2 (OpenJDK)        TLSv1.3   TLS_AES_128_GCM_SHA256            256 bit ECDH (P-256)    # Modern client
+Java 17.0.3 (OpenJDK)        TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+Java 21.0.6 (OpenJDK)        TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+go 1.17.8                    TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+LibreSSL 3.3.6 (macOS)       TLSv1.3   TLS_CHACHA20_POLY1305_SHA256      253 bit ECDH (X25519)   # Modern client
+OpenSSL 1.0.2e               TLSv1.2   ECDHE-RSA-AES128-GCM-SHA256       256 bit ECDH (P-256)    # Legacy client
+OpenSSL 1.1.1d (Debian)      TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+OpenSSL 3.0.15 (Debian)      TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+OpenSSL 3.5.0 (git)          TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern client
+Apple Mail (16.0)            TLSv1.2   ECDHE-RSA-AES128-GCM-SHA256       256 bit ECDH (P-256)    # Modern mail client
+Thunderbird (91.9)           TLSv1.3   TLS_AES_128_GCM_SHA256            253 bit ECDH (X25519)   # Modern mail client
+
+Security Rating Analysis
+Let’s analyze the security rating using the -R option:
+
+docker run --rm -ti drwetter/testssl.sh -R https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The above command performs the following tests:
+
+Renegotiation vulnerabilities
+Secure renegotiation
+Secure client-initiated renegotiation
+The output shows:
+
+Command Output
+ Testing for Renegotiation vulnerabilities 
+
+ Secure Renegotiation (RFC 5746)           supported (OK)
+ Secure Client-Initiated Renegotiation     not vulnerable (OK)
+
+Client Compatibility Analysis
+The scan results can be categorized as follows:
+
+Modern Client Support:
+All modern browsers support TLS 1.3
+Strong cipher suites consistently used
+Forward secrecy properly implemented
+X25519 key exchange preferred
+
+Legacy System Handling:
+Insecure clients properly blocked
+Legacy systems fail gracefully
+No downgrade attacks possible
+Clear security boundaries
+
+Mobile Client Compatibility:
+Android 9+ supports TLS 1.3
+iOS devices fully compatible
+Strong security across platforms
+Consistent cipher suite support
+
+Programming Language Support:
+Modern Java versions fully compatible
+Go and OpenSSL support TLS 1.3
+Strong security across libraries
+Consistent implementation
+
+Let’s move to the next step
+```
+```markdown
+Advanced SSL/TLS Scanning Techniques
+Now that we’ve mastered the basics, let’s explore some advanced scanning techniques with testssl.sh. These techniques are particularly useful for large-scale environments, compliance audits, and detailed security assessments.
+
+1. Performance-Optimized Scanning
+For large-scale scanning, we can optimize performance using parallel processing and stealth techniques:
+
+docker run --rm -ti drwetter/testssl.sh --fast --parallel --sneaky https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The command performs the following optimizations:
+
+--fast: Skips time-consuming checks
+--parallel: Runs multiple tests simultaneously, significantly reducing scan time
+--sneaky: Minimizes network footprint by using custom user agents and reducing request frequency
+The output shows:
+
+Command Output
+Testing protocols via sockets except NPN+ALPN
+
+SSLv2      not offered (OK)     # Parallel processing enabled
+SSLv3      not offered (OK)     # Stealth mode active
+TLS 1      not offered         # Reduced network noise
+TLS 1.1    not offered         # Optimized scanning
+TLS 1.2    offered (OK)        # Parallel execution
+TLS 1.3    offered (OK): final # Efficient processing
+
+2. Custom Cipher Suite Testing
+Let’s perform a detailed cipher suite analysis with protocol-specific testing:
+
+docker run --rm -ti drwetter/testssl.sh --cipher-per-proto --mapping=iana https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The command performs the following tests:
+
+--cipher-per-proto: Tests cipher suites for each protocol version
+--mapping=iana: Uses standardized IANA cipher suite names
+--sneaky: Reduces network impact during testing
+The output shows:
+
+Command Output
+Testing cipher suites per protocol
+
+TLS 1.2 (server order)     ECDHE-ECDSA-AES256-GCM-SHA384  ECDHE-ECDSA-CHACHA20-POLY1305
+                          ECDHE-RSA-AES256-GCM-SHA384     ECDHE-RSA-CHACHA20-POLY1305
+                          DHE-RSA-AES256-GCM-SHA384       DHE-RSA-CHACHA20-POLY1305
+                          ECDHE-ECDSA-AES128-GCM-SHA256   ECDHE-RSA-AES128-GCM-SHA256
+                          DHE-RSA-AES128-GCM-SHA256
+
+TLS 1.3 (server order)     TLS_AES_256_GCM_SHA384         TLS_CHACHA20_POLY1305_SHA256
+                          TLS_AES_128_GCM_SHA256
+
+3. Advanced Certificate Analysis
+For comprehensive certificate inspection and validation:
+
+docker run --rm -ti drwetter/testssl.sh -S --show-each --mapping=iana https://prod-kr6k1mdm.lab.practical-devsecops.training/
+
+The command performs the following tests:
+
+--S: Server certificate analysis
+--show-each: Displays detailed information for each certificate in the chain
+--mapping=iana: Uses standardized naming conventions
+The output shows:
+
+Command Output
+Testing server defaults (Server Hello)
+
+TLS extensions (standard)    "EC point formats/#11" "application layer protocol negotiation/#16"
+                           "extended master secret/#23" "session ticket/#35"
+                           "supported versions/#43" "key share/#51"
+                           "renegotiation info/#65281"
+
+Certificate #1
+Subject:                     CN=*.lab.practical-devsecops.training
+Issuer:                      C=US, O=Let's Encrypt, CN=R3
+Validity:                    2024-03-17 06:46 to 2024-06-15 06:46
+Key:                         RSA 4096 bits
+Signature Algorithm:         SHA256 with RSA
+Extended Key Usage:          TLS Web Server Authentication, TLS Web Client Authentication
+Subject Alternative Name:    DNS:*.lab.practical-devsecops.training
+OCSP URI:                    http://r3.o.lencr.org
+CRL URI:                     http://r3.c.lencr.org/27.crl
+
+Let’s move to the next step
+```
+```markdown
+Conclusion
+In this hands-on exercise, we successfully learned how to use testssl.sh to check and improve the security of web services. We started with basic SSL testing, moved on to finding security weaknesses, and learned how to fix them. By following a step-by-step approach, we gained practical skills in securing web applications and protecting user data.
+
+Key accomplishments:
+
+Mastered basic SSL testing and protocol checking
+Learned to find and fix common security weaknesses
+Tested and improved encryption settings
+Made sure security works with all browsers and devices
+Applied best practices for web security
+
+The skills you learned today are very useful in the real world. You can now check the security of any website, find problems before attackers do, and keep your users’ data safe. These skills are important for anyone working in web development, security, or IT. Keep practicing and exploring new security tools - the more you learn, the better you can protect your web services.
+
+Remember, security is an ongoing process. Regular testing and updates are essential to maintaining a secure environment.
+```

@@ -9360,3 +9360,8722 @@ We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.l
 
 Click on the appropriate job name to see the output.
 ```
+````md
+# Fix the Issues Reported by Safety Tool
+
+## Download the source code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to download the source code of the project from our git repository.
+
+```bash
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+````
+
+### Command Output
+
+```
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+```
+
+Let’s cd into the application code, so we can scan the app.
+
+```bash
+cd webapp
+```
+
+We are now in the webapp directory.
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Install Safety
+
+Safety checks your installed dependencies for known security vulnerabilities.  
+By default, it uses the open Python vulnerability database Safety DB but can be upgraded to use pyup.io’s Safety API using the –key option.
+
+Source: [https://pypi.org/project/safety](https://pypi.org/project/safety)
+
+You can find more details about the project at Safety.
+
+---
+
+## Install the Safety tool
+
+Let’s install the safety tool on the system to scan the Python dependencies.
+
+```bash
+pip3 install safety==2.3.5
+````
+
+### Command Output
+
+```
+Collecting safety==2.3.5
+  Downloading safety-2.3.5-py3-none-any.whl (57 kB)
+     |████████████████████████████████| 57 kB 8.0 MB/s 
+Requirement already satisfied: setuptools>=19.3 in /usr/local/lib/python3.8/dist-packages (from safety==2.3.5) (67.4.0)
+Collecting Click>=8.0.2
+  Downloading click-8.1.3-py3-none-any.whl (96 kB)
+     |████████████████████████████████| 96 kB 9.9 MB/s 
+Requirement already satisfied: requests in /usr/local/lib/python3.8/dist-packages (from safety==2.3.5) (2.28.2)
+
+...[SNIP]...
+
+Successfully installed Click-8.1.3 dparse-0.6.2 packaging-21.3 pyparsing-3.0.9 ruamel.yaml-0.17.21 ruamel.yaml.clib-0.2.7 safety-2.3.5 toml-0.10.2
+```
+
+---
+
+## Explore Safety options
+
+```bash
+safety check --help
+```
+
+### Command Output
+
+```
+Usage: safety check [OPTIONS]
+
+  Find vulnerabilities in Python dependencies at the target provided.
+
+Options:
+  --key TEXT                      API Key for pyup.io's vulnerability
+                                  database. Can be set as SAFETY_API_KEY
+                                  environment variable. Default: empty
+  --db TEXT                       Path to a local or remote vulnerability
+                                  database. Default: empty
+  --full-report / --short-report  Full reports include a security advisory (if
+                                  available). Default: --short-report NOTE:
+                                  This argument is mutually exclusive with
+                                  arguments: [bare with values [True, False],
+                                  json with values [True, False], output with
+                                  values ['json', 'bare']].
+  --stdin                         Read input from stdin. NOTE: This argument
+                                  is mutually exclusive with  arguments:
+                                  [files].
+  -r, --file FILENAME             Read input from one (or multiple)
+                                  requirement files. Default: empty NOTE: This
+                                  argument is mutually exclusive with
+                                  arguments: [stdin].
+  -i, --ignore TEXT               Ignore one (or multiple) vulnerabilities by
+                                  ID. Default: empty
+  -o, --output [screen|text|json|bare]
+  -pr, --proxy-protocol [http|https]
+                                  Proxy protocol (https or http) --proxy-
+                                  protocol NOTE: This argument requires the
+                                  following flags  [proxy_host].
+  -ph, --proxy-host TEXT          Proxy host IP or DNS --proxy-host
+  -pp, --proxy-port INTEGER       Proxy port number --proxy-port NOTE: This
+                                  argument requires the following flags
+                                  [proxy_host].
+  --exit-code / --continue-on-error
+                                  Output standard exit codes. Default: --exit-
+                                  code
+  --policy-file FILENAME          Define the policy file to be used
+  --audit-and-monitor / --disable-audit-and-monitor
+                                  Send results back to pyup.io for viewing on
+                                  your dashboard. Requires an API key.
+  --project TEXT                  Project to associate this scan with on
+                                  pyup.io. Defaults to a canonicalized github
+                                  style name if available, otherwise unknown
+  --save-json TEXT                Path to where output file will be placed, if
+                                  the path is a directory, Safety will use
+                                  safety-report.json as filename. Default:
+                                  empty
+  --help                          Show this message and exit.
+```
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Run the Scanner
+
+As we have learned in the **DevSecOps Gospel**, we should save the output in a machine-readable format.
+
+We are using the `tee` command to show the output and store it in a file simultaneously.
+
+```bash
+safety check -r requirements.txt --json | tee safety-output.json
+````
+
+* **-r flag** → used to specify the input file.
+* **--json flag** → tells that output should be in the JSON format.
+
+---
+
+## Command Output
+
+```json
+{
+    "report_meta": {
+        "scan_target": "files",
+        "scanned": [
+            "requirements.txt"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "api_key": false,
+        "local_database_path": null,
+        "safety_version": "2.3.5",
+        "timestamp": "2023-03-05 05:49:22",
+        "packages_found": 1,
+        "vulnerabilities_found": 26,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+
+...[SNIP]...
+
+            "analyzed_version": "3.0",
+            "advisory": "Django 3.2.14 and 4.0.6 include a fix for CVE-2022-34265: Potential SQL injection via Trunc(kind) and Extract(lookup_name) arguments.\r\nhttps://www.djangoproject.com/weblog/2022/jul/04/security-releases",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2022-34265",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://pyup.io/v/49733/f17"
+        }
+    ],
+    "ignored_vulnerabilities": [],
+    "remediations": {
+        "django": {
+            "current_version": "3.0",
+            "vulnerabilities_found": 26,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://pyup.io/?from=3.0"
+        }
+    }
+}
+```
+
+---
+
+✅ As you can see, we found **multiple security issues** in third-party components.
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Fixing the Issues
+
+The tool found many **vulnerable components** in the source code.  
+To fix these issues, we first need to see what components are installed in the system by checking the `requirements.txt` file.
+
+```bash
+cat requirements.txt
+````
+
+### Command Output
+
+```
+Django==3.0
+```
+
+---
+
+✅ Only **one component** needs to be upgraded to fix the issues.
+You can find out the safe versions of **Django** by visiting:
+🔗 [https://pypi.org/project/Django/#history](https://pypi.org/project/Django/#history)
+
+At the time of writing this exercise, the latest updated version is **Django 4.2.21**.
+
+Let’s edit the `requirements.txt` file to use version **4.2.21**:
+
+```bash
+cat >requirements.txt<<EOF
+Django==4.2.21
+EOF
+```
+
+---
+
+> ⚠️ **Note**
+> You need to talk to the development team to see if they can upgrade the package to a specific version **without breaking the application**.
+> The release notes explain why the new version is safer and how to determine what the developer needs in the relevant version.
+
+---
+
+Now, let’s run the scanner once again:
+
+```bash
+safety check -r requirements.txt --json | tee safety-output.json
+```
+
+### Command Output
+
+```json
+{
+    "report_meta": {
+        "scan_target": "files",
+        "scanned": [
+            "requirements.txt"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "api_key": false,
+        "local_database_path": null,
+        "safety_version": "2.3.5",
+        "timestamp": "2023-03-05 05:50:47",
+        "packages_found": 0,
+        "vulnerabilities_found": 0,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+        "telemetry": {
+            "os_type": "Linux",
+            "os_release": "5.15.0-1026-aws",
+            "os_description": "Linux-5.15.0-1026-aws-x86_64-with-glibc2.29",
+            "python_version": "3.8.10",
+            "safety_command": "check",
+            "safety_options": {
+                "files": {
+                    "-r": 1
+                },
+                "json": {
+                    "--json": 1
+                }
+            },
+            "safety_version": "2.3.5",
+            "safety_source": "cli"
+        },
+        "git": {
+            "branch": "main",
+            "tag": "",
+            "commit": "1cb7ab820ee83f93de1eea4f05b923c4bd49caf6",
+            "dirty": true,
+            "origin": "https://gitlab.practical-devsecops.training/pdso/django.nv"
+        },
+        "project": null,
+        "json_version": 1
+    },
+    "scanned_packages": {},
+    "affected_packages": {},
+    "announcements": [],
+    "vulnerabilities": [],
+    "ignored_vulnerabilities": [],
+    "remediations": {}
+}
+```
+
+---
+
+🎉 **Cool! We fixed the issues** found in our application’s components.
+
+---
+
+## Final Note
+
+* After upgrading, always **check if the application works properly**.
+* These fixes may break your application, so please **consult with your development team**.
+* As a best practice, ensure the components aren’t vulnerable to **any critical or high issues**.
+
+```
+```
+````md
+# Software Component Analysis Using pip-audit
+
+## Download the Source Code
+
+We will do all the exercises **locally first in DevSecOps-Box**, so let’s start the exercise.
+
+First, we need to download the source code of the project from our git repository:
+
+```bash
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+````
+
+Now, let’s `cd` into the application so we can scan the app:
+
+```bash
+cd webapp
+```
+
+✅ We are now in the **webapp** directory.
+
+---
+
+Let’s move to the **next step**.
+
+```
+```
+````md
+# Install pip-audit
+
+The **pip-audit** is a tool for scanning Python environments for packages with known vulnerabilities.  
+It uses the **Python Packaging Advisory Database** (https://github.com/pypa/advisory-db) via the **PyPI JSON API** as a source of vulnerability reports.
+
+📖 Source: [https://github.com/trailofbits/pip-audit](https://github.com/trailofbits/pip-audit)
+
+---
+
+## Step 1: Install pip-audit
+
+We will install the **pip-audit scanner** to perform static analysis:
+
+```bash
+pip3 install pip-audit==1.1.2
+````
+
+### Command Output
+
+```
+Collecting pip-audit==1.1.2
+  Downloading pip_audit-1.1.2-py3-none-any.whl (54 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 54.5/54.5 KB 2.0 MB/s eta 0:00:00
+Collecting pip-api>=0.0.26
+  Downloading pip_api-0.0.27-py3-none-any.whl (111 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 111.3/111.3 KB 26.0 MB/s eta 0:00:00
+
+...[SNIP]...
+
+Successfully installed CacheControl-0.12.10 certifi-2021.10.8 charset-normalizer-2.0.11 cyclonedx-python-lib-0.12.3 html5lib-1.1 idna-3.3 lockfile-0.12.2 msgpack-1.0.3 packageurl-python-0.9.6 pip-api-0.0.27 pip-audit-1.1.2 progress-1.6 requests-2.27.1 resolvelib-0.8.1 six-1.16.0 toml-0.10.2 types-setuptools-57.4.8 types-toml-0.10.3 urllib3-1.26.8 webencodings-0.5.1
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. 
+It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+```
+
+✅ We have successfully installed the **pip-audit scanner**.
+
+---
+
+## Step 2: Explore pip-audit Options
+
+Run the help command to explore available options:
+
+```bash
+pip-audit --help
+```
+
+### Command Output
+
+```
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE] [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR] [--progress-spinner {on,off}] [--timeout TIMEOUT] [--path PATHS]
+                 [-v]
+
+audit the Python environment for dependencies with known vulnerabilities
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
+  -l, --local           show only results for dependencies in the local environment (default: False)
+  -r REQUIREMENTS, --requirement REQUIREMENTS
+                        audit the given requirements file; this option can be used multiple times (default: None)
+  -f FORMAT, --format FORMAT
+                        the format to emit audit results in (choices: columns, json, cyclonedx-json, cyclonedx-xml) (default: columns)
+  -s SERVICE, --vulnerability-service SERVICE
+                        the vulnerability service to audit dependencies against (choices: osv, pypi) (default: pypi)
+  -d, --dry-run         collect all dependencies but do not perform the auditing step (default: False)
+  -S, --strict          fail the entire audit if dependency collection fails on any dependency (default: False)
+  --desc [{on,off,auto}]
+                        include a description for each vulnerability; `auto` defaults to `on` for the `json` format. This flag has no effect on the `cyclonedx-json` or `cyclonedx-xml` formats.
+                        (default: auto)
+  --cache-dir CACHE_DIR
+                        the directory to use as an HTTP cache for PyPI; uses the `pip` HTTP cache by default (default: None)
+  --progress-spinner {on,off}
+                        display a progress spinner (default: on)
+  --timeout TIMEOUT     set the socket timeout (default: 15)
+  --path PATHS          restrict to the specified installation path for auditing packages; this option can be used multiple times (default: [])
+  -v, --verbose         give more output; this setting overrides the `PIP_AUDIT_LOGLEVEL` variable and is equivalent to setting it to `debug` (default: False)
+```
+
+---
+
+➡️ Let’s move to the **next step**.
+
+```
+```
+```md
+Run the scanner
+As we have learned in the DevSecOps Gospel, we should save the output in a machine-readable format.
+
+We are using the tee command to show the output, and store it in a file simultaneously.
+
+```
+
+pip-audit -r ./requirements.txt -f json | tee pip-audit-output.json
+
+```
+
+Command Output
+```
+
+\[{"name": "django", "version": "1.8.3", "vulns": \[{"id": "PYSEC-2019-16", "fix\_versions": \["1.11.27", "2.2.9"]}, {"id": "PYSEC-2017-9", "fix\_versions": \["1.8.18", "1.9.13", "1.10.7"]}, {"id": "PYSEC-2015-11", "fix\_versions": \["1.7.11", "1.8.7", "1.9rc2"]}, {"id": "PYSEC-2016-3", "fix\_versions": \["1.8.15", "1.9.10"]}, {"id": "PYSEC-2021-98", "fix\_versions": \["2.2.24", "3.1.12", "3.2.4"]}, {"id": "PYSEC-2018-6", "fix\_versions": \["1.8.19", "1.11.11", "2.0.3"]}, {"id": "PYSEC-2016-18", "fix\_versions": \["1.8.16", "1.9.11", "1.10.3"]}, {"id": "PYSEC-2016-15", "fix\_versions": \["1.8.10", "1.9.3"]}, {"id": "PYSEC-2016-16", "fix\_versions": \["1.8.10", "1.9.3"]}, {"id": "PYSEC-2016-2", "fix\_versions": \["1.8.14", "1.9.8", "1.10rc1"]}, {"id": "PYSEC-2016-17", "fix\_versions": \["1.8.16", "1.9.11", "1.10.3"]}, {"id": "PYSEC-2018-5", "fix\_versions": \["1.8.19", "1.11.11", "2.0.3"]}, {"id": "PYSEC-2017-10", "fix\_versions": \["1.8.18", "1.9.13", "1.10.7"]}, {"id": "PYSEC-2015-22", "fix\_versions": \["1.4.22", "1.7.10", "1.8.4"]}]}]
+
+```
+
+As you can see, we found multiple security issues in third-party components.
+```
+```md
+Software Component Analysis Using Dependency-Check
+Download the Source Code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to download the source code of the project from the git repository.
+
+```
+
+git clone [https://github.com/WebGoat/WebGoat.git](https://github.com/WebGoat/WebGoat.git) webapp
+
+```
+
+Let’s move to the next step.
+```
+```md
+# Software Component Analysis Using Dependency-Check
+
+## Install OWASP Dependency Check
+Dependency-Check is SCA tool that attempts to detect publicly disclosed vulnerabilities contained within a project’s dependencies.  
+
+You can find more details about the project at [https://github.com/jeremylong/DependencyCheck](https://github.com/jeremylong/DependencyCheck).
+
+---
+
+Before installing Dependency-Check, we need to ensure if java is installed in our system.
+
+```
+
+java -h
+
+```
+
+### Command Output
+```
+
+bash: java: command not found
+
+```
+
+It appears that Java is not installed, so we need to proceed with its installation.  
+Before that, let’s update apt first.
+
+```
+
+apt update
+
+```
+
+Now, let’s install Java.
+
+```
+
+apt install openjdk-17-jre -y
+
+```
+
+Next, we need to download Dependency Check source code.
+
+```
+
+wget -O /opt/v8.3.1.zip [https://github.com/jeremylong/DependencyCheck/releases/download/v8.3.1/dependency-check-8.3.1-release.zip](https://github.com/jeremylong/DependencyCheck/releases/download/v8.3.1/dependency-check-8.3.1-release.zip)
+
+```
+
+Extract the source code.
+
+```
+
+unzip /opt/v8.3.1.zip -d /opt/
+
+```
+
+We will add the tool to the PATH so that we can reference it on the command line.
+
+```
+
+export PATH=/opt/dependency-check/bin:\$PATH
+
+```
+
+Let’s explore the options that this tool provides us.
+
+```
+
+dependency-check.sh -h
+
+```
+
+### Command Output
+```
+
+usage: Dependency-Check Core \[--advancedHelp] \[--enableExperimental]
+\[--exclude <pattern>] \[-f <format>] \[--failOnCVSS <score>] \[-h]
+\[--junitFailOnCVSS <score>] \[-l <file>] \[-n] \[-o <path>]
+\[--prettyPrint] \[--project <name>] \[-s <path>] \[--suppression <file>] \[-v]
+
+Dependency-Check Core can be used to identify if there are any known CVE
+vulnerabilities in libraries utilized by an application. Dependency-Check
+Core will automatically update required data from the Internet, such as
+the CVE and CPE data files from nvd.nist.gov.
+
+```
+--advancedHelp              Print the advanced help message.
+--enableExperimental        Enables the experimental analyzers.
+--exclude <pattern>         Specify an exclusion pattern. This option
+                            can be specified multiple times and it
+                            accepts Ant style exclusions.
+```
+
+-f,--format <format>           The report format (HTML, XML, CSV, JSON,
+JUNIT, SARIF, JENKINS, or ALL). The
+default is HTML. Multiple format
+parameters can be specified.
+\--failOnCVSS <score>        Specifies if the build should be failed if
+a CVSS score above a specified level is
+identified. The default is 11; since the
+CVSS scores are 0-10, by default the build
+will never fail.
+-h,--help                      Print this message.
+\--junitFailOnCVSS <score>   Specifies the CVSS score that is
+considered a failure when generating the
+junit report. The default is 0.
+-l,--log <file>                The file path to write verbose logging
+information.
+-n,--noupdate                  Disables the automatic updating of the
+NVD-CVE, hosted-suppressions and RetireJS
+data.
+-o,--out <path>                The folder to write reports to. This
+defaults to the current directory. It is
+possible to set this to a specific file
+name if the format argument is not set to
+ALL.
+\--prettyPrint               When specified the JSON and XML report
+formats will be pretty printed.
+\--project <name>            The name of the project being scanned.
+-s,--scan <path>               The path to scan - this option can be
+specified multiple times. Ant style paths
+are supported (e.g. 'path/\*\*/\*.jar'); if
+using Ant style paths it is highly
+recommended to quote the argument value.
+\--suppression <file>        The file path to the suppression XML file.
+This can be specified more then once to
+utilize multiple suppression files
+-v,--version                   Print the version information.
+
+```
+
+---
+
+Let’s move to the next step.
+```
+````md
+# Run the Scanner
+
+Perform the scan on the **webapp** source code directory using the following command:
+
+```bash
+dependency-check.sh --scan webapp --format "JSON" --project "Webgoat" --out /opt
+````
+
+Notice, the **format**, **project name** and **output directory**.
+
+---
+
+## Scanning Time
+
+If you’re trying using the latest version of the tool, the scanning process may take **20-30 minutes** depending on the number of files and the complexity of the project.
+
+You can make it faster by using the **NVD API Key** from [https://nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key).
+Without an NVD API Key dependency-check’s updates will be extremely slow.
+
+To begin with, the Dependency-Check tool will update its database before scanning the code, which may take a few minutes.
+
+---
+
+### Command Output
+
+```
+[INFO] Checking for updates
+[INFO] NVD CVE requires several updates; this could take a couple of minutes.
+[INFO] Download Started for NVD CVE - 2002
+[INFO] Download Complete for NVD CVE - 2002  (133 ms)
+
+...[SNIP]...
+
+[INFO] Analysis Started
+[INFO] Finished Archive Analyzer (0 seconds)
+[INFO] Finished File Name Analyzer (0 seconds)
+[INFO] Finished Dependency Merging Analyzer (0 seconds)
+[INFO] Finished Version Filter Analyzer (0 seconds)
+[INFO] Finished Hint Analyzer (0 seconds)
+[INFO] Created CPE Index (1 seconds)
+[INFO] Finished CPE Analyzer (1 seconds)
+[INFO] Finished False Positive Analyzer (0 seconds)
+[INFO] Finished NVD CVE Analyzer (0 seconds)
+[INFO] Finished RetireJS Analyzer (1 seconds)
+[INFO] Finished Sonatype OSS Index Analyzer (0 seconds)
+[INFO] Finished Vulnerability Suppression Analyzer (0 seconds)
+[INFO] Finished Known Exploited Vulnerability Analyzer (0 seconds)
+[INFO] Finished Dependency Bundling Analyzer (0 seconds)
+[INFO] Finished Unused Suppression Rule Analyzer (0 seconds)
+[INFO] Analysis Complete (3 seconds)
+[INFO] Writing report to: /opt/dependency-check-report.json
+```
+
+---
+
+As we have learned in the **DevSecOps Gospel**, we should save the output in a **machine-readable format** so the output can be parsed by the machines.
+
+You can see several vulnerabilities found in **jquery** from the output.
+Also the report was stored in the `/opt/dependency-check-report.json` file.
+
+---
+
+## Fail on CVSS
+
+In the previous step, if you look carefully, there is an interesting argument named `--failOnCVSS`.
+What does it mean?
+
+By including this parameter in the CI/CD pipeline, we can specify a **CVSS score threshold** that, if exceeded, will cause the build to fail.
+
+Normally, the tool does not automatically fail the build despite the presence of vulnerabilities. However, with this parameter, we can enforce a failure condition based on the specified CVSS score.
+
+---
+
+### Example: Using `--failOnCVSS`
+
+```bash
+dependency-check.sh --scan webapp --format "JSON" --project "Webgoat" --failOnCVSS 4 --out /opt
+```
+
+#### Command Output
+
+```
+...[SNIP]...
+One or more dependencies were identified with vulnerabilities that have a CVSS score greater than or equal to '4.0': 
+
+bootstrap.min.js: CVE-2018-14042(6.1), CVE-2019-8331(6.1), CVE-2018-14041(6.1), CVE-2016-10735(6.1), CVE-2018-20676(6.1), CVE-2018-20677(6.1)
+bootstrap.min.js: CVE-2018-14042(6.1), CVE-2019-8331(6.1), CVE-2018-14041(6.1), CVE-2016-10735(6.1), CVE-2018-20676(6.1), CVE-2018-20677(6.1)
+jquery-1.10.2.min.js: CVE-2015-9251(6.1), CVE-2019-11358(6.1), CVE-2020-23064(6.1), CVE-2020-11023(6.1), CVE-2020-11022(6.1)
+jquery-2.1.4.min.js: CVE-2015-9251(6.1), CVE-2019-11358(6.1), CVE-2020-23064(6.1), CVE-2020-11023(6.1), CVE-2020-11022(6.1)
+jquery-ui-1.10.4.custom.min.js: CVE-2016-7103(6.1), CVE-2022-31160(6.1), CVE-2021-41184(6.1), CVE-2021-41183(6.1), CVE-2021-41182(6.1)
+jquery-ui-1.10.4.js: CVE-2016-7103(6.1), CVE-2022-31160(6.1), CVE-2021-41184(6.1), CVE-2021-41183(6.1), CVE-2021-41182(6.1)
+jquery-ui.min.js: CVE-2022-31160(6.1), CVE-2021-41184(6.1), CVE-2021-41183(6.1), CVE-2021-41182(6.1)
+jquery.min.js: CVE-2020-23064(6.1), CVE-2020-11023(6.1), CVE-2020-11022(6.1)
+underscore-min.js: CVE-2021-23358(7.2)
+
+See the dependency-check report for more details.
+```
+
+Now, check the exit code:
+
+```bash
+echo $?
+```
+
+#### Command Output
+
+```
+15
+```
+
+---
+
+### Example: Without `--failOnCVSS`
+
+```bash
+dependency-check.sh --scan webapp --format "JSON" --project "Webgoat" --out /opt
+```
+
+```bash
+echo $?
+```
+
+#### Command Output
+
+```
+0
+```
+
+---
+
+✅ Great! We have learned something new about the behavior of this tool.
+
+If you are not familiar with the exit code, please refer to the chapter titled **Introduction to the tools of the trade** and the exercise about **Linux Exit Code**.
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Challenges
+
+Recall techniques you have learned in the previous modules.
+
+- Explore the different options offered by the Dependency Check tool.  
+- At which stage should you include the Dependency Check tool in the CI/CD pipeline?  
+- Use the available parameter in the tool to mark the **CVE-2021-23358** issue as a false positive.  
+- Try solving the challenges without looking at the solution in the next step.  
+
+---
+
+# Solutions
+
+### At which stage should you include the Dependency Check tool in the CI/CD pipeline?
+
+You can include this tool in the **initial stage** of your CI/CD pipeline, such as the **build stage** or any stage before packaging the application into a single package like a JAR or containerized image.  
+
+By doing so, the organization can ensure that no malicious issues are present in the application’s dependencies or libraries.
+
+---
+
+### Use the available parameter in the tool to mark the CVE-2021-23358 issue as a false positive
+
+We have the option to use the `--suppression` parameter in Dependency Check to mark an issue as a **false positive**.  
+
+This feature allows us to specify that the tool should ignore the marked issue in subsequent scans.  
+
+It functions similarly to the **Baseline feature in the Bandit tool**, which also allows ignoring false positive issues.  
+
+Implementing the `--suppression` parameter helps streamline the scanning process by excluding known false positives from future reports.
+
+---
+
+### Step 1: Create a suppression file
+
+```bash
+cat >suppression.xml<<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes><![CDATA[
+        Ignore underscore-min.js issue as FP
+        ]]></notes>
+        <vulnerabilityName>CVE-2021-23358</vulnerabilityName>
+    </suppress>
+</suppressions>
+EOF
+````
+
+---
+
+### Step 2: Run the scanner using suppression option
+
+```bash
+dependency-check.sh --scan webapp --format "JSON" --project "Webgoat" --failOnCVSS 7 --suppression suppression.xml --out /opt
+```
+
+The output **no longer mentions the issue**, but if you run the following command **without ignoring** the issue, you will see the below output:
+
+```bash
+dependency-check.sh --scan webapp --format "JSON" --project "Webgoat" --failOnCVSS 7 --out /opt
+```
+
+#### Command Output
+
+```
+...[SNIP]...
+One or more dependencies were identified with vulnerabilities that have a CVSS score greater than or equal to '7.0': 
+
+underscore-min.js: CVE-2021-23358(7.2)
+
+See the dependency-check report for more details.
+```
+
+```
+```
+````md
+# How To Embed Dependency-Check Into GitLab
+
+## A Simple CI/CD Pipeline
+
+Let’s download the code using **git clone** in DevSecOps Box.  
+Once done, we need to push our source code into GitLab.  
+
+> **Note**  
+> Before proceeding with the steps below, please wait until the GitLab machine is fully provisioned as the initialization process takes time to automatically add the projects to your GitLab.
+
+```bash
+git clone https://github.com/WebGoat/WebGoat.git webgoat
+````
+
+```bash
+cd webgoat
+```
+
+Rename git url to the new one:
+
+```bash
+git remote rename origin old-origin
+```
+
+```bash
+git remote add origin http://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat.git
+```
+
+Then, push the code into the repository:
+
+```bash
+git push -u origin --all
+```
+
+And enter the GitLab credentials:
+
+| Name     | Value         |
+| -------- | ------------- |
+| Username | root          |
+| Password | pdso-training |
+
+The above command will create a new project for **webgoat** if not exist.
+
+---
+
+## Base CI/CD Pipeline
+
+Considering your DevOps team created a simple CI pipeline with the following contents. Please add the **Dependency-Check** scan to this pipeline.
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+```
+
+---
+
+## GitLab Access
+
+Let’s log into Gitlab using the following details and run the above pipeline.
+
+| Name       | Value                                                                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitLab URL | [https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat) |
+| Username   | root                                                                                                                                                 |
+| Password   | pdso-training                                                                                                                                        |
+
+---
+
+## Create `.gitlab-ci.yml`
+
+Next, we need to create a CI/CD pipeline by adding the `.gitlab-ci.yml` file.
+
+* Click on the **+ (plus)** button, then click **New File**
+* Copy the above CI script (use **Control+A** and **Control+V**)
+
+Save changes to the file using the **Commit changes** button.
+
+---
+
+## Verify the Pipeline Runs
+
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting:
+👉 [WebGoat GitLab Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat/pipelines)
+
+Click on the appropriate job name to see the output.
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Embed Dependency Check in CI/CD Pipeline
+
+As discussed in the **SCA using Dependency Check** exercise, we can put **Dependency Check** in our CI/CD pipeline.  
+
+However, do remember that you need to run commands **manually in a local system like DevSecOps-Box before embedding** commands for automated execution in CI/CD pipelines.  
+Manually testing commands in a local environment like DevSecOps-Box helps in easy troubleshooting.
+
+---
+
+## Step 1: Create `run-depcheck.sh`
+
+Visit 👉 [GitLab WebGoat Project](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat) to create a new file called **`run-depcheck.sh`** with the following contents:
+
+```sh
+#!/bin/sh
+
+DATA_DIRECTORY="$PWD/data"
+REPORT_DIRECTORY="$PWD/reports"
+
+if [ ! -d "$DATA_DIRECTORY" ]; then
+  echo "Initially creating persistent directories"
+  mkdir -p "$DATA_DIRECTORY"
+  chmod -R 777 "$DATA_DIRECTORY"
+
+  mkdir -p "$REPORT_DIRECTORY"
+  chmod -R 777 "$REPORT_DIRECTORY"
+fi
+
+docker run --rm \
+  --volume $(pwd):/src \
+  --volume "$DATA_DIRECTORY":/usr/share/dependency-check/data \
+  --volume "$REPORT_DIRECTORY":/reports \
+  hysnsec/dependency-check \
+  --scan /src \
+  --format "JSON" \
+  --project "Webgoat" \
+  --failOnCVSS 4 \
+  --out /reports
+````
+
+📌 Don’t forget to use **File Name as `run-depcheck.sh`**
+
+---
+
+## Step 2: Add CI/CD Job to `.gitlab-ci.yml`
+
+Now, add the following content to your `.gitlab-ci.yml` file:
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+odc-backend:
+  stage: test
+  image: gitlab/dind:latest
+  script:
+    - chmod +x ./run-depcheck.sh
+    - mkdir -p reports
+    - ./run-depcheck.sh > reports/dependency-check-report.json
+  artifacts:
+    paths:
+      - reports/dependency-check-report.json
+    when: always
+    expire_in: one week
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+```
+
+---
+
+## Step 3: Trigger the Pipeline
+
+As discussed, **any change to the repo kickstarts the pipeline**.
+
+You can see the results of this pipeline by visiting:
+👉 [WebGoat Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat/pipelines)
+
+Click on the appropriate job name to see the output.
+
+---
+
+## Notes
+
+We’ve discussed different methods of using the tool:
+
+* **Native Installation**: Directly installing the tool on the system.
+* **Package Manager or Binary**: Installing via a package manager or using the binary file.
+* **Docker**: Running the tool within a Docker container.
+
+✅ All methods are suitable for CI/CD integration.
+⭐ Docker is recommended for CI/CD as it operates smoothly without dependencies.
+⚡ Using the binary file is efficient, avoiding additional dependencies.
+
+Ultimately, you can choose either method based on your specific situation.
+
+---
+
+## Why Did the Job Fail?
+
+Did you notice the job **failed because of non zero exit code**?
+Why did the job fail? Because the tool found **security issues**.
+
+👉 This is the expected behavior of any DevSecOps friendly tool.
+
+You need to either:
+
+* **Fix the security issues**, or
+* **Add `allow_failure: true`** to let the job finish without blocking other jobs.
+
+If you have troubles understanding exit code, please go through the exercise titled **Working with Exit Code**.
+
+---
+
+In the next step, you will learn **why you should not fail the build (pipeline).**
+
+```
+```
+````md
+# Allow the Job Failure
+
+### Reminder
+- Except for **DevSecOps-Box**, every other machine closes after two hours, even if you are in the middle of the exercise.  
+- After two hours, in case of a **404**, you need to refresh the exercise page and click on **Start the Exercise** button to continue working.  
+
+---
+
+### Why Not Fail the Pipeline in Maturity Levels 1 and 2?
+
+You do not want to fail the builds (pipeline) in **DevSecOps Maturity Levels 1 and 2** because:  
+
+- If a security tool fails a job, it **won’t allow other DevOps jobs like release/deploy to run**, hence causing great distress to the DevOps Team.  
+- Security tools often suffer from **false positives**.  
+- Failing a build on inaccurate data is a **sure recipe for disaster**.  
+
+---
+
+### Use `allow_failure`
+
+You can use the `allow_failure` tag to **not fail the build** even though the tool found security issues.  
+
+---
+
+### Example
+
+```yaml
+odc-backend:
+  stage: test
+  image: gitlab/dind:latest
+  script:
+    - chmod +x ./run-depcheck.sh
+    - mkdir -p reports
+    - ./run-depcheck.sh > reports/dependency-check-report.json
+  artifacts:
+    paths:
+      - reports/dependency-check-report.json
+    when: always
+    expire_in: one week
+  allow_failure: true #<--- allow the build to fail but don't mark it as such
+````
+
+---
+
+### Final Pipeline
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+odc-backend:
+  stage: test
+  image: gitlab/dind:latest
+  script:
+    - chmod +x ./run-depcheck.sh
+    - mkdir -p reports
+    - ./run-depcheck.sh > reports/dependency-check-report.json
+  artifacts:
+    paths:
+      - reports/dependency-check-report.json
+    when: always
+    expire_in: one week
+  allow_failure: true
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+```
+
+---
+
+### Outcome
+
+* You will notice that the **odc-backend job has failed**, but other jobs and stages **ran fine**.
+* As discussed, **any change to the repo kick starts the pipeline**.
+
+You can see the results of this pipeline by visiting:
+👉 [WebGoat Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/webgoat/pipelines)
+
+Click on the appropriate job name to see the **output/results**.
+
+```
+```
+````md
+# Software Component Analysis Using Snyk
+
+## Download the Source Code
+
+We will do all the exercises locally first in **DevSecOps-Box**, so let’s start the exercise.
+
+First, we need to download the source code of the project from our git repository.
+
+```bash
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+````
+
+### Command Output
+
+```
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 228, done.
+remote: Total 228 (delta 0), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (228/228), 1.03 MiB | 1.04 MiB/s, done.
+Resolving deltas: 100% (86/86), done.
+```
+
+Let’s cd into the application code, so we can scan the app.
+
+```bash
+cd webapp
+```
+
+We are now in the **webapp** directory.
+
+---
+
+✅ Let’s move to the next step.
+
+```
+```
+````md
+# Install Snyk
+
+Dependency analysis tool or **SCA** is used to find vulnerabilities in open source dependencies and it supports multiple programming languages such as Ruby, Python, NodeJS, Java, Go, .NET. It’s easy to use:  
+- A developer can use it on his/her machine using the command line  
+- DevOps team can embed it into CI/CD pipeline.  
+
+(Source: https://snyk.io)
+
+📌 More details about the project: https://github.com/snyk/snyk
+
+---
+
+## Step 1: Download Snyk
+
+```bash
+wget -O /usr/local/bin/snyk https://github.com/snyk/cli/releases/download/v1.984.0/snyk-linux
+````
+
+---
+
+## Step 2: Give executable permission
+
+```bash
+chmod +x /usr/local/bin/snyk
+```
+
+---
+
+## Step 3: Explore options provided by Snyk
+
+```bash
+snyk --help
+```
+
+### Command Output
+
+```
+CLI commands help
+  Snyk CLI scans and monitors your projects for security vulnerabilities and license issues.
+
+  For more information visit the Snyk website https://snyk.io
+
+  For details see the CLI documentation https://docs.snyk.io/features/snyk-cli
+
+How to get started
+  1. Authenticate by running snyk auth
+  2. Test your local project with snyk test
+  3. Get alerted for new vulnerabilities with snyk monitor
+
+Available commands
+  To learn more about each Snyk CLI command, use the --help option, for example, snyk auth --help or 
+  snyk container --help
+
+  snyk auth
+    Authenticate Snyk CLI with a Snyk account.
+
+  snyk test
+    Test a project for open source vulnerabilities and license issues.
+
+    Note: Use snyk test --unmanaged to scan all files for known open source dependencies (C/C++ only).
+
+  snyk monitor
+    Snapshot and continuously monitor a project for open source vulnerabilities and license issues.
+
+  snyk container
+    Test container images for vulnerabilities.
+
+  snyk iac
+    Commands to find and manage security issues in Infrastructure as Code files.
+
+  snyk code
+    Find security issues using static code analysis.
+
+  snyk log4shell
+    Find Log4Shell vulnerability.
+
+  snyk config
+    Manage Snyk CLI configuration.
+
+  snyk policy
+    Display the .snyk policy for a package.
+
+  snyk ignore
+    Modify the .snyk policy to ignore stated issues.
+
+Debug
+  Use -d option to output the debug logs.
+
+Configure the Snyk CLI
+  You can use environment variables to configure the Snyk CLI and also set variables to configure the
+  Snyk CLI to connect with the Snyk API. See Configure the Snyk CLI 
+  https://docs.snyk.io/features/snyk-cli/configure-the-snyk-cli
+```
+
+---
+
+✅ Let’s move to the next step.
+
+```
+```
+````md
+# Run the Scanner
+
+As we have learned in the **DevSecOps Gospel**, we should save the output in a **machine-readable format**.
+
+We are using `--json` argument to output the results in JSON format.
+
+```bash
+snyk test --json .
+````
+
+---
+
+### Command Output
+
+```
+MissingApiTokenError: `snyk` requires an authenticated account. Please run `snyk auth` and try again.
+    at Object.apiTokenExists (/snapshot/snyk/dist/cli/webpack:/snyk/src/lib/api-token.ts:22:11)
+    at Object.validateCredentials (/snapshot/snyk/dist/cli/webpack:/snyk/src/cli/commands/test/validate-credentials.ts:10:5)
+    at test (/snapshot/snyk/dist/cli/webpack:/snyk/src/cli/commands/test/index.ts:76:3)
+    at callModule (/snapshot/snyk/dist/cli/webpack:/snyk/src/cli/commands/index.js:6:1)
+    at process.runNextTicks [as _tickCallback] (node:internal/process/task_queues:61:5)
+    at Function.runMain (pkg/prelude/bootstrap.js:1941:13)
+    at node:internal/main/run_main_module:17:47
+    at runCommand (/snapshot/snyk/dist/cli/webpack:/snyk/src/cli/main.ts:51:25)
+    at main (/snapshot/snyk/dist/cli/webpack:/snyk/src/cli/main.ts:293:11)
+    at /snapshot/snyk/dist/cli/index.ts:11:3
+    at Object.callHandlingUnexpectedErrors (/snapshot/snyk/dist/cli/webpack:/snyk/src/lib/unexpected-error.ts:28:5)
+```
+
+---
+
+We are greeted with an error.
+Snyk is complaining about **missing API Token** as it’s a paid solution and wants you to register before it can run the scan.
+
+---
+
+## Authenticate with Snyk
+
+If you haven’t registered before:
+
+1. Go to [Snyk Website](https://snyk.io)
+2. Click **SIGN UP FOR FREE**
+3. Select Google account option
+4. Complete sign-up
+5. Go to account settings page: [https://app.snyk.io/account](https://app.snyk.io/account)
+6. Copy the API token
+
+⚠️ **Remember!**
+Do not use your company’s Snyk credentials or token to practice these exercises. Please sign up for a **free account** instead.
+
+⚠️ **Note**
+Make sure you are copying the correct key, or you will receive:
+`Authentication failed. Please check the API token on https://snyk.io.`
+
+---
+
+### Option 1: Authenticate using CLI
+
+```bash
+snyk auth YOUR_SNYK_API_TOKEN_HERE
+```
+
+#### Command Output
+
+```
+Your account has been authenticated. Snyk is now ready to be used.
+```
+
+---
+
+### Option 2: Export the token as ENV variable
+
+```bash
+export SNYK_TOKEN=YOUR_SNYK_TOKEN_HERE
+```
+
+---
+
+## Run the Scan Again
+
+```bash
+snyk test --json .
+```
+
+---
+
+### Command Output
+
+```
+{
+  "ok": false,
+  "error": "Missing node_modules folder: we can't test without dependencies.\nPlease run 'npm install' first.",
+  "path": "."
+}
+```
+
+---
+
+## Install Dependencies
+
+It raises another error; we need to install the dependencies using `npm install`.
+
+But first, install **npm**:
+
+```bash
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE_MAJOR=20
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+apt update
+apt install nodejs -y
+```
+
+Ensure you are in the `webapp` directory:
+
+```bash
+cd /webapp
+```
+
+Now run:
+
+```bash
+npm install
+```
+
+---
+
+## Re-run the Scan
+
+```bash
+snyk test --json . > output.json
+```
+
+---
+
+### Check the Output
+
+```bash
+cat output.json
+```
+
+#### Command Output
+
+```
+{
+  "ok": false,
+  "error": "Dependency bcrypt-nodejs was not found in package-lock.json. Your package.json and package-lock.json are probably out of sync. Please run \"npm install\" and try again.",
+  "path": "."
+}
+```
+
+---
+
+We are experiencing another error while scanning the dependencies.
+
+👉 After exploration, the issue is related to out-of-sync **package.json** and **package-lock.json**.
+
+---
+
+## Fix: Ignore Out-of-Sync Errors
+
+```bash
+snyk test --strict-out-of-sync=false --json . > output.json
+```
+
+---
+
+📌 **Note**
+If you want to get the dashboard on the Snyk website, then monitor for new vulnerabilities, please use:
+
+```bash
+snyk monitor
+```
+
+```
+```
+````md
+# How To Embed Snyk Into GitLab
+
+## A Simple CI/CD Pipeline  
+Considering your DevOps team created a simple CI pipeline with the following contents.  
+
+Please add the Snyk scan to this pipeline.  
+
+---
+
+**Click anywhere to copy**
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+````
+
+---
+
+## Let’s log into GitLab using the following details and run the above pipeline.
+
+**GitLab CI/CD Machine**
+
+| Name     | Value                                                                                                                                                                                                          |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Link     | [https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml) |
+| Username | root                                                                                                                                                                                                           |
+| Password | pdso-training                                                                                                                                                                                                  |
+
+---
+
+Next, we need to create a CI/CD pipeline by replacing the `.gitlab-ci.yml` file content with the above CI script.
+Click on the **Edit** button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the **Commit changes** button.
+
+---
+
+## Verify the pipeline runs
+
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting:
+👉 [https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to see the output.
+
+---
+
+## Challenge
+
+We will use a commercial offering **Snyk** to scan for vulnerable third-party components.
+
+* Add another job name **oast-snyk** under the **build stage** with the Snyk tool
+* Sign up for the Snyk’s Free service and generate/copy the token
+* Store Snyk token in **Variables** via:
+  Project → Settings → CI/CD → Variables
+  [https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci\_cd](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd)
+* Create a new variable **SNYK\_TOKEN** and put the token you got from the service, and ensure the **protected** flag is turned on
+* Use Snyk’s Linux binary to scan the dependencies in the project
+
+---
+
+⚠️ Please try to do this exercise **without looking at the solution** on the next page.
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````md
+# Embed Snyk in CI/CD pipeline
+
+As discussed in the **SCA using the Snyk exercise**, we can put Snyk in our CI/CD pipeline.  
+
+However, do remember that you need run commands manually in a local system like **DevSecOps Box** before embedding commands for automated execution in CI/CD pipelines.  
+
+Manually testing commands in a local environment like DevSecOps Box helps in easy troubleshooting.  
+
+Since **Snyk** is a paid tool, you would also need to add the **SNYK_TOKEN** to the CI/CD variables on GitLab CI.  
+
+⚠️ **Do not use your company’s Snyk Credentials/Token** to practice these exercises. Please sign up for a **Free Account** instead.  
+
+---
+
+## Configure the Snyk Token
+
+Let’s login into GitLab and configure this token:  
+👉 [GitLab CI/CD Settings](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd)
+
+Click on the **Expand** button under the Variables section, then click on the **Add Variable** button.  
+
+Add the following key/value pair in the form:  
+
+| Name | Value |
+|------|-------|
+| Key  | `SNYK_TOKEN` |
+| Value | `INSERT_SNYK_TOKEN_HERE`, you can find the token in your Snyk account at [https://app.snyk.io/account](https://app.snyk.io/account) |
+
+Finally, click on the **Add Variable** button.  
+
+---
+
+## Update the Pipeline
+
+Next, please visit:  
+👉 [Edit .gitlab-ci.yml](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml)  
+
+Click on the **Edit** button and append the following code to the `.gitlab-ci.yml` file.  
+
+---
+
+**Click anywhere to copy**
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+oast-snyk:
+  stage: build
+  image: node:alpine3.10
+  before_script:
+    - wget -O snyk https://github.com/snyk/cli/releases/download/v1.1156.0/snyk-alpine
+    - chmod +x snyk
+    - mv snyk /usr/local/bin/
+  script:
+    - npm install
+    - snyk auth $SNYK_TOKEN
+    - snyk test --json > snyk-results.json
+    - cat snyk-results.json
+  artifacts:
+    paths:
+      - snyk-results.json
+    when: always
+    expire_in: one week
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+````
+
+---
+
+## Verify the Pipeline
+
+As discussed, **any change to the repo kickstarts the pipeline.**
+
+We can see the results of this pipeline by visiting:
+👉 [Pipeline Results](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to see the output.
+
+---
+
+## Next Step
+
+In the next step, you will learn **why you need to fail the builds**.
+
+```
+```
+````md
+# Allow the job failure
+
+**Remember!**
+
+Except for **DevSecOps-Box**, every other machine closes after two hours, even if you are in the middle of the exercise.  
+You need to refresh the exercise page and click on **Start the Exercise** button to continue working on it.  
+
+You do not want to fail the builds in **DevSecOps Maturity Levels 1 and 2**.  
+If a security tool fails a job upon finding security issues, you would want to allow it to fail and not block the builds as there would be **false positives** in the results.  
+
+You can use the **allow_failure** tag to *“not fail the build”* even though the tool found security issues.  
+
+```yaml
+oast-snyk:
+  stage: build
+  image: node:alpine3.10
+  before_script:
+    - wget -O snyk https://github.com/snyk/cli/releases/download/v1.1156.0/snyk-alpine
+    - chmod +x snyk
+    - mv snyk /usr/local/bin/
+  script:
+    - npm install
+    - snyk auth $SNYK_TOKEN
+    - snyk test --json > snyk-results.json
+    - cat snyk-results.json
+  artifacts:
+    paths:
+      - snyk-results.json
+    when: always
+  allow_failure: true #<--- allow the build to fail but don't mark it as such
+````
+
+---
+
+## Final Pipeline
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+oast-snyk:
+  stage: build
+  image: node:alpine3.10
+  before_script:
+    - wget -O snyk https://github.com/snyk/cli/releases/download/v1.1156.0/snyk-alpine
+    - chmod +x snyk
+    - mv snyk /usr/local/bin/
+  script:
+    - npm install
+    - snyk auth $SNYK_TOKEN
+    - snyk test --json > snyk-results.json
+    - cat snyk-results.json
+  artifacts:
+    paths:
+      - snyk-results.json
+    when: always
+    expire_in: one week
+  allow_failure: true
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+```
+
+---
+
+## Key Notes
+
+* You will notice that the **oast-snyk** job has failed, but other jobs and stages ran fine.
+* As discussed, any change to the repo **kick starts the pipeline**.
+* We can see the results of this pipeline by visiting:
+  👉 [GitLab Pipeline Results](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to see the output/results.
+
+---
+
+## Remember!
+
+* Did you notice the job failed because of **non zero exit code** (here, exit code 1)?
+* **Why did the job fail?** Because the tool found security issues.
+
+  * This is the **expected behavior** of any DevSecOps friendly tool.
+* You need to either **fix the security issues** or add `allow_failure: true` to let the job finish without blocking other jobs.
+
+👉 If you have troubles understanding **exit code**, please go through the exercise titled **Working with Exit Code**.
+
+---
+
+✅ Let’s move to the next step.
+
+```
+```
+```md
+# Extra Mile Exercise: Analyze the results from Snyk and remove any false positives
+
+## Who should do this exercise?
+This exercise is beyond the CDP course’s scope. It’s added to help folks who already know these concepts in and out.
+You can write small scripts in Python or Ruby or Golang.
+You consider yourself an expert or advanced user in SAST.
+
+## Challenges
+Recall techniques you have learned in the previous exercises.
+
+- Login into the Snyk portal and explore the findings
+- Mark false positives as false positives
+- Ensure each result is at the right severity level (HIGH, MEDIUM, LOW)
+- Export the final report and suggest remediation steps to developers
+- Ensure false positives are not shown again in CI scans
+
+**Note**
+
+We will not provide solutions for this extra mile exercise.
+```
+```markdown
+Software Component Analysis Using NPM Audit
+Download the source code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, We need to download the source code of the project from our git repository.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+
+Command Output
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+Let’s cd into the application code so we can scan the app.
+
+
+cd webapp
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Install NPM
+NPM has security built in since npm@6, this command allows you to analyze dependencies in your existing code to identify insecure dependencies, have a good security report, and also easy to implement it into CI/CD pipeline without install any packages except NPM itself.
+
+We will install NodeJS and also NPM with the following command.
+
+
+curl -sL https://deb.nodesource.com/setup_14.x | bash -
+
+
+apt install nodejs -y
+
+npm audit tool is part of npm and it gets installed when you install node.js. Let’s check the help menu of npm audit to understand its feature set.
+
+
+npm audit -h
+
+Command Output
+npm audit [--json] [--production]
+npm audit fix [--force|--package-lock-only|--dry-run|--production|--only=(dev|prod)]
+Which options would you choose from this list?
+
+Let’s move to the next step.
+```
+````markdown
+Run the Scanner
+We can run the basic command without any extra arguments, however the output is not suitable for a CI/CD pipeline because the output is not in a machine readable format.
+
+First, we need to install the dependencies using npm install.
+
+
+npm install
+
+Let’s run the npm audit command.
+
+
+npm audit
+
+Command Output
+
+...[SNIP]...
+
+┌───────────────┬──────────────────────────────────────────────────────────────┐
+│ High          │ ini before 1.3.6 vulnerable to Prototype Pollution via       │
+│               │ ini.parse                                                    │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Package       │ ini                                                          │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Patched in    │ >=1.3.6                                                      │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Dependency of │ grunt-npm-install [dev]                                      │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Path          │ grunt-npm-install > npm > config-chain > ini                 │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ More info     │ https://github.com/advisories/GHSA-qqgx-2p2h-9c37            │
+└───────────────┴──────────────────────────────────────────────────────────────┘
+found 250 vulnerabilities (22 low, 79 moderate, 119 high, 30 critical) in 1347 scanned packages
+  38 vulnerabilities require semver-major dependency updates.
+  212 vulnerabilities require manual review. See the full report for details.
+As we can see, the basic command gives us the report in a table format
+
+As we have learned in the DevSecOps Gospel, we should save the output in a machine-readable format so the output can be parsed by the machines.
+
+We can save the output in JSON format using --json flag.
+
+
+npm audit --json | tee results.json
+
+Command Output
+
+...[SNIP]...
+
+    "1091252": {
+      "findings": [
+        {
+          "version": "1.3.4",
+          "paths": [
+            "grunt-npm-install>npm>ini",
+            "grunt-npm-install>npm>config-chain>ini"
+          ]
+        }
+      ],
+      "metadata": null,
+      "vulnerable_versions": "<1.3.6",
+      "module_name": "ini",
+      "severity": "high",
+      "github_advisory_id": "GHSA-qqgx-2p2h-9c37",
+      "cves": [
+        "CVE-2020-7788"
+      ],
+      "access": "public",
+      "patched_versions": ">=1.3.6",
+      "cvss": {
+        "score": 7.3,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L"
+      },
+      "updated": "2023-03-02T21:03:59.000Z",
+      "recommendation": "Upgrade to version 1.3.6 or later",
+      "cwe": [
+        "CWE-1321"
+      ],
+      "found_by": null,
+      "deleted": null,
+      "id": 1091252,
+      "references": "- https://github.com/npm/ini/commit/56d2805e07ccd94e2ba0984ac9240ff02d44b6f1\n- https://www.npmjs.com/advisories/1589\n- https://snyk.io/vuln/SNYK-JS-INI-1048974\n- https://nvd.nist.gov/vuln/detail/CVE-2020-7788\n- https://lists.debian.org/debian-lts-announce/2020/12/msg00032.html\n- https://github.com/advisories/GHSA-qqgx-2p2h-9c37",
+      "created": "2020-12-10T16:53:45.000Z",
+      "reported_by": null,
+      "title": "ini before 1.3.6 vulnerable to Prototype Pollution via ini.parse",
+      "npm_advisory_id": null,
+      "overview": "### Overview\nThe `ini` npm package before version 1.3.6 has a Prototype Pollution vulnerability.\n\nIf an attacker submits a malicious INI file to an application that parses it with `ini.parse`, they will pollute the prototype on the application. This can be exploited further depending on the context.\n\n### Patches\n\nThis has been patched in 1.3.6.\n\n### Steps to reproduce\n\npayload.ini\n```\n[__proto__]\npolluted = \"polluted\"\n```\n\npoc.js:\n```\nvar fs = require('fs')\nvar ini = require('ini')\n\nvar parsed = ini.parse(fs.readFileSync('./payload.ini', 'utf-8'))\nconsole.log(parsed)\nconsole.log(parsed.__proto__)\nconsole.log(polluted)\n```\n\n```\n> node poc.js\n{}\n{ polluted: 'polluted' }\n{ polluted: 'polluted' }\npolluted\n```",
+      "url": "https://github.com/advisories/GHSA-qqgx-2p2h-9c37"
+    }
+  },
+  "muted": [],
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 22,
+      "moderate": 79,
+      "high": 119,
+      "critical": 30
+    },
+    "dependencies": 409,
+    "devDependencies": 934,
+    "optionalDependencies": 57,
+    "totalDependencies": 1347
+  },
+  "runId": "096c6f2f-8d40-4af6-8796-da4e94c0bc43"
+}
+There you go. Why don’t you embed npm audit in CI/CD pipeline?
+````
+```markdown
+Software Component Analysis Using AuditJS
+Download the source code
+Like always, we will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, We need to download the source code of the project from our git repository.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+
+Command Output
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+Let’s cd into the application code so we can scan the app.
+
+
+cd webapp
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Install AuditJS
+AuditJS Audits an NPM package.json file to identify known vulnerabilities. It uses the OSS Index v3 REST API from Sonatype to identify known vulnerabilities and outdated package versions.
+
+Since AuditJS needs npm, we will install NodeJS and NPM with the following command.
+
+
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE_MAJOR=20
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+apt update
+
+
+apt install nodejs -y
+
+Let’s install auditjs with NPM.
+
+
+npm install -g auditjs
+
+Perfect, we have installed the tool. Let’s check the help menu to understand its feature set.
+
+
+auditjs -h
+
+Command Output
+auditjs [command]
+
+Commands:
+  auditjs iq [options]    Audit this application using Nexus IQ Server
+  auditjs config          Set config for OSS Index or Nexus IQ Server
+  auditjs ossi [options]  Audit this application using Sonatype OSS Index
+
+Options:
+  --version  Show version number                                       [boolean]
+  --help     Show help                                                 [boolean]
+auditjs provides you with the ability to use two different indices i.e., either Nexus IQ Server or Sonatype OSS Index. This tool will automatically update the index based on your input and will poll the index to find if we are using any vulnerable components.
+
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+We will use Sonatype as an index to scan our project’s components. If you explore the help menu, you will see we can use ossi as index.
+
+
+auditjs ossi --help
+
+Command Output
+auditjs ossi [options]
+
+Audit this application using Sonatype OSS Index
+
+Commands:
+  auditjs ossi sbom  Output the purl only CycloneDx sbom to std_out
+
+Options:
+      --version    Show version number                                 [boolean]
+      --help       Show help                                           [boolean]
+  -u, --user       Specify OSS Index username                           [string]
+  -p, --password   Specify OSS Index password or token                  [string]
+  -c, --cache      Specify path to use as a cache location              [string]
+  -q, --quiet      Only print out vulnerable dependencies              [boolean]
+  -j, --json       Set output to JSON                                  [boolean]
+  -x, --xml        Set output to JUnit XML format                      [boolean]
+  -w, --whitelist  Set path to whitelist file                           [string]
+      --clear      Clears cache location if it has been set in config  [boolean]
+      --bower      Force the application to explicitly scan for Bower  [boolean]
+Let’s perform the scan using the following command.
+
+
+auditjs ossi
+
+Command Output
+ ________   ___  ___   ________   ___   _________       ___   ________
+|\   __  \ |\  \|\  \ |\   ___ \ |\  \ |\___   ___\    |\  \ |\   ____\
+\ \  \|\  \\ \  \\\  \\ \  \_|\ \\ \  \\|___ \  \_|    \ \  \\ \  \___|_
+ \ \   __  \\ \  \\\  \\ \  \ \\ \\ \  \    \ \  \   __ \ \  \\ \_____  \
+  \ \  \ \  \\ \  \\\  \\ \  \_\\ \\ \  \    \ \  \ |\  \\_\  \\|____|\  \
+   \ \__\ \__\\ \_______\\ \_______\\ \__\    \ \__\\ \________\ ____\_\  \
+    \|__|\|__| \|_______| \|_______| \|__|     \|__| \|________||\_________\
+                                                                \|_________|
+
+
+  _      _                       _   _
+ /_)    /_`_  _  _ _/_   _  _   (/  /_`_._  _   _/ _
+/_)/_/ ._//_// //_|/ /_//_//_' (_X /  ///_'/ //_/_\
+   _/                _//
+
+  AuditJS version: 4.0.39
+
+✔ Starting application
+[2023-03-05T05:58:10.320] [ERROR] auditjs - Failed project directory validation.  Are you in a (built) node, yarn, or bower project directory?
+Error: Could not instantiate muncher
+    at new Application (/usr/lib/node_modules/auditjs/bin/Application/Application.js:68:19)
+    at Object.<anonymous> (/usr/lib/node_modules/auditjs/bin/index.js:206:23)
+    at Module._compile (internal/modules/cjs/loader.js:1114:14)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1143:10)
+    at Module.load (internal/modules/cjs/loader.js:979:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:819:12)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:75:12)
+    at internal/main/run_main_module.js:17:47
+As you can see, it’s complaining that we haven’t installed these dependencies locally, so lets install our components using npm install.
+
+
+npm install
+
+Are you wondering how we can figure these commands? It’s simple, you either read the project’s documentation or you run some trials and figure out what to do.
+
+Now that’s done, re-run the auditjs command once again.
+
+
+auditjs ossi
+
+Command Output
+  ________   ___  ___   ________   ___   _________       ___   ________      
+|\   __  \ |\  \|\  \ |\   ___ \ |\  \ |\___   ___\    |\  \ |\   ____\     
+\ \  \|\  \\ \  \\\  \\ \  \_|\ \\ \  \\|___ \  \_|    \ \  \\ \  \___|_    
+ \ \   __  \\ \  \\\  \\ \  \ \\ \\ \  \    \ \  \   __ \ \  \\ \_____  \   
+  \ \  \ \  \\ \  \\\  \\ \  \_\\ \\ \  \    \ \  \ |\  \\_\  \\|____|\  \  
+   \ \__\ \__\\ \_______\\ \_______\\ \__\    \ \__\\ \________\ ____\_\  \ 
+    \|__|\|__| \|_______| \|_______| \|__|     \|__| \|________||\_________\
+                                                                \|_________|
+
+
+  _      _                       _   _              
+ /_)    /_`_  _  _ _/_   _  _   (/  /_`_._  _   _/ _
+/_)/_/ ._//_// //_|/ /_//_//_' (_X /  ///_'/ //_/_\ 
+   _/                _//                            
+
+  AuditJS version: 4.0.39
+
+✔ Starting application
+✔ Getting coordinates for Sonatype OSS Index
+✔ Auditing your application with Sonatype OSS Index
+✔ Submitting coordinates to Sonatype OSS Index
+✔ Reticulating splines
+✔ Removing whitelisted vulnerabilities
+
+  Sonabot here, beep boop beep boop, here are your Sonatype OSS Index results:
+  Total dependencies audited: 350
+
+...[SNIP]...
+
+[335/350] - pkg:npm/utile@0.2.1 - 1 vulnerability found!
+
+  Vulnerability Title:  1 vulnerability found
+  ID:  sonatype-2018-0208
+  Description:  1 non-CVE vulnerability found. To see more details, please create a free account at https://ossindex.sonatype.org/ and request for this information using your registered account
+  CVSS Score:  9.1
+  CVSS Vector:  CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H
+  Reference:  https://ossindex.sonatype.org/vulnerability/sonatype-2018-0208
+
+[336/350] - pkg:npm/utile@0.3.0 - 1 vulnerability found!
+
+  Vulnerability Title:  1 vulnerability found
+  ID:  sonatype-2018-0208
+  Description:  1 non-CVE vulnerability found. To see more details, please create a free account at https://ossindex.sonatype.org/ and request for this information using your registered account
+  CVSS Score:  9.1
+  CVSS Vector:  CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H
+  Reference:  https://ossindex.sonatype.org/vulnerability/sonatype-2018-0208
+
+[337/350] - pkg:npm/utils-merge@1.0.0 - No vulnerabilities found!
+[338/350] - pkg:npm/utils-merge@1.0.1 - No vulnerabilities found!
+[339/350] - pkg:npm/vary@1.1.2 - No vulnerabilities found!
+[340/350] - pkg:npm/which-boxed-primitive@1.0.2 - No vulnerabilities found!
+[341/350] - pkg:npm/which-collection@1.0.1 - No vulnerabilities found!
+[342/350] - pkg:npm/which-typed-array@1.1.9 - No vulnerabilities found!
+[343/350] - pkg:npm/window-size@0.1.0 - No vulnerabilities found!
+[344/350] - pkg:npm/winston@0.8.0 - No vulnerabilities found!
+[345/350] - pkg:npm/winston@0.8.3 - No vulnerabilities found!
+[346/350] - pkg:npm/wordwrap@0.0.2 - No vulnerabilities found!
+[347/350] - pkg:npm/wordwrap@0.0.3 - No vulnerabilities found!
+[348/350] - pkg:npm/wrappy@1.0.2 - No vulnerabilities found!
+[349/350] - pkg:npm/x-xss-protection@1.0.0 - No vulnerabilities found!
+[350/350] - pkg:npm/yargs@3.5.4 - No vulnerabilities found!
+--------------------------------------------------------------------------
+As we can see, the basic command gives us the report in a table format.
+
+As we have learned in the DevSecOps Gospel, we should save the output in a machine-readable format so the output can be parsed by the machines.
+
+We can save the output in JSON format using -j flag and make it print the vulnerable dependencies only using -q flag.
+
+
+auditjs ossi -q -j | tee auditjs-output.json
+
+Command Output
+[
+
+...[SNIP]...
+
+  {
+    "coordinates": "pkg:npm/uglify-js@2.4.24",
+    "description": "JavaScript parser, mangler/compressor and beautifier toolkit",
+    "reference": "https://ossindex.sonatype.org/component/pkg:npm/uglify-js@2.4.24?utm_source=auditjs&utm_medium=integration&utm_content=4.0.39",
+    "vulnerabilities": [
+      {
+        "id": "sonatype-2015-0010",
+        "title": "[sonatype-2015-0010] CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')",
+        "description": "uglify-js - [ CVE-2015-8858 ] Regular Expression Denial of Service \n\nThe software does not properly restrict the size or amount of resources that are requested or influenced by an actor, which can be used to consume more resources than intended.",
+        "cvssScore": 7.5,
+        "cvssVector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+        "cve": "CVE-2015-8858",
+        "reference": "https://ossindex.sonatype.org/vulnerability/sonatype-2015-0010?component-type=npm&component-name=uglify-js&utm_source=auditjs&utm_medium=integration&utm_content=4.0.39"
+      }
+    ]
+  }
+]
+Great! Why don’t you embed auditjs in CI/CD pipeline?
+```
+```markdown
+How To Embed AuditJS Into GitLab
+A Simple CI/CD Pipeline
+Let’s download the code using git clone in DevSecOps Box.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/nodejs.git nodejs
+
+
+cd nodejs
+
+Rename git url to the new one.
+
+
+git remote rename origin old-origin
+
+
+git remote add origin git@gitlab-ce-kr6k1mdm:root/nodejs.git
+
+Then, push the code into the repository.
+
+
+git push -u origin --all
+
+And enter the GitLab credentials.
+
+Name	Value
+Username	root
+Password	pdso-training
+The above command will create a new project for nodejs if not exist.
+
+Next, considering your DevOps team created a simple CI pipeline with the following contents.
+
+Click anywhere to copy
+
+image: node:alpine3.10
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+test:
+  stage: test
+  script:
+    - echo "This is an test step"
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
+
+Let’s log into GitLab using the following details and run the above pipeline.
+
+GitLab CI/CD Machine
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/nodejs/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline runs
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/nodejs/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Embed AuditJS in CI/CD pipeline
+As discussed in the SCA using AuditJS exercise, we can embed the AuditJS tool in our CI/CD pipeline.
+
+However, do remember that you need run commands manually in a local system like devsecops box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like devsecops box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Maybe you want to scan the components before performing SAST scans.
+
+Click anywhere to copy
+
+image: node:alpine3.10
+
+cache:
+  paths:
+  - node_modules/
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - npm install
+
+test:
+  stage: test
+  script:
+    - echo "This is an test step"
+
+auditjs:
+  image: docker:dind
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src -w /src hysnsec/auditjs ossi -q -j | tee auditjs-output.json
+  artifacts:
+    paths: [auditjs-output.json]
+    when: always # What is this for?
+    expire_in: one week
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/nodejs/-/blob/main/.gitlab-ci.yml.
+
+Do not forget to click on the “Commit Changes” button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/nodejs/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Remember!
+
+Did you notice the job failed because of non zero exit code?
+
+Why did the job fail? Because the tool found security issues. This is the expected behavior of any DevSecOps friendly tool.
+
+You need to either fix the security issues or add allow_failure: true to let the job finish without blocking other jobs.
+
+If you have troubles understanding exit code, please go through the exercise titled Working with Exit Code.
+
+You will notice that the auditjs job stores the output to a file auditjs-output.json.
+
+In the next step, you will learn the need to not fail the builds (pipeline).
+```
+```markdown
+Allow the job failure
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise
+After two hours, in case of a 404, you need to refresh the exercise page and click on Start the Exercise button to continue working
+You do not want to fail the builds (pipeline) in DevSecOps Maturity Levels 1 and 2. If a security tool fails a build upon security findings, you would want to allow it to fail and not block the pipeline as there would be false positives in the results.
+
+You can use the allow_failure tag to not fail the builds even though the tool found security issues.
+
+auditjs:
+  image: docker:dind
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src -w /src hysnsec/auditjs ossi -q -j | tee auditjs-output.json
+  artifacts:
+    paths: [auditjs-output.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true  #<--- allow the build to fail but don't mark it as such
+Notice allow_failure: true at the end of the YAML file.
+
+The final pipeline would look like the following.
+
+Click anywhere to copy
+
+image: node:alpine3.10
+
+cache:
+  paths:
+  - node_modules/
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - npm install
+
+test:
+  stage: test
+  script:
+    - echo "This is an test step"
+
+auditjs:
+  image: docker:dind
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src -w /src hysnsec/auditjs ossi -q -j | tee auditjs-output.json
+  artifacts:
+    paths: [auditjs-output.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true  #<--- allow the build to fail but don't mark it as such
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
+
+Go ahead and add it to the .gitlab-ci.yml file to run the pipeline.
+
+You will notice that the auditjs job has failed but didn’t block the other jobs from running.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/nodejs/pipelines.
+
+Click on the appropriate job name to see the output.
+```
+```markdown
+Software Component Analysis Using bundler-audit
+Download the source code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, We need to download the source code of the project from our git repository.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/rails.git webapp
+
+Let’s cd into the application so we can scan the app.
+
+
+cd webapp
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Install bundler-audit
+Basically, our system doesn’t have Ruby installed, so we need to install it using rbenv utility so lets install rbenv.
+
+
+curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash
+
+Command Output
+Installing rbenv with git...
+Initialized empty Git repository in /root/.rbenv/.git/
+Updating origin
+remote: Enumerating objects: 2889, done.
+remote: Counting objects: 100% (46/46), done.
+remote: Compressing objects: 100% (37/37), done.
+remote: Total 2889 (delta 20), reused 19 (delta 9), pack-reused 2843
+Receiving objects: 100% (2889/2889), 558.75 KiB | 18.63 MiB/s, done.
+Resolving deltas: 100% (1808/1808), done.
+From https://github.com/rbenv/rbenv
+ * [new branch]      master     -> origin/master
+ * [new tag]         v0.1.0     -> v0.1.0
+ * [new tag]         v0.1.1     -> v0.1.1
+ * [new tag]         v0.1.2     -> v0.1.2
+ * [new tag]         v0.2.0     -> v0.2.0
+ * [new tag]         v0.2.1     -> v0.2.1
+ * [new tag]         v0.3.0     -> v0.3.0
+ * [new tag]         v0.4.0     -> v0.4.0
+ * [new tag]         v1.0.0     -> v1.0.0
+ * [new tag]         v1.1.0     -> v1.1.0
+ * [new tag]         v1.1.1     -> v1.1.1
+ * [new tag]         v1.1.2     -> v1.1.2
+Branch 'master' set up to track remote branch 'master' from 'origin'.
+Already on 'master'
+warning: gcc not found; using CC=cc
+aborted: compiler not found: cc
+Optional bash extension failed to build, but things will still work normally.
+
+Installing ruby-build with git...
+Cloning into '/root/.rbenv/plugins/ruby-build'...
+remote: Enumerating objects: 11574, done.
+remote: Counting objects: 100% (267/267), done.
+remote: Compressing objects: 100% (138/138), done.
+remote: Total 11574 (delta 197), reused 172 (delta 116), pack-reused 11307
+Receiving objects: 100% (11574/11574), 2.44 MiB | 22.53 MiB/s, done.
+Resolving deltas: 100% (7664/7664), done.
+
+All done!
+Note that this installer does NOT edit your shell configuration files:
+1. You'll want to ensure that `~/.rbenv/bin' is added to PATH.
+2. Run `rbenv init' to view instructions on how to configure rbenv for your shell.
+3. Launch a new terminal window after editing shell configuration files.
+4. (Optional) Run the doctor command to verify the installation:
+   wget -q "https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-doctor" -O- | bash
+The rbenv utility is complaining about not being on the path, so lets add it to the path using the following command.
+
+
+export PATH="~/.rbenv/bin:$PATH"
+
+Before we install ruby, lets check what version of ruby our project needs by peeking into Gemfile
+
+
+cat Gemfile
+
+Command Output
+# frozen_string_literal: true
+source "https://rubygems.org"
+
+#don't upgrade
+gem "rails", "6.0.0"
+
+ruby "2.6.5"
+
+gem "aruba"
+gem "bcrypt"
+gem "coffee-rails"
+gem "execjs"
+gem "foreman"
+gem "jquery-fileupload-rails"
+gem "jquery-rails"
+gem "minitest"
+gem "powder" # Pow related gem
+gem "pry-rails" # not in dev group in case running via prod/staging @ a training
+gem "puma"
+gem "rails-perftest"
+gem "rake"
+gem "responders" #For Rails 4.2 # LOCKED DOWN
+gem "ruby-prof"
+gem "sassc-rails"
+gem "simplecov", require: false, group: :test
+gem "sqlite3"
+gem "therubyracer"
+gem "turbolinks"
+gem "uglifier"
+gem "unicorn"
+
+# Add SMTP server support using MailCatcher
+# NOTE: https://github.com/sj26/mailcatcher#bundler
+# gem 'mailcatcher'
+
+group :development, :mysql do
+  gem "better_errors"
+  gem "binding_of_caller"
+  gem "bundler-audit"
+  gem "guard-livereload"
+  gem "guard-rspec"
+  gem "guard-shell"
+  gem "pry"
+  gem "rack-livereload"
+  gem "rb-fsevent"
+  gem "rubocop-github"
+  gem "travis-lint"
+end
+
+group :development, :test, :mysql do
+  gem "capybara"
+  gem "database_cleaner"
+  gem "launchy"
+  gem "poltergeist"
+  gem "rspec-rails", '4.0.0.beta3' # 4/26/2019: LOCKED DOWN
+  gem "test-unit"
+end
+
+group :openshift do
+  gem "pg"
+end
+
+group :mysql do
+  gem "mysql2"
+end
+Okay, it seems we need to use ruby “2.6.5”. Let’s go ahead and install it using rbenv
+
+
+rbenv install 2.6.5
+
+Command Output
+Downloading ruby-2.6.5.tar.bz2...
+-> https://cache.ruby-lang.org/pub/ruby/2.6/ruby-2.6.5.tar.bz2
+Installing ruby-2.6.5...
+
+BUILD FAILED (Ubuntu 18.04 using ruby-build 20210510)
+
+Inspect or clean up the working tree at /tmp/ruby-build.20210513032818.200.7hPWvg
+Results logged to /tmp/ruby-build.20210513032818.200.log
+
+Last 10 log lines:
+checking for ruby... false
+checking build system type... x86_64-pc-linux-gnu
+checking host system type... x86_64-pc-linux-gnu
+checking target system type... x86_64-pc-linux-gnu
+checking for gcc... no
+checking for cc... no
+checking for cl.exe... no
+configure: error: in `/tmp/ruby-build.20210513032818.200.7hPWvg/ruby-2.6.5':
+configure: error: no acceptable C compiler found in $PATH
+See `config.log' for more details
+Now, we need to install a compiler. Let’s update apt first.
+
+
+apt update
+
+Then install the essential compiler for Ruby.
+
+
+apt-get install build-essential libreadline-dev -y
+
+Command Output
+...[SNIP]...
+
+Setting up gcc-7 (7.5.0-3ubuntu1~18.04) ...
+Setting up g++-7 (7.5.0-3ubuntu1~18.04) ...
+Setting up gcc (4:7.4.0-1ubuntu2.3) ...
+Setting up dpkg-dev (1.19.0.5ubuntu2.3) ...
+Setting up g++ (4:7.4.0-1ubuntu2.3) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+Setting up build-essential (12.4ubuntu1) ...
+Processing triggers for libc-bin (2.27-3ubuntu1.4) ...
+Let’s try installing ruby again.
+
+
+rbenv install --verbose 2.6.5
+
+We need to add ruby to the path.
+
+
+export PATH="/root/.rbenv/versions/2.6.5/bin:$PATH"
+
+Okay, its done. Now, we can verify the ruby version using the following command.
+
+
+ruby --version
+
+Command Output
+ruby 2.6.5p114 (2019-10-01 revision 67812) [x86_64-linux]
+Let’s install the bundler-audit tool to perform SCA.
+
+
+gem install --user-install bundler-audit
+
+Command Output
+Fetching bundler-audit-0.8.0.gem
+Fetching thor-1.1.0.gem
+WARNING:  You don't have /root/.gem/ruby/2.6.0/bin in your PATH,
+          gem executables will not run.
+Successfully installed thor-1.1.0
+Successfully installed bundler-audit-0.8.0
+Parsing documentation for thor-1.1.0
+Installing ri documentation for thor-1.1.0
+Parsing documentation for bundler-audit-0.8.0
+Installing ri documentation for bundler-audit-0.8.0
+Done installing documentation for thor, bundler-audit after 1 seconds
+2 gems installed
+We will add the tool to the PATH, so we can refer it on the command line.
+
+
+export PATH="~/.gem/ruby/2.6.0/bin/:$PATH"
+
+We have successfully installed bundler-audit.
+
+Let’s explore what options bundle-audit gives us.
+
+
+bundle-audit -h
+
+Command Output
+Commands:
+  bundle-audit check [DIR]     # Checks the Gemfile.lock for insecure dependencies
+  bundle-audit download        # Downloads ruby-advisory-db
+  bundle-audit help [COMMAND]  # Describe available commands or one specific command
+  bundle-audit stats           # Prints ruby-advisory-db stats
+  bundle-audit update          # Updates the ruby-advisory-db
+  bundle-audit version         # Prints the bundler-audit version
+Let’s move to the next step.
+```
+```markdown
+Run the OAST/SCA Scan
+The idea here is to show you that the tools are not perfect, installation steps might break and even simple things won’t work in a predictable manner.
+
+Let’s perform the SCA scan on our code with the following command.
+
+
+bundle-audit
+
+Command Output
+Download ruby-advisory-db ...
+Cloning into '/root/.local/share/ruby-advisory-db'...
+remote: Enumerating objects: 5127, done.
+remote: Counting objects: 100% (130/130), done.
+remote: Compressing objects: 100% (92/92), done.
+remote: Total 5127 (delta 48), reused 86 (delta 26), pack-reused 4997
+Receiving objects: 100% (5127/5127), 943.82 KiB | 18.51 MiB/s, done.
+Resolving deltas: 100% (2505/2505), done.
+ruby-advisory-db:
+  advisories:   500 advisories
+  last updated: 2021-05-10 10:23:43 -0700
+Name: actionpack
+Version: 6.0.0
+CVE: CVE-2021-22904
+Criticality: Unknown
+URL: https://groups.google.com/g/rubyonrails-security/c/Pf1TjkOBdyQ
+Title: Possible DoS Vulnerability in Action Controller Token Authentication
+Solution: upgrade to ~> 5.2.4.6, ~> 5.2.6, ~> 6.0.3.7, >= 6.1.3.2
+
+Name: actionpack
+Version: 6.0.0
+CVE: CVE-2020-8264
+Criticality: Unknown
+URL: https://groups.google.com/g/rubyonrails-security/c/yQzUVfv42jk
+Title: Possible XSS Vulnerability in Action Pack in Development Mode
+Solution: upgrade to >= 6.0.3.4
+
+Name: actionpack
+Version: 6.0.0
+CVE: CVE-2021-22881
+Criticality: Unknown
+URL: https://groups.google.com/g/rubyonrails-security/c/zN_3qA26l6E
+Title: Possible Open Redirect in Host Authorization Middleware
+Solution: upgrade to ~> 6.0.3.5, >= 6.1.2.1
+
+
+...[SNIP]...
+
+
+Name: rack
+Version: 2.0.7
+CVE: CVE-2020-8161
+Criticality: Unknown
+URL: https://groups.google.com/forum/#!topic/ruby-security-ann/T4ZIsfRf2eA
+Title: Directory traversal in Rack::Directory app bundled with Rack
+Solution: upgrade to ~> 2.1.3, >= 2.2.0
+
+Name: websocket-extensions
+Version: 0.1.4
+CVE: CVE-2020-7663
+GHSA: GHSA-g6wq-qcwm-j5g2
+Criticality: High
+URL: https://github.com/faye/websocket-extensions-ruby/security/advisories/GHSA-g6wq-qcwm-j5g2
+Title: Regular Expression Denial of Service in websocket-extensions (RubyGem)
+Solution: upgrade to >= 0.1.5
+
+Vulnerabilities found!
+As you can see, there are several vulnerabilities in our Rails application and also bundle-audit allows us to mark an issue or issues as False Positive (FP) using .bundler-audit.yml file, please refer this link to learn more.
+```
+```markdown
+How To Embed bundler-audit Into GitLab
+A Simple CI/CD Pipeline
+Let’s download the code using git clone in DevSecOps Box.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/rails.git rails
+
+
+cd rails
+
+Rename git url to the new one.
+
+
+git remote rename origin old-origin
+
+
+git remote add origin git@gitlab-ce-kr6k1mdm:root/rails.git
+
+Then, push the code into the repository.
+
+
+git push -u origin --all
+
+And enter the GitLab credentials.
+
+Name	Value
+Username	root
+Password	pdso-training
+The above command will create a new project for rails if not exist.
+
+Next, considering your DevOps team created a simple CI pipeline with the following contents.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
+  when: manual # Continuous Delivery
+
+Let’s log into GitLab using the following details and run the above pipeline.
+
+GitLab CI/CD Machine
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/rails/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline runs
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/rails/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Embed bundler-audit in CI/CD pipeline
+As discussed in the SCA using bundler-audit exercise, we can embed the bundler-audit tool in our CI/CD pipeline.
+
+However, do remember that you need run commands manually in a local system like devsecops box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like devsecops box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Maybe you want to scan the components before performing SAST scans.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+bundler-audit:
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src -w /src hysnsec/bundle-audit check --format json --output bundle-audit-output.json
+  artifacts:
+    paths: [bundle-audit-output.json]
+    when: always # What is this for?
+    expire_in: one week
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
+  when: manual # Continuous Delivery
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/rails/-/blob/main/.gitlab-ci.yml.
+
+Do not forget to click on the Commit Changes button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/rails/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Remember!
+
+Did you notice the job failed because of non zero exit code(exit code 1)?
+
+Why did the job fail? Because the tool found security issues. This is the expected behavior of any DevSecOps friendly tool.
+
+You need to either fix the security issues or add allow_failure: true to let the job finish without blocking other jobs.
+
+If you have troubles understanding exit code, please go through the exercise titled Working with Exit Code.
+
+You will notice that the bundler-audit job stores the output to a file bundle-audit-output.json.
+
+In the next step, you will learn the need to not fail the builds.
+```
+```markdown
+Allow the job failure
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise
+After two hours, in case of a 404, you need to refresh the exercise page and click on Start the Exercise button to continue working
+You do not want to fail the builds (pipeline) in DevSecOps Maturity Levels 1 and 2. If a security tool fails a build upon security findings, you would want to allow it to fail and not block the pipeline as there would be false positives in the results.
+
+You can use the allow_failure tag to not fail the builds even though the tool found security issues.
+
+bundler-audit:
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src -w /src hysnsec/bundle-audit check --format json --output bundle-audit-output.json
+  artifacts:
+    paths: [bundle-audit-output.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true  #<--- allow the build to fail but don't mark it as such
+Notice allow_failure: true at the end of the YAML file.
+
+The final pipeline would look like the following.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+bundler-audit:
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src -w /src hysnsec/bundle-audit check --format json --output bundle-audit-output.json
+  artifacts:
+    paths: [bundle-audit-output.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true  #<--- allow the build to fail but don't mark it as such
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
+  when: manual # Continuous Delivery
+
+Go ahead and add it to the .gitlab-ci.yml file to run the pipeline.
+
+Understanding -v option in docker command
+You will notice that the bundler-audit job has failed but didn’t block the other jobs from running.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/rails/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Back
+Mark as compl
+```
+```markdown
+Software Component Analysis Using Composer Audit
+Download the source code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, We need to download the source code of the project from our git repository.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/php.git
+
+Command Output
+Cloning into 'php'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/php.git/
+remote: Enumerating objects: 312, done.
+remote: Counting objects: 100% (50/50), done.
+remote: Compressing objects: 100% (40/40), done.
+remote: Total 312 (delta 29), reused 23 (delta 10), pack-reused 262
+Receiving objects: 100% (312/312), 756.40 KiB | 19.39 MiB/s, done.
+Resolving deltas: 100% (111/111), done.
+Let’s cd into the application code so we can scan the app.
+
+
+cd php
+
+We are now in the php directory.
+
+Let’s move to the next step.
+```
+```markdown
+Install Composer version 2
+Composer is a tool that manages dependencies for PHP. It simplifies the process of managing PHP software packages and libraries, allowing developers to easily declare the libraries that their projects depend on, and manage them. Composer version 2 comes with a security feature that analyzes dependencies defined in a repository using the composer audit command.
+
+We will install PHP and also Composer with the following command.
+
+
+apt update && apt install -y software-properties-common
+add-apt-repository -y ppa:ondrej/php
+apt update
+apt install -y php7.4 php7.4-gd php7.4-intl php7.4-xsl php7.4-mbstring php7.4-curl
+
+Then we will install composer version 2 which has audit feature.
+
+
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+php -r "unlink('composer-setup.php');"
+
+composer audit tool is part of composer version 2. Let’s check the help menu of composer audit to understand its feature set.
+
+
+composer audit -h
+
+Command Output
+Description:
+  Checks for security vulnerability advisories for installed packages
+
+Usage:
+  audit [options]
+
+Options:
+      --no-dev                   Disables auditing of require-dev packages.
+  -f, --format=FORMAT            Output format. Must be "table", "plain", "json", or "summary". [default: "table"]
+      --locked                   Audit based on the lock file instead of the installed packages.
+  -h, --help                     Display help for the given command. When no command is given display help for the list command
+  -q, --quiet                    Do not output any message
+  -V, --version                  Display this application version
+      --ansi|--no-ansi           Force (or disable --no-ansi) ANSI output
+  -n, --no-interaction           Do not ask any interactive question
+      --profile                  Display timing and memory usage information
+      --no-plugins               Whether to disable plugins.
+      --no-scripts               Skips the execution of all scripts defined in composer.json file.
+  -d, --working-dir=WORKING-DIR  If specified, use the given directory as working directory.
+      --no-cache                 Prevent use of the cache
+  -v|vv|vvv, --verbose           Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+
+Help:
+  The audit command checks for security vulnerability advisories for installed packages.
+
+  If you do not want to include dev dependencies in the audit you can omit them with --no-dev
+
+  Read more at https://getcomposer.org/doc/03-cli.md#audit
+Which options would you choose from this list?
+
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+We can run the basic command without any extra arguments, however the output is not suitable for a CI/CD pipeline because the output is not in a machine readable format.
+
+First, we need to install the dependencies using composer install.
+
+
+composer install
+
+Let’s run the composer audit command.
+
+
+composer audit
+
+Command Output
+Found 15 security vulnerability advisories affecting 7 packages:
++-------------------+----------------------------------------------------------------------------------+
+| Package           | guzzlehttp/guzzle                                                                |
+| CVE               | CVE-2022-31091                                                                   |
+| Title             | Change in port should be considered a change in origin                           |
+| URL               | https://github.com/guzzle/guzzle/security/advisories/GHSA-q559-8m2m-g699         |
+| Affected versions | >=7,<7.4.5|>=4,<6.5.8                                                            |
+| Reported at       | 2022-06-20T22:24:00+00:00                                                        |
++-------------------+----------------------------------------------------------------------------------+
++-------------------+----------------------------------------------------------------------------------+
+| Package           | guzzlehttp/guzzle                                                                |
+| CVE               | CVE-2022-31090                                                                   |
+| Title             | CURLOPT_HTTPAUTH option not cleared on change of origin                          |
+| URL               | https://github.com/guzzle/guzzle/security/advisories/GHSA-25mq-v84q-4j7r         |
+| Affected versions | >=7,<7.4.5|>=4,<6.5.8                                                            |
+| Reported at       | 2022-06-20T22:24:00+00:00                                                        |
++-------------------+----------------------------------------------------------------------------------+
++-------------------+----------------------------------------------------------------------------------+
+| Package           | guzzlehttp/guzzle                                                                |
+| CVE               | CVE-2022-31043                                                                   |
+| Title             | Fix failure to strip Authorization header on HTTP downgrade                      |
+| URL               | https://github.com/guzzle/guzzle/security/advisories/GHSA-w248-ffj2-4v5q         |
+| Affected versions | >=7,<7.4.4|>=4,<6.5.7                                                            |
+| Reported at       | 2022-06-09T23:36:00+00:00                                                        |
++-------------------+----------------------------------------------------------------------------------+
++-------------------+----------------------------------------------------------------------------------+
+| Package           | guzzlehttp/guzzle                                                                |
+| CVE               | CVE-2022-31042                                                                   |
+| Title             | Failure to strip the Cookie header on change in host or HTTP downgrade           |
+| URL               | https://github.com/guzzle/guzzle/security/advisories/GHSA-f2wf-25xc-69c9         |
+| Affected versions | >=7,<7.4.4|>=4,<6.5.7                                                            |
+| Reported at       | 2022-06-09T23:36:00+00:00                                                        |
++-------------------+----------------------------------------------------------------------------------+
++-------------------+----------------------------------------------------------------------------------+
+| Package           | guzzlehttp/guzzle                                                                |
+| CVE               | CVE-2022-29248                                                                   |
+| Title             | Cross-domain cookie leakage                                                      |
+| URL               | https://github.com/guzzle/guzzle/security/advisories/GHSA-cwmx-hcrq-mhc3         |
+| Affected versions | >=7,<7.4.3|>=4,<6.5.6                                                            |
+| Reported at       | 2022-05-25T13:21:00+00:00                                                        |
++-------------------+----------------------------------------------------------------------------------+
+
+...[SNIP]...
+As we can see, the basic command gives us the report in a table format
+
+As we have learned in the DevSecOps Gospel, we should save the output in a machine-readable format so the output can be parsed by the machines.
+
+We can save the output in JSON format using -f flag.
+
+
+composer audit -f json | tee results.json
+
+Command Output
+
+...[SNIP]...
+
+            "2": {
+                "title": "CVE-2020-15094: Prevent RCE when calling untrusted remote with CachingHttpClient",
+                "cve": "CVE-2020-15094",
+                "link": "https://symfony.com/cve-2020-15094",
+                "reportedAt": "2020-09-02T08:00:00+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-754h-5r27-7x3r"
+                    },
+                    {
+                        "name": "FriendsOfPHP/security-advisories",
+                        "remoteId": "symfony/http-kernel/CVE-2020-15094.yaml"
+                    }
+                ],
+                "advisoryId": "PKSA-8knv-7jsn-12w8",
+                "packageName": "symfony/http-kernel",
+                "affectedVersions": ">=4.3.0,<4.4.0|>=4.4.0,<4.4.13|>=5.0.0,<5.1.0|>=5.1.0,<5.1.5"
+            },
+            "3": {
+                "title": "CVE-2019-18887: Use constant time comparison in UriSigner",
+                "cve": "CVE-2019-18887",
+                "link": "https://symfony.com/cve-2019-18887",
+                "reportedAt": "2019-11-13T08:00:00+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-q8hg-pf8v-cxrv"
+                    },
+                    {
+                        "name": "FriendsOfPHP/security-advisories",
+                        "remoteId": "symfony/http-kernel/CVE-2019-18887.yaml"
+                    }
+                ],
+                "advisoryId": "PKSA-sn9k-4yr8-6s9c",
+                "packageName": "symfony/http-kernel",
+                "affectedVersions": ">=2.2.0,<2.3.0|>=2.3.0,<2.4.0|>=2.4.0,<2.5.0|>=2.5.0,<2.6.0|>=2.6.0,<2.7.0|>=2.7.0,<2.8.0|>=2.8.0,<2.8.52|>=3.0.0,<3.1.0|>=3.1.0,<3.2.0|>=3.2.0,<3.3.0|>=3.3.0,<3.4.0|>=3.4.0,<3.4.35|>=4.0.0,<4.1.0|>=4.1.0,<4.2.0|>=4.2.0,<4.2.12|>=4.3.0,<4.3.8"
+            }
+        },
+        "symfony/mime": [
+            {
+                "title": "CVE-2019-18888: Prevent argument injection in a MimeTypeGuesser",
+                "cve": "CVE-2019-18888",
+                "link": "https://symfony.com/cve-2019-18888",
+                "reportedAt": "2019-11-13T08:00:00+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-xhh6-956q-4q69"
+                    },
+                    {
+                        "name": "FriendsOfPHP/security-advisories",
+                        "remoteId": "symfony/mime/CVE-2019-18888.yaml"
+                    }
+                ],
+                "advisoryId": "PKSA-7y15-t1fp-w94f",
+                "packageName": "symfony/mime",
+                "affectedVersions": ">=4.3.0,<4.3.8"
+            }
+        ]
+    }
+}
+Variable Scan Results
+
+Your results might slightly vary because of the dynamic landscape of changing vulnerabilities, and security updates.
+
+There you go. Why don’t you embed composer audit in CI/CD pipeline?
+```
+```markdown
+How To Embed Composer Into GitLab
+A Simple CI/CD Pipeline
+Let’s download the code using git clone in DevSecOps Box.
+
+
+git clone https://gitlab.practical-devsecops.training/pdso/php.git
+
+
+cd php
+
+Rename git url to the new one.
+
+
+git remote rename origin old-origin
+
+
+git remote add origin git@gitlab-ce-kr6k1mdm:root/php.git
+
+Then, push the code into the repository and it will automatically create a new project if not exist.
+
+
+git push -u origin --all
+
+And enter the GitLab credentials.
+
+Name	Value
+Username	root
+Password	pdso-training
+Considering your DevOps team created a simple CI pipeline with the following contents.
+
+Hence, you should create .gitlab-ci.yml file in php repository by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/php
+
+create-new-file
+
+new-file-format
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - integration
+  - prod
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+We have 2 jobs in this pipeline, a integration job and a prod job. We did integrate SCA/OAST beforehand, we can carry forward the same tactics in this exercise as well.
+
+As a security engineer, I don’t need to care much about what the DevOps team is doing as part of these jobs. Why? imagine having to learn every build/testing tool used by your DevOps team, it will be a nightmare. Instead, rely on the DevOps team for help.
+
+Let’s login into the GitLab using the following details and execute this pipeline.
+
+GitLab CI/CD Machine
+Name	Value
+Link	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/php/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline run
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/php/pipelines.
+
+Click on the appropriate job name to see the output.
+
+In the next step, we will embed PHPstan in the CI/CD pipeline and follow all the best practices.
+
+Let’s move to the next step.
+```
+```markdown
+Embed Composer Audit in CI/CD pipeline
+As discussed in the SCA using Composer exercise, we can embed Composer Audit in our CI/CD pipeline. However, do remember you need to run the command manually before you embed this SAST tool in the pipeline.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - integration
+  - prod
+
+oast-backend:
+  stage: build  # we moved this job from test stage to build stage, by replacing the text test to build
+  image: php:7.4
+  before_script:
+    - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+    - php -r "unlink('composer-setup.php');"
+    - apt update
+    - apt install unzip
+  script:
+    - composer install
+    - composer audit -f json | tee composer-output.json
+  artifacts:
+    paths: [composer-output.json]
+    when: always
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/php/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Remember!
+
+Did you notice the job failed because of non zero exit code(exit 13)?
+
+Why did the job fail? Because the tool found security issues. This is the expected behavior of any DevSecOps friendly tool.
+
+You need to either fix the security issues or add allow_failure: true to let the job finish without blocking other jobs.
+
+If you have troubles understanding exit code, please go through the exercise titled Working with Exit Code.
+
+You will notice that the oast-backend job stores the output to a file composer-report.json.
+
+Let’s move to the next step.
+```
+```markdown
+Allow the job failure
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise
+After two hours, in case of a 404, you need to refresh the exercise page and click on Start the Exercise button to continue working
+You do not want to fail the builds (pipeline) in DevSecOps Maturity Levels 1 and 2. If a security tool fails a job, it won’t allow other DevOps jobs like release/deploy to run hence causing great distress to DevOps Team. Moreover, the security tools suffer from false positives. Failing a build on inaccurate data is a sure recipe for disaster.
+
+You can use the allow_failure tag to not fail the build even though the tool found security issues.
+
+Command Output
+oast-backend:
+  stage: build  # we moved this job from test stage to build stage, by replacing the text test to build
+  image: php:7.4
+  before_script:
+    - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+    - php -r "unlink('composer-setup.php');"
+    - apt update
+    - apt install unzip
+  script:
+    - composer install
+    - composer audit -f json | tee composer-output.json
+  artifacts:
+    paths: [composer-output.json]
+    when: always
+  allow_failure: true #<--- allow the build to fail but don't mark it as such
+The pipeline would look like the following.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+oast-backend:
+  stage: build 
+  image: php:7.4
+  before_script:
+    - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+    - php -r "unlink('composer-setup.php');"
+    - apt update
+    - apt install unzip
+  script:
+    - composer install
+    - composer audit -f json | tee composer-output.json
+  artifacts:
+    paths: [composer-output.json]
+    when: always
+  allow_failure: true
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+You will notice that the oast-backend job has failed, but other jobs and stages ran fine.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/php/pipelines.
+
+Click on the appropriate job name to see the output/results.
+```
+```markdown
+Addressing Issues via Renovate on GitLab
+Downloading The Source Code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to download the source code of the project from our git repository.
+
+
+git clone git@gitlab-ce-kr6k1mdm:root/django-nv.git
+
+Authentication Confirmation Required
+
+If you encounter the following prompt while trying to clone GitLab, Please type yes and press Enter to proceed.
+
+Command Output
+The authenticity of host 'gitlab-ce-kr6k1mdm (10.x.x.x)' can't be established.
+ECDSA key fingerprint is SHA256:U1W8wQm8tgHmuF/T0uf1jNVCzHyhqeJ4MmGG/K4XmcI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+Lets cd into the application code, so we can scan the app.
+
+
+cd django-nv
+
+We are now in the django-nv directory.
+
+Let’s move to the next step.
+```
+```markdown
+Installing Renovate
+Renovate is an open-source tool that automates the process of updating dependencies in software projects. It runs continuously to detect outdated dependencies and opens pull requests with updates. Renovate is primarily designed to be used with version control systems like Git.
+
+As Renovate requires npm, let’s proceed to install NodeJS and NPM using the following command.
+
+
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE_MAJOR=20
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+apt update
+
+
+apt install nodejs -y
+
+Let’s install Renovate with NPM.
+
+
+npm install -g renovate
+
+Note
+
+Kindly exercise patience as the installation of Renovate may take approximately 2-4 minutes.
+
+If you notice an outdated version of npm post the installation of Renovate, please ignore them for now.
+
+Excellent, we’ve successfully installed the tool. Now, let’s explore the help menu to better comprehend its array of features.
+
+
+renovate -h
+
+Command Output
+Usage: renovate [options] [repositories...]
+
+Options:
+  --detect-global-manager-config [boolean]                     If `true`, Renovate tries to detect global manager configuration from the file system.
+  --detect-host-rules-from-env [boolean]                       If `true`, Renovate tries to detect host rules from environment variables.
+  --allow-post-upgrade-command-templating [boolean]            Set this to `false` to disable template compilation for post-upgrade commands.
+  --allowed-post-upgrade-commands <array>                      A list of regular expressions that decide which post-upgrade tasks are allowed.
+  --post-upgrade-tasks <object>                                Post-upgrade tasks that are executed before a commit is made by Renovate.
+  --onboarding-no-deps [boolean]                               Onboard the repository even if no dependencies are found.
+  --config-migration [boolean]                                 Enable this to get config migration PRs when needed.
+  --product-links <object>                                     Links which are used in PRs, issues and comments.
+  --secrets <object>                                           Object which holds secret name/value pairs.
+  --migrate-presets <object>                                   Define presets here which have been removed or renamed and should be migrated automatically.
+  --global-extends <array>                                     Configuration presets to use or extend for a self-hosted config.
+  --enabled [boolean]                                          Enable or disable Renovate bot.
+  --repository-cache <string>                                  This option decides if Renovate uses a JSON cache to speed up extractions.
+  --repository-cache-type <string>                             Set the type of renovate repository cache if `repositoryCache` is enabled.
+  --force-cli [boolean]                                        Decides if CLI configuration options are moved to the `force` config section.
+  --draft-p-r [boolean]                                        If set to `true` then Renovate creates draft PRs, instead of normal status PRs.
+  --dry-run <string>                                           If enabled, perform a dry run by logging messages instead of creating/updating/deleting
+                                                               branches and PRs.
+  --print-config [boolean]                                     If enabled, Renovate logs the fully resolved config for each repository, plus the fully
+                                                               resolved presets.
+  --binary-source <string>                                     Controls how third-party tools like npm or Gradle are called: directly, via Docker sidecar
+                                                               containers, or via dynamic install.
+  --redis-url <string>                                         If set, this Redis URL will be used for caching instead of the file system.
+  --base-dir <string>                                          The base directory for Renovate to store local files, including repository files and cache. If
+                                                               left empty, Renovate will create its own temporary directory to use.
+  --cache-dir <string>                                         The directory where Renovate stores its cache. If left empty, Renovate creates a subdirectory
+                                                               within the `baseDir`.
+  --containerbase-dir <string>                                 The directory where Renovate stores its containerbase cache. If left empty, Renovate creates a
+                                                               subdirectory within the `cacheDir`.
+  --custom-env-variables <object>                              Custom environment variables for child processes and sidecar Docker containers.
+  --custom-datasources <object>                                Defines custom datasources for usage by managers
+  --docker-child-prefix <string>                               Change this value to add a prefix to the Renovate Docker sidecar container names and labels.
+  --docker-cli-options <string>                                Pass CLI flags to `docker run` command when `binarySource=docker`.
+  --docker-sidecar-image <string>                              Change this value to override the default Renovate sidecar image.
+  --docker-user <string>                                       Set the `UID` and `GID` for Docker-based binaries if you use `binarySource=docker`.
+  --composer-ignore-platform-reqs <array>                      Configure use of `--ignore-platform-reqs` or `--ignore-platform-req` for the Composer package
+                                                               manager.
+  --go-get-dirs <array>                                        Directory pattern to run `go get` on
+  --log-file <string>                                          Log file path.
+  --log-file-level <string>                                    Set the log file log level.
+  --log-context <string>                                       Add a global or per-repo log context to each log entry.
+  --onboarding [boolean]                                       Require a Configuration PR first.
+  --onboarding-config <object>                                 Configuration to use for onboarding PRs.
+  --onboarding-rebase-checkbox [boolean]                       Set to enable rebase/retry markdown checkbox for onboarding PRs.
+  --fork-processing <string>                                   Whether to process forked repositories. By default, all forked repositories are skipped when in
+                                                               `autodiscover` mode.
+  --include-mirrors [boolean]                                  Whether to process repositories that are mirrors. By default, repositories that are mirrors are
+                                                               skipped.
+  --fork-token <string>                                        Set a personal access token here to enable "fork mode".
+  --fork-org <string>                                          The preferred organization to create or find forked repositories, when in fork mode.
+  --github-token-warn [boolean]                                Display warnings about GitHub token not being set.
+  --require-config <string>                                    Controls Renovate's behavior regarding repository config files such as `renovate.json`.
+  --optimize-for-disabled [boolean]                            Set to `true` to perform a check for disabled config prior to cloning.
+  --dependency-dashboard [boolean]                             Whether to create a "Dependency Dashboard" issue in the repository.
+  --dependency-dashboard-approval [boolean]                    Controls if updates need manual approval from the Dependency Dashboard issue before PRs are
+                                                               created.
+  --dependency-dashboard-autoclose [boolean]                   Set to `true` to let Renovate close the Dependency Dashboard issue if there are no more
+                                                               updates.
+  --dependency-dashboard-title <string>                        Title for the Dependency Dashboard issue.
+  --dependency-dashboard-header <string>                       Any text added here will be placed first in the Dependency Dashboard issue body.
+  --dependency-dashboard-footer <string>                       Any text added here will be placed last in the Dependency Dashboard issue body, with a divider
+                                                               separator before it.
+  --dependency-dashboard-labels <array>                        These labels will always be applied on the Dependency Dashboard issue, even when they have been
+                                                               removed manually.
+  --dependency-dashboard-o-s-v-vulnerability-summary <string>  Control if the Dependency Dashboard issue lists CVEs supplied by [osv.dev](https://osv.dev).
+  --config-warning-reuse-issue [boolean]                       Set this to `false` to make Renovate create a new issue for each config warning, instead of
+                                                               reopening or reusing an existing issue.
+  --private-key <string>                                       Server-side private key.
+  --private-key-old <string>                                   Secondary or old private key to try.
+  --private-key-path <string>                                  Path to the Server-side private key.
+  --private-key-path-old <string>                              Path to the Server-side old private key.
+  --encrypted <object>                                         An object containing configuration encrypted with project key.
+  --timezone <string>                                          [IANA Time Zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+  --schedule <array>                                           Limit branch creation to these times of day or week.
+  --automerge-schedule <array>                                 Limit automerge to these times of day or week.
+  --update-not-scheduled [boolean]                             Whether to update branches when not scheduled. Renovate will not create branches outside of the
+                                                               schedule.
+  --persist-repo-data [boolean]                                If set to `true`: keep repository data between runs instead of deleting the data.
+  --expose-all-env [boolean]                                   Set this to `true` to allow passing of all environment variables to package managers.
+  --allow-plugins [boolean]                                    Set this to `true` if repositories are allowed to run install plugins.
+  --allow-scripts [boolean]                                    Set this to `true` if repositories are allowed to run install scripts.
+  --allow-custom-crate-registries [boolean]                    Set this to `true` to allow custom crate registries.
+  --ignore-plugins [boolean]                                   Set this to `true` if `allowPlugins=true` but you wish to skip running plugins when updating
+                                                               lock files.
+  --ignore-scripts [boolean]                                   Set this to `false` if `allowScripts=true` and you wish to run scripts when updating lock
+                                                               files.
+  --platform <string>                                          Platform type of repository.
+  --endpoint <string>                                          Custom endpoint to use.
+  --token <string>                                             Repository Auth Token.
+  --username <string>                                          Username for authentication.
+  --password <string>                                          Password for authentication.
+  --npmrc <string>                                             String copy of `.npmrc` file. Use `\n` instead of line breaks.
+  --npmrc-merge [boolean]                                      Whether to merge `config.npmrc` with repo `.npmrc` content if both are found.
+  --npm-token <string>                                         npm token used to authenticate with the default registry.
+  --update-lock-files [boolean]                                Set to `false` to disable lock file updating.
+  --skip-installs [boolean]                                    Skip installing modules/dependencies if lock file updating is possible without a full install.
+  --autodiscover [boolean]                                     Autodiscover all repositories.
+  --autodiscover-filter <array>                                Filter the list of autodiscovered repositories.
+  --autodiscover-topics <array>                                Filter the list of autodiscovered repositories by topics.
+  --pr-commits-per-run-limit <integer>                         Set the maximum number of commits per Renovate run. By default there is no limit.
+  --use-base-branch-config <string>                            Whether to read configuration from `baseBranches` instead of only the default branch.
+  --git-author <string>                                        Author to use for Git commits. Must conform to
+                                                               [RFC5322](https://datatracker.ietf.org/doc/html/rfc5322).
+  --git-ignored-authors <array>                                Git authors which are ignored by Renovate. Must conform to
+                                                               [RFC5322](https://datatracker.ietf.org/doc/html/rfc5322).
+  --git-timeout <integer>                                      Configure the timeout with a number of milliseconds to wait for a Git task.
+
+...[SNIP]...
+
+  -v, --version                                                output the version number
+  -h, --help                                                   display help for command
+  Examples:
+
+    $ renovate --token 123test singapore/lint-condo
+    $ LOG_LEVEL=debug renovate --labels=renovate,dependency --ignore-unstable=false singapore/lint-condo
+    $ renovate singapore/lint-condo singapore/package-test
+Spend some time to review the number of options provided by the renovate tool.
+
+Renovate provides these following features:
+
+Feature	Description
+Automation	Renovate automates the process of identifying and updating outdated dependencies in software projects.
+Customization	Renovate offers extensive customization options to suit various project needs and workflows.
+Scalability	Renovate can handle projects of any size, from small to large-scale applications.
+Support	Renovate provides support for a broad spectrum of languages and package managers, namely JavaScript (npm & Yarn), Python (Pip), Java (Maven), PHP (Composer), Ruby (Bundler), Docker and more.
+Efficiency	By automating dependency management, Renovate frees up developers’ time for writing code, leading to improved productivity.
+Security & Stability	By keeping dependencies updated, Renovate helps integrate the latest security patches and bug fixes promptly, therefore contributing to safer and more stable software.
+Let’s move to the next step.
+```
+```markdown
+Running The Scanner
+First, we have to check the git version before running the scanner.
+
+The minimum Git version to run Renovate is 2.33.0
+
+Let’s check the git version.
+
+
+git --version
+
+Command Output
+git version 2.34.1
+Splendid! We have the reached the minimum Git version to run Renovate, now let’s run the scanner.
+
+
+renovate
+
+Command Output
+FATAL: You must configure a GitHub token
+ INFO: Renovate is exiting with a non-zero code due to the following logged errors
+       "loggerErrors": [
+         {
+           "name": "renovate",
+           "level": 60,
+           "logContext": "s07HAxdQDgUL0FHaV9FjW",
+           "msg": "You must configure a GitHub token"
+         }
+       ]
+
+We have an error that requires us to configure a GitHub token for Renovate. To run renovate we have to configure our GitHub Token, in the next step we will learn how to configure GitHub Token.
+In this exercise, we will be utilizing GitLab. Therefore, we’ll set up GitLab Access in the subsequent step.
+
+Let’s move to the next step to configure GitLab in Renovate.
+```
+```markdown
+Initiating Renovate For Addressing Issue
+In the preceding step, we configured GitLab to accept changes initiated by Renovate. Now, we’ll proceed with this process.
+
+Renovate is programmed to automate alterations to our GitLab.
+
+GitLab Setup
+In this step, we will set up the gitlab access to integrate renovate to a gitlab repository.
+
+Why We Need Use Git To Use Renovate?
+
+Renovate uses GitHub (as well as other platforms like GitLab or Bitbucket) for several reasons:
+
+Feature              Description
+Version Control      Renovate is built to work with version control systems. It uses Git to create branches and commits for each dependency update it proposes. This maintains a record of all changes and allows for easier rollbacks if something goes wrong.
+Collaboration and Review   By creating pull or merge requests in GitHub, changes are visible to all team members, open for discussion and can be reviewed and merged by others. Automated testing integrations in the repository can test the changes before merging.
+Automated Workflow   Everything is integrated into the developer’s usual workflow. Developers don’t have to manually check for updates, the bot will asynchronously alert them when updates are needed.
+Access to Dependency Files Renovate needs access to files like package.json, composer.json, pom.xml, etc., which are typically stored in the repository, to determine which dependencies are outdated.
+
+For these reasons, Renovate needs access to repositories hosted on services like GitLab. However, a token for authentication is required to access private repositories or to make API requests beyond a certain limit. This token must be provided in environment variables when running Renovate.
+
+Create A Personal Access Token (PAT) In GitLab Account
+```
+```markdown
+Addressing Issues via Renovate on GitLab
+Initiating Renovate For Addressing Issue
+In the preceding step, we configured GitLab to accept changes initiated by Renovate. Now, we’ll proceed with this process.
+
+Renovate is programmed to automate alterations to our GitLab.
+
+GitLab Setup
+In this step, we will set up the gitlab access to integrate renovate to a gitlab repository.
+
+Why We Need Use Git To Use Renovate?
+
+Renovate uses GitHub (as well as other platforms like GitLab or Bitbucket) for several reasons:
+
+Feature	Description
+Version Control	Renovate is built to work with version control systems. It uses Git to create branches and commits for each dependency update it proposes. This maintains a record of all changes and allows for easier rollbacks if something goes wrong.
+Collaboration and Review	By creating pull or merge requests in GitHub, changes are visible to all team members, open for discussion and can be reviewed and merged by others. Automated testing integrations in the repository can test the changes before merging.
+Automated Workflow	Everything is integrated into the developer’s usual workflow. Developers don’t have to manually check for updates, the bot will asynchronously alert them when updates are needed.
+Access to Dependency Files	Renovate needs access to files like package.json, composer.json, pom.xml, etc., which are typically stored in the repository, to determine which dependencies are outdated.
+For these reasons, Renovate needs access to repositories hosted on services like GitLab. However, a token for authentication is required to access private repositories or to make API requests beyond a certain limit. This token must be provided in environment variables when running Renovate.
+
+Create A Personal Access Token (PAT) In GitLab Account
+Let’s log into GitLab using the following details.
+
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we will create our Personal Access Token from GitLab at :
+
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/-/profile/personal_access_tokens.
+Provide the token name as renovatebot, select the following checkboxes:
+
+api
+read_api
+read_repository
+write_repository
+After that click on Create personal access token button.
+
+Note
+
+For the intended operation, we need to assign the following functions to their respective categories:
+
+Permission	Description
+api	This grants complete read/write access to the API, which includes all groups and projects, the container registry, and the package registry.
+read_api	This provides read access to the API, covering all groups and projects, the container registry, and the package registry.
+read_repository	This allows read-only access to repositories on private projects using Git-over-HTTP or the Repository Files API.
+write_repository	This permits read-write access to repositories on private projects via Git-over-HTTP (but not using the API).
+Remember to safely store your Personal Access Token, as we will use it in the next step to connect Renovate to GitLab for automated merge requests.
+
+Initiating Renovate
+Next, we will establish the renovate-config.js file to configure the file within the django-nv repository. Let’s input the following configuration file.
+
+Please use the nano/vim text editor to modify the configuration file and create the renovate-config.js file.
+
+Click anywhere to copy
+
+module.exports = {
+  endpoint: 'https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/api/v4/',
+  token: '<your_gitlab_token>',
+  platform: 'gitlab',
+  onboardingConfig: {
+    extends: ['config:recommended'],
+  },
+  repositories: ['root/django-nv'],
+};
+Please replace with the GitLab token you previously generated.
+
+Subsequently, we should export the RENOVATE_CONFIG_FILE variable.
+
+
+export RENOVATE_CONFIG_FILE="/django-nv/renovate-config.js"
+
+Next, we will run the Renovate command to automatically update dependencies. However, it’s necessary that we specify a particular repository to scan the dependencies.
+
+Attention
+
+As we are using https for our endpoint, we must ignore the https restriction. Node.js, which Renovate is based on, refuses such requests by default to prevent “man-in-the-middle” attacks.
+
+This is common if you’re operating a local GitLab instance via HTTPS with a self-signed certificate.
+
+To address this issue, you can set the NODE_TLS_REJECT_UNAUTHORIZED environment variable to “0”
+
+
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
+Proceed by running the Renovate command.
+
+
+renovate
+
+Command Output
+(node:3069) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ INFO: Repository started (repository=root/django-nv)
+       "renovateVersion": "36.93.0"
+ INFO: Branch created (repository=root/django-nv, branch=renovate/configure)
+       "commit": "dda5672f52e5a08389c42aa944c225b1ae6f21df",
+       "onboarding": true
+ INFO: Dependency extraction complete (repository=root/django-nv, baseBranch=main)
+       "stats": {
+         "managers": {
+           "dockerfile": {"fileCount": 1, "depCount": 1},
+           "gitlabci": {"fileCount": 1, "depCount": 2},
+           "npm": {"fileCount": 1, "depCount": 34},
+           "pip_requirements": {"fileCount": 1, "depCount": 1}
+         },
+         "total": {"fileCount": 4, "depCount": 38}
+       }
+ WARN: GitHub token is required for some dependencies (repository=root/django-nv)
+       "githubDeps": ["node"]
+ INFO: Onboarding PR created (repository=root/django-nv)
+       "pr": "Pull Request #1"
+ INFO: Repository finished (repository=root/django-nv)
+       "cloned": true,
+       "durationMs": 15274
+Perfect! let’s understand the output.
+
+Action	Description
+Repository started	Renovate bot began working on the /webapp repository.
+Branch created	Renovate created a new branch named renovate/configure for updating dependencies.
+Dependency extraction complete	Renovate completed checking the code, identifying 4 files, and detecting a total of 38 dependencies.
+Onboarding PR created	Renovate generated a Pull Request containing suggested updates.
+Repository finished	Renovate concluded the scan and PR creation process in approximately 14 seconds.
+How To Run The Command In Docker?
+Please navigate to the GitLab Merge Request (MR) page at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/merge_requests.
+
+Within your repository, you’ll discover a New Merge Request, created by Renovate for the first time. Renovate will add a renovate.json file to establish the necessary schema.
+
+renovate-configure-MR
+
+On the following page, an overview will be displayed as you scroll down.
+
+renovate-MR-overview
+
+Proceed by clicking on the Merge button.
+
+Great! Your repository has been updated successfully.
+
+Go back to your terminal and execute a pull command in the django-nv directory to update its contents.
+
+
+git pull origin main
+
+Command Output
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 4 (delta 2), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (4/4), 518 bytes | 518.00 KiB/s, done.
+From gitlab-ce-kr6k1mdm:root/django-nv
+ * branch            main       -> FETCH_HEAD
+   0345cd1..d16fc4e  main       -> origin/main
+Updating 0345cd1..d16fc4e
+Fast-forward
+ renovate.json | 6 ++++++
+ 1 file changed, 6 insertions(+)
+ create mode 100644 renovate.json
+Next, we will run the renovate command to check for any further updates.
+
+
+renovate
+
+Command Output
+(node:3174) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ INFO: Repository started (repository=root/django-nv)
+       "renovateVersion": "36.93.0"
+ INFO: Dependency extraction complete (repository=root/django-nv, baseBranch=main)
+       "stats": {
+         "managers": {
+           "dockerfile": {"fileCount": 1, "depCount": 1},
+           "gitlabci": {"fileCount": 1, "depCount": 2},
+           "npm": {"fileCount": 1, "depCount": 34},
+           "pip_requirements": {"fileCount": 1, "depCount": 1}
+         },
+         "total": {"fileCount": 4, "depCount": 38}
+       }
+ WARN: GitHub token is required for some dependencies (repository=root/django-nv)
+       "githubDeps": ["node"]
+ INFO: Branch created (repository=root/django-nv, branch=renovate/django-3.x)
+       "commitSha": "a07389acccc4f47a5621f7c57bb84b59af8df9e7"
+ WARN: No github.com token has been configured. Skipping release notes retrieval (repository=root/django-nv, branch=renovate/django-3.x)
+       "manager": "pip_requirements",
+       "packageName": "Django",
+       "sourceUrl": "https://github.com/django/django"
+ INFO: PR created (repository=root/django-nv, branch=renovate/django-3.x)
+       "pr": 2,
+       "prTitle": "Update dependency Django to v3.2.21"
+ INFO: Branch created (repository=root/django-nv, branch=renovate/consolidate-0.x)
+       "commitSha": "8b71ac4869fc6e07588d8ed22185151f5e319cb1"
+ WARN: No github.com token has been configured. Skipping release notes retrieval (repository=root/django-nv, branch=renovate/consolidate-0.x)
+       "manager": "npm",
+       "packageName": "consolidate",
+       "sourceUrl": "https://github.com/ladjs/consolidate"
+ INFO: PR created (repository=root/django-nv, branch=renovate/consolidate-0.x)
+       "pr": 3,
+       "prTitle": "Update dependency consolidate to ^0.16.0"
+ INFO: Issue created (repository=root/django-nv)
+ INFO: Repository finished (repository=root/django-nv)
+       "cloned": true,
+       "durationMs": 14928
+In the following execution, as demonstrated above, Renovate scanned the dependency and detected that both the Consolidate and Django versions were outdated, each indicated in separate Merge Request.
+
+Please navigate to the GitLab Merge Request (MR) page at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/merge_requests, where you will observe the update from Renovate.
+
+dependency-fix-renovate-gitlab
+
+Renovate, acting automatically, updated the Django version to v3.2.21 and Consolidate version to ^0.16.0 and then initiated a Merge Request in GitLab.
+
+Open each Merge Request and repeat the previous action to accept the Pull Request from Renovate.
+
+Great! You have successfully updated the django-nv repository.
+
+Let’s now proceed to pull the new changes.
+
+
+git pull origin main
+
+Command Output
+remote: Enumerating objects: 12, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 9 (delta 6), reused 7 (delta 4), pack-reused 0
+Unpacking objects: 100% (9/9), 998 bytes | 499.00 KiB/s, done.
+From gitlab-ce-kr6k1mdm:root/django-nv
+ * branch            main       -> FETCH_HEAD
+   d16fc4e..c6604d1  main       -> origin/main
+Updating d16fc4e..c6604d1
+Fast-forward
+ package.json     | 2 +-
+ requirements.txt | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+Next, let’s try to re-scan the repository.
+
+
+renovate
+
+Command Output
+(node:3436) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ INFO: Repository started (repository=root/django-nv)
+       "renovateVersion": "36.93.0"
+ INFO: Dependency extraction complete (repository=root/django-nv, baseBranch=main)
+       "stats": {
+         "managers": {
+           "dockerfile": {"fileCount": 1, "depCount": 1},
+           "gitlabci": {"fileCount": 1, "depCount": 2},
+           "npm": {"fileCount": 1, "depCount": 34},
+           "pip_requirements": {"fileCount": 1, "depCount": 1}
+         },
+         "total": {"fileCount": 4, "depCount": 38}
+       }
+ WARN: GitHub token is required for some dependencies (repository=root/django-nv)
+       "githubDeps": ["node"]
+ INFO: Repository finished (repository=root/django-nv)
+       "cloned": true,
+       "durationMs": 9120
+Fantastic! An automatic update has been successfully carried out using Renovate.
+
+Note
+
+For further learning, you might want to visit this page. Renovate creates a list here for manual updates of dependencies, where you can select the necessary dependencies using checkboxes.
+
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/issues/1.
+```
+```markdown
+Addressing Issues via Renovate on GitLab
+Conclusion
+Renovate is an incredibly potent tool that allows developers to automate the often tedious task of maintaining software dependencies. By identifying and updating these dependencies continuously, Renovate ensures software projects are less prone to bugs, are more secure, and feature the latest functionality. It supports a wide range of languages and package managers, making it a versatile tool for repositories hosted on GitHub, GitLab, and other platforms.
+
+That said, to maximize its benefit, it’s crucial to understand the full capabilities of Renovate, particularly how to customize and control its behaviors using different configuration options. Its seamless integration within existing workflows, and its collaborative features like creating pull requests for updates, allows for transparency and shared control over dependency updates within teams.
+
+This tool, however, does require specific configurations and access to function correctly – including setup of environment variables for access tokens, and some awareness of rate limits when dealing with larger or multiple repositories.
+
+References
+Renovate Documentation: https://docs.renovatebot.com/
+Renovate’s GitHub repository: https://github.com/renovatebot/renovate
+Renovate - Dependency Management: https://medium.com/javarevisited/renovate-dependency-management-c1f0a9072e47
+Renovate - Self-Hosted Gitlab setup: https://docs.renovatebot.com/examples/self-hosting/
+```
+```markdown
+Addressing Issues via Dependabot on GitLab
+Downloading The Source Code
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to download the source code of the project from our GitLab repository.
+
+git clone git@gitlab-ce-kr6k1mdm:root/django-nv.git
+
+Authentication Confirmation Required
+
+If you encounter the following prompt while trying to clone GitLab, Please type yes and press Enter to proceed.
+
+Command Output
+The authenticity of host 'gitlab-ce-kr6k1mdm (10.x.x.x)' can't be established.
+ECDSA key fingerprint is SHA256:U1W8wQm8tgHmuF/T0uf1jNVCzHyhqeJ4MmGG/K4XmcI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+Lets cd into the application code, so we can scan the app.
+
+cd django-nv
+
+We are now in the django-nv directory.
+
+Let’s move to the next step.
+```
+```markdown
+GitLab Setup
+In this step, we will set up the gitlab access to integrate dependabot-gitlab to a gitlab repository.
+
+Create A Personal Access Token (PAT) In GitLab Account
+Let’s log into GitLab using the following details.
+
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we will create our Personal Access Token from GitLab at :
+
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/-/profile/personal_access_tokens.
+Provide the token name as renovatebot, select the following checkboxes:
+
+api  
+read_api  
+read_repository  
+write_repository  
+
+After that click on Create personal access token button.
+
+Note
+
+For the intended operation, we need to assign the following functions to their respective categories:
+
+Permission	Description  
+api	This grants complete read/write access to the API, which includes all groups and projects, the container registry, and the package registry.  
+read_api	This provides read access to the API, covering all groups and projects, the container registry, and the package registry.  
+read_repository	This allows read-only access to repositories on private projects using Git-over-HTTP or the Repository Files API.  
+write_repository	This permits read-write access to repositories on private projects via Git-over-HTTP (but not using the API).  
+
+Remember to safely store your Personal Access Token, as we will use it in the next step to connect dependabot-gitlab to GitLab for automated merge requests.
+```
+```markdown
+Configuring Dependabot-GitLab
+Why We Are Using Dependabot-GitLab?
+
+Dependabot is an essential tool in modern software development due to its features that help automate dependency updates and provide security alerts. Here’s why you should consider using Dependabot in GitLab:
+
+Feature	Description  
+Security	Dependabot helps keep your dependencies up-to-date, reducing the risk of using outdated packages that may have security vulnerabilities.  
+Automation	Dependabot automatically submits pull requests anytime it discovers updates. This saves you time by sparing you from manually tracking and applying updates.  
+New Features and Bug Fixes	Keeping your dependencies updated means you also get to benefit from any new features, improvements, or bug fixes that have been introduced in the newer versions.  
+Compatibility Checks	Dependabot runs your test suite on each update it puts together to ensure that it doesn’t break your software. This provides additional confidence in the updates.  
+Efficient Workflow Integration	Dependabot directly integrates with Git workflow, meaning you can process its pull requests the same way you handle others. This includes conducting code reviews, running tests against changes, and more.  
+Configurability	You can configure Dependabot to suit your needs – control the frequency of updates, limit the number of open pull requests, ignore certain dependencies, and more.  
+
+By frequent and automated updating, Dependabot helps to keep codebases healthy, secure, less buggy, and ensures they are using the most efficient implementations available.
+
+We need to add the GitLab Personal Access Token variable (Go to Project (django.nv) → Settings → CI/CD → Variables → Expand).
+
+You can also follow this URL https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd
+
+In the Variables section, you need to insert your GitLab Personal Access Token. This allows the dependabot-gitlab to carry out an automated Merge Request in the upcoming steps using the GitLab Personal Access Token.
+
+Don’t forget to have a backup of your original Personal Access Token.
+
+Click on the Add Variable button and you’ll be directed to the variable input box.
+
+The tool Dependabot-GitLab employs the SETTINGS__GITLAB_ACCESS_TOKEN to source the Personal Access Token.
+
+Then populate the SETTINGS__GITLAB_ACCESS_TOKEN field with the previously generated Personal Access Token value.
+
+Ensure the Protect Variable box is unchecked for a more adaptable pipeline, then click add variable.
+
+set-variable
+
+Next, click the Add Variable button.
+
+Now that we’ve successfully set up the token, let’s proceed to the next stage to implement dependabot-gitlab.
+```
+```markdown
+Initiating Dependabot-GitLab For Resolving Issues
+Configuring Dependabot-GitLab
+We will set up the configuration file to ensure Dependabot can function correctly and scan the necessary packages.
+
+Return to your devsecops-box terminal. We will start by creating a dependabot.yml file within our django-nv directory. Initially, we will create a .gitlab folder which will serve as the location for the dependabot.yml file.
+
+mkdir /django-nv/.gitlab
+
+Next, we will insert content into the dependabot.yml file.
+
+cat > /django-nv/.gitlab/dependabot.yml <<EOF
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+EOF
+
+The dependabot.yml configuration instructs Dependabot to manage and update npm package dependencies for a project:
+
+Configuration	Description  
+version: 2	Specifies the use of version 2 of the Dependabot configuration file, which is the latest version available.  
+updates:	Indicates a list of updating actions to be performed by Dependabot.  
+package-ecosystem: npm	Determines the ecosystem to be updated, specifically npm package dependencies.  
+directory: /	Points Dependabot to the root directory of the project, indicating where to search for dependencies to update.  
+
+You simply need to specify the package ecosystems and their corresponding configurations. Generally, you’ll need only one npm (which also observes yarn). However, here is a complete list of all potential ecosystems.
+
+For other package ecosystems, please refer to this link: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#package-ecosystem
+
+Note
+
+The directory: is mandatory as it defines the location of package manifests (e.g., package.json) for each package manager.
+
+Next, we should commit the changes to the Django-nv repository.
+
+Initial Git Setup
+
+To work with git repositories, we need to first setup a username and email.
+
+We can use git config commands to set it up.
+
+git config --global user.email "student@practical-devsecops.com"
+
+git config --global user.name "student"
+
+Having completed the initial setup, let’s proceed to push the new changes.
+
+git add .gitlab/
+
+git commit -m "add dependabot configuration file"
+
+Command Output
+[main 2368c30] add dependabot configuration file
+ 1 file changed, 7 insertions(+)
+ create mode 100644 .gitlab/dependabot.yml
+
+git push origin main
+
+Command Output
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 32 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (4/4), 397 bytes | 397.00 KiB/s, done.
+Total 4 (delta 1), reused 0 (delta 0)
+To gitlab-ce-kr6k1mdm:root/django-nv.git
+   8c86acd..2368c30  main -> main
+Excellent, we have successfully added the Dependabot-GitLab configuration file to the django-nv repository.
+
+Running Dependabot-GitLab
+Let’s navigate to the django-nv repository and update the .gitlab-ci.yml file to enable the execution of the dependabot tool, which scans and automatically generates merge requests for any forthcoming package changes and updates.
+
+Follow the link below to update the .gitlab-ci.yml file.
+
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+
+Please replace the existing content of the .gitlab-ci.yml file with the following.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+
+.npm:
+  stage: build
+  image:
+    name: docker.io/andrcuns/dependabot-gitlab:0.11.0
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: none
+    PACKAGE_MANAGER: npm
+    RAILS_ENV: production
+    SETTINGS__GITLAB_URL: $CI_SERVER_URL
+    SETTINGS__STANDALONE: "true"
+  before_script:
+    - cd /home/dependabot/app
+  script:
+    - bundle exec rake "dependabot:update[$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME,$PACKAGE_MANAGER,/]"
+
+dependabot:
+  extends: .npm
+  when: manual
+
+Note
+
+Here are explanations for the variable functions:
+
+Variable	Explanation  
+GIT_STRATEGY	Specifies how jobs interact with the Git repository. Values: fetch for efficient fetching, clone for full clone.  
+PACKAGE_MANAGER	Indicates the package manager responsible for managing dependencies.  
+RAILS_ENV	Specifies the application’s operating environment. Adjust based on the current stage: “development” or “test”.  
+SETTINGS_GITLAB_URL	Refers to the URL of the GitLab instance. Adjust based on your CI/CD setup.  
+SETTINGS_STANDALONE	Specifies whether Dependabot operates as a standalone service. Value: false for operation as a GitHub App in the cloud.  
+
+Commit the changes and then check out the running pipeline at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/pipelines
+
+We have set the dependabot job’s pipeline to when: manual because we don’t want to command dependabot to perform its duties every time we run the pipeline. This allows us, as developers, to decide when we want to utilize dependabot in running the pipeline manually.
+
+Proceed by launching the most recent pipeline and clicking the play button to run the dependabot job.
+
+play-button
+
+Let’s allow the pipeline to run. You can monitor the process by clicking on the dependabot job.
+
+Note
+
+Dependabot will scan and analyze all packages. It could take roughly 10 to 15 minutes for a full package update scan to be completed, as Dependabot will subsequently create a Merge Request.
+
+runner-duration
+
+Excellent! The pipeline has finished its run. You will now find new Merge Requests created by Dependabot in relation to the package update within the NPM ecosystem.
+
+pipeline-result
+
+Your final task is to merge all of the Merge Requests. Here is an example of how to do this:
+
+Open one of the Merge Requests in https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/merge_requests.
+
+dependabot-MRs
+
+Choose one of the Merge Requests and proceed to Merge in order to update the packages.
+
+MRs-package
+
+Click the Merge button and the package will be updated.
+
+Apply similar actions to the other Merge Requests.
+
+To verify that the latest changes in the django-nv repository are reflected, open a terminal and perform a git pull on the django-nv directory.
+
+git pull origin main
+
+Command Output
+remote: Enumerating objects: 42, done.
+remote: Counting objects: 100% (42/42), done.
+remote: Compressing objects: 100% (17/17), done.
+remote: Total 39 (delta 33), reused 26 (delta 22), pack-reused 0
+Unpacking objects: 100% (39/39), 4.33 KiB | 443.00 KiB/s, done.
+From gitlab-ce-kr6k1mdm:root/django-nv
+ * branch            main       -> FETCH_HEAD
+   3f92423..9a7b4be  main       -> origin/main
+Updating 3f92423..9a7b4be
+Fast-forward
+ .gitlab-ci.yml | 25 ++++++++++++++++++-------
+ package.json   |  8 ++++----
+ 2 files changed, 22 insertions(+), 11 deletions(-)
+Excellent! You have updated the NPM packages within the package.json file using dependabot-gitlab.
+
+Similar steps can also be carried out for other package ecosystems.
+```
+```markdown
+Conclusion
+Dependabot is a critical tool for managing the dependencies in programming projects, specifically those hosted on platforms like GitLab. It helps keep project dependencies up-to-date by automatically checking for updates and generating merge requests for each one found.
+
+Automation reduces the overall workload for developers, streamlining the update process and maintaining the currency and security of the project. It also frees developers to focus on coding rather than the laborious task of keeping track of numerous dependencies.
+
+Despite having more limited functionality on GitLab compared to GitHub, it’s possible to still reap significant benefits from Dependabot through correct setup and regular usage. Overall, Dependabot is an invaluable resource for any team or individual developing software on GitLab.
+```
+```markdown
+Additional Resources
+Dependabot-GitLab Repository: https://gitlab.com/dependabot-gitlab/dependabot  
+Running Dependabot on GitLab: https://dependabot-gitlab.gitlab.io/dependabot/  
+Setting Dependabot-GitLab environment: https://dependabot-gitlab.gitlab.io/dependabot/config/environment.html  
+```
+```markdown
+Software Component Analysis Using OSV Scanner
+Preparation
+We will initially complete all tasks at a local level in DevSecOps-Box, so let’s initiate this exercise.
+
+To start, we need to pull the project’s source code from our Git repository.
+
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+
+Command Output
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+
+Let’s navigate into the application code using the cd command to allow us to scan the app.
+
+cd webapp
+
+We now find ourselves in the webapp directory.
+
+The forthcoming step necessitates us using the lock file to initiate the OSV Scanner.
+
+Configuration Of package-lock.json File
+
+To ensure a smooth installation of npm, let’s first update the package list.
+
+apt update
+
+The generation of the package-lock.json file from npm is now required. Prior to this however, the installation of npm is necessary.
+
+apt install npm -y
+
+Following this installation, we can proceed to formulate the package-lock.json file utilizing npm.
+
+npm install
+
+Significant Remark: Disregard error vulnerabilities, should they arise as illustrated below, because our primary need is the package-lock.json.
+
+npm-output
+
+What we necessitate is that the npm forms a package-lock.json file. The existence of this can be established by applying the ls command.
+
+ls
+
+Command Output
+Dockerfile  bandit.ignore  manage.py     __package-lock.json__  requirements.txt  taskManager
+README.md   fixtures       node_modules  package.json       run.sh
+
+We now proceed to the subsequent step to initiate the installation of OSV Scanner.
+```
+```markdown
+Getting Started With OSV Scanner
+OSV (Open Source Vulnerability) Scanner is a highly efficient security tool systematically developed to examine and identify vulnerability points within open-source software and projects. OSV Scanner is a non-invasive scanner specifically engineered to unveil critical security issues. The primary resource that OSV Scanner leverages is the Software Bill of Materials (SBOM), a comprehensive inventory file that encapsulates detailed information, such as names and version specifications, about every open-source component used in a software project.
+
+OSV Scanner can also process lock files from several programming languages like package-lock.json for JavaScript or requirements.txt for Python, which detail the specific versions of each dependency used in the project.
+
+Reference: https://google.github.io/osv-scanner/
+
+Installing OSV Scanner
+First, we aim to install the OSV Scanner. Please utilize the command below to carry out the installation of the OSV Scanner.
+
+wget -O /usr/bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v1.4.0/osv-scanner_1.4.0_linux_amd64 && sudo chmod +x /usr/bin/osv-scanner
+
+Command Output
+--2023-09-26 05:41:17--  https://github.com/google/osv-scanner/releases/download/v1.4.0/osv-scanner_1.4.0_linux_amd64
+Resolving github.com (github.com)... 140.82.112.3
+Connecting to github.com (github.com)|140.82.112.3|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/565629124/1d1fae28-4d4c-4530-a4a5-08ecd13e6d97?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20230926%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230926T054117Z&X-Amz-Expires=300&X-Amz-Signature=bef6cfa0d9021577837008ebafde4732dfff0304057f0058e402817b47325268&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=565629124&response-content-disposition=attachment%3B%20filename%3Dosv-scanner_1.4.0_linux_amd64&response-content-type=application%2Foctet-stream [following]
+--2023-09-26 05:41:17--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/565629124/1d1fae28-4d4c-4530-a4a5-08ecd13e6d97?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20230926%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230926T054117Z&X-Amz-Expires=300&X-Amz-Signature=bef6cfa0d9021577837008ebafde4732dfff0304057f0058e402817b47325268&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=565629124&response-content-disposition=attachment%3B%20filename%3Dosv-scanner_1.4.0_linux_amd64&response-content-type=application%2Foctet-stream
+Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.108.133, ...
+Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.109.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 16457728 (16M) [application/octet-stream]
+Saving to: ‘/usr/bin/osv-scanner’
+
+/usr/bin/osv-scanner                       100%[=====================================================================================>]  15.70M  --.-KB/s    in 0.1s    
+
+2023-09-26 05:41:17 (157 MB/s) - ‘/usr/bin/osv-scanner’ saved [16457728/16457728]
+
+Great! The installation of the OSV Scanner has been successfully completed.
+
+At this point, we should execute a command to assess the functionality and availability of the scanning feature in the OSV Scanner.
+
+osv-scanner --help
+
+Command Output
+NAME:
+   osv-scanner - scans various mediums for dependencies and matches it against the OSV database
+
+USAGE:
+   osv-scanner [global options] command [command options] [directory1 directory2...]
+
+VERSION:
+   1.4.0
+
+COMMANDS:
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --docker value, -D value [ --docker value, -D value ]      scan docker image with this name
+   --lockfile value, -L value [ --lockfile value, -L value ]  scan package lockfile on this path
+   --sbom value, -S value [ --sbom value, -S value ]          scan sbom file on this path
+   --config value                                             set/override config file
+   --format value, -f value                                   sets the output format (default: "table")
+   --json                                                     sets output to json (deprecated, use --format json instead) (default: false)
+   --output value                                             saves the result to the given file path
+   --skip-git                                                 skip scanning git repositories (default: false)
+   --recursive, -r                                            check subdirectories (default: false)
+   --experimental-call-analysis                               attempt call analysis on code to detect only active vulnerabilities (default: false)
+   --no-ignore                                                also scan files that would be ignored by .gitignore (default: false)
+   --experimental-local-db                                    checks for vulnerabilities using local databases (default: false)
+   --experimental-offline                                     checks for vulnerabilities using local databases that are already cached (default: false)
+   --help, -h                                                 show help
+   --version, -v                                              print the version
+
+Let’s move to the next step.
+```
+```markdown
+Running The Scanner
+In this section, we will initiate the OSV Scanner to conduct an analysis of vulnerabilities based on the OSV Database. This section encompasses various methods for scanning, including:
+
+Method Scanning	Description  
+Elementary Scanning	This method involves a straightforward scan of the entire operating system or software against a database of known vulnerabilities. It aims to identify vulnerabilities without focusing on specific components.  
+Targeted Scanning	In contrast to elementary scanning, targeted scanning focuses on specific components or areas of the system or software. It is used when the user suspects vulnerabilities in certain components or wants to limit the scope of the scanning process.  
+Output Generation from Scanning	After completing the scan, an output in the form of a report is generated. This report details each identified vulnerability, including potential risks and impacts. It may also provide recommendations for addressing detected vulnerabilities.  
+Local Database Scanning	Local database scanning, or offline mode scanning, allows the OSV scan to be conducted without an internet connection. It refers to a local database (Local DB) containing information on known vulnerabilities. This is useful in disconnected or secure environments.  
+False Positive Analysis Scanning	False positive analysis scanning aims to mitigate inaccurately reported vulnerabilities known as false positives. It involves cross-referencing findings, coordinating data, and employing sophisticated algorithms to reduce the occurrence of false positives.  
+
+We will now proceed step-by-step through each scanning process.
+
+Basic Scanning
+Firstly, we’ll employ general scanning. Let’s perform a scan on our webapp directory to examine what can be accessed by the OSV Scanner.
+
+osv-scanner .
+
+Command Output
+Scanning dir .  
+Scanning /django.nv/ at commit 74aa195986bee858fd61ad1f94f20c94bdd29aff  
+Scanned /django.nv/package-lock.json file and found 1020 packages  
+Scanned /django.nv/requirements.txt file and found 1 package  
+
+╭─────────────────────────────────────┬──────┬───────────┬───────────────────┬─────────┬───────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE           │ VERSION │ SOURCE            │
+├─────────────────────────────────────┼──────┼───────────┼───────────────────┼─────────┼───────────────────┤
+│ https://osv.dev/GHSA-3v6h-hqm4-2rg6 │ 5.5  │ npm       │ adm-zip           │ 0.4.4   │ package-lock.json │
+│ https://osv.dev/GHSA-pp7h-53gx-mx7r │ 6.5  │ npm       │ bl                │ 1.0.3   │ package-lock.json │
+│ https://osv.dev/GHSA-pp7h-53gx-mx7r │ 6.5  │ npm       │ bl                │ 1.1.2   │ package-lock.json │
+│ https://osv.dev/GHSA-832h-xg76-4gv6 │ 7.5  │ npm       │ brace-expansion   │ 1.1.6   │ package-lock.json │
+│ https://osv.dev/GHSA-cwfw-4gq5-mrqx │      │ npm       │ braces            │ 1.8.5   │ package-lock.json │
+│ https://osv.dev/GHSA-g95f-p29q-9xw4 │ 3.7  │ npm       │ braces            │ 1.8.5   │ package-lock.json │
+
+......[SNIP]......
+
+│ https://osv.dev/GHSA-v6rh-hp5x-86rv │ 7.3  │ PyPI      │ django            │ 3.0     │ requirements.txt  │
+│ https://osv.dev/GHSA-vfq6-hq5r-27r6 │ 9.8  │ PyPI      │ django            │ 3.0     │ requirements.txt  │
+│ https://osv.dev/GHSA-wpjr-j57x-wxfw │ 5.9  │ PyPI      │ django            │ 3.0     │ requirements.txt  │
+│ https://osv.dev/PYSEC-2020-31       │      │           │                   │         │                   │
+│ https://osv.dev/GHSA-xgxc-v2qg-chmh │ 5.3  │ PyPI      │ django            │ 3.0     │ requirements.txt  │
+│ https://osv.dev/PYSEC-2021-6        │      │           │                   │         │                   │
+│ https://osv.dev/GHSA-xpfp-f569-q3p2 │ 9.8  │ PyPI      │ django            │ 3.0     │ requirements.txt  │
+╰─────────────────────────────────────┴──────┴───────────┴───────────────────┴─────────┴───────────────────╯
+
+Impressive! We have completed the scan using the basic scanning method, and have obtained results from the package-lock.json and requirements.txt files.
+
+Interpreting the Output
+Let’s briefly decipher the meaning of the aforementioned results.
+
+The table shared essentially portrays the outcomes of a security vulnerability examination using the Open Source Vulnerabilities (OSV) scanner. This tool allows you to pinpoint any known vulnerabilities in your software, with an emphasis on open source usage. Each column represents:
+
+Field	Description  
+OSV URL	These links provide comprehensive descriptions of each detected vulnerability. Following these links imparts further understanding over the threat and any available fixes or mitigations.  
+CVSS	An acronym for Common Vulnerability Scoring System. It’s an industry-standard method for rating the severity of security vulnerabilities within software, with scores ranging from 0 to 10. More elevated scores imply more critical vulnerabilities.  
+ECOSYSTEM	This indicates the software or runtime environment in which the package finds typical use, for instance, npm or PyPI.  
+PACKAGE	This signifies the distinctive software package within that ecosystem that has a known vulnerability. Packages such as adm-zip, bl, brace-expansion in the npm ecosystem, or django in the PyPI ecosystem, feature in the table.  
+VERSION	This denotes the exact version of the package comprising the vulnerability. It’s possible that only certain versions of a package are affected.  
+SOURCE	This column informs of the file location of the vulnerable package. In your case, vulnerabilities were detected in the package-lock.json file for npm packages and requirements.txt file for PyPI packages.  
+
+The outcomes revealed numerous dependencies that are utilizing versions possessing known security vulnerabilities. The information can be harnessed to update your dependencies as needed— either manually, or by utilizing a tool that automatically updates your packages to versions deemed secure.
+
+Nice! We will try to address some of the issues identified in the Fix the Issues Reported by Safety Tool exercises.
+```
+```markdown
+Software Component Analysis Using OSV-Scalibr
+In this scenario, you will explore how to utilize OSV-Scalibr (Software Composition Analysis Library) to extract software inventory data and detect vulnerabilities in your applications.
+
+You will learn how to:  
+- Install and configure OSV-Scalibr  
+- Scan local files and container images  
+- Generate SPDX reports  
+- Understand and analyze scan results  
+
+Note
+
+We have already set up the necessary tools including Docker on the DevSecOps-Box machine, you just have to use them for the exercise.
+
+Always remember that the DevSecOps Box is an immutable machine, and thus it does not save the previous state after you close or reload the browser.
+```
+```markdown
+Introduction to OSV-Scalibr
+OSV-Scalibr (Software Composition Analysis Library) is an extensible file system scanner developed by Google that focuses on extracting software inventory data and detecting vulnerabilities. While OSV-Scanner primarily focuses on vulnerability scanning using the OSV database, OSV-Scalibr provides additional capabilities:
+
+Key features of OSV-Scalibr:
+- Extracts installed language packages and software inventory data  
+- Performs vulnerability scanning on local machines and container images  
+- Supports custom plugins for inventory extraction and vulnerability detection  
+- Can be used as both a standalone binary or as a library in custom applications  
+- Provides special features like RPM extraction support and MacOS Application extraction  
+
+The main differences between OSV-Scanner and OSV-Scalibr:
+
+- **Focus**: OSV-Scanner focuses primarily on vulnerability scanning, while OSV-Scalibr focuses on both inventory extraction and vulnerability detection  
+- **Extensibility**: OSV-Scalibr is designed to be highly extensible through custom plugins  
+- **Integration Options**: OSV-Scalibr can be used as a library in other applications, making it more flexible for custom implementations  
+
+Let’s move to the next step.
+```
+```markdown
+Installing OSV-SCALIBR
+After we know the difference between OSV-Scanner and OSV-Scalibr, let’s start by getting our environment ready. First, we’ll clone a sample application that we can scan with OSV-Scalibr in this case we will use django.nv repository.
+
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+
+Command Output
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+
+Let’s move into the application directory:
+
+cd webapp
+
+Now we need to install OSV-Scalibr. Since it’s written in Go, we’ll first ensure Go is installed:
+
+curl -OL https://dl.google.com/go/go1.24.0.linux-amd64.tar.gz  
+tar -C /usr/local -xvf go1.24.0.linux-amd64.tar.gz  
+export PATH=$PATH:/usr/local/go/bin  
+
+Let’s verify Go is installed correctly:
+
+go version
+
+Command Output
+go version go1.24.0 linux/amd64
+
+Now after all the dependencies are installed, we can install OSV-Scalibr:
+
+export GOPROXY=https://goproxy.cn,direct  
+go install github.com/google/osv-scalibr/binary/scalibr@v0.2.0  
+export PATH=$PATH:$(go env GOPATH)/bin  
+
+We have successfully installed the OSV-Scalibr. Let’s explore what osv scalibr can do by running the help command:
+
+scalibr --help
+
+Command Output
+Usage of scalibr:  
+  -cdx-authors string  
+        The 'authors' field for the output CDX document. Format is --cdx-authors=author1,author2  
+  -cdx-component-name string  
+        The 'metadata.component.name' field for the output CDX document  
+  -cdx-component-version string  
+        The 'metadata.component.version' field for the output CDX document  
+  -detectors value  
+        Comma-separated list of detectors plugins to run  
+  -explicit-extractors  
+        If set, the program will exit with an error if not all extractors required by enabled detectors are explicitly enabled.  
+  -extractors value  
+        Comma-separated list of extractor plugins to run  
+  -filter-by-capabilities  
+        If set, plugins whose requirements (network access, OS, etc.) aren't satisfied by the scanning environment will be silently disabled instead of throwing a validation error. (default true)  
+  -govulncheck-db string  
+        Path to the offline DB for the govulncheck detectors to use. Leave empty to run the detectors in online mode.  
+  -image-platform string  
+        The platform of the remote image to scan. If not specified, the platform of the client is used. Format is os/arch (e.g. linux/arm64)  
+  -o value  
+        The path of the scanner outputs in various formats, e.g. -o textproto=result.textproto -o spdx23-json=result.spdx.json -o cdx-json=result.cyclonedx.json  
+  -remote-image string  
+        The remote image to scan. If specified, SCALIBR pulls and scans this image instead of the local filesystem.  
+  -result string  
+        The path of the output scan result file  
+  -root string  
+        The root dir used by detectors and by file walking during extraction (e.g.: "/", "c:\" or ".")  
+  -skip-dir-glob string  
+        If the glob matches a directory, it will be skipped. The glob is matched against the absolute file path.  
+  -skip-dir-regex string  
+        If the regex matches a directory, it will be skipped. The regex is matched against the absolute file path.  
+  -skip-dirs value  
+        Comma-separated list of file paths to avoid traversing  
+  -spdx-creators string  
+        The 'creators' field for the output SPDX document. Format is --spdx-creators=creatortype1:creator1,creatortype2:creator2  
+  -spdx-document-name string  
+        The 'name' field for the output SPDX document  
+  -spdx-document-namespace string  
+        The 'documentNamespace' field for the output SPDX document  
+  -verbose  
+        Enable this to print debug logs  
+  -windows-all-drives  
+        Scan all drives on Windows  
+
+As you can see, there are a lot of options available. Let’s move on to learning how to use it.
+
+Let’s move to the next step.
+```
+```markdown
+Basic Scanning with OSV-Scalibr
+OSV-Scalibr is an extensible file system scanner that can:
+
+- Extract software inventory data (installed packages)  
+- Detect vulnerabilities  
+- Generate SPDX reports  
+- Scan both local files and container images  
+
+Let’s start with a basic scan of our webapp directory:
+
+scalibr --result=result.textproto
+
+Command Output
+2025/02/04 05:20:32 End status: 18001 dirs visited, 134705 inodes visited, 1801 Extract calls, 4.618332981s elapsed  
+2025/02/04 05:20:32 Scan status: SUCCEEDED  
+2025/02/04 05:20:32 Found 4476 software inventories, 0 security findings  
+2025/02/04 05:20:32 Writing scan results to result.textproto  
+2025/02/04 05:20:32 Marshaled result proto has 1858954 bytes  
+
+The command above will generate a scan result in Protocol Buffer text format (a human-readable serialization format used by Google’s Protocol Buffers for structured data).
+
+Let’s examine the results:
+
+cat result.textproto
+
+Command Output
+.... [SNIP] ....
+
+inventories:  {
+  name:  "zwitch"
+  version:  "1.0.5"
+  source_code:  {}
+  purl:  {
+    purl:  "pkg:npm/zwitch@1.0.5"
+    type:  "npm"
+    name:  "zwitch"
+    version:  "1.0.5"
+  }
+  ecosystem:  "npm"
+  locations:  "usr/local/lib/python3.10/dist-packages/ansible_collections/grafana/grafana/yarn.lock"
+  extractor:  "javascript/yarnlock"
+}
+
+The output of the scanning will show detected packages and any associated vulnerabilities as the above result shows.
+
+---
+
+Scanning a Container Image
+The tool is not only able to scan a local directory, but it can also scan a container image. Let’s give it a try by scanning the Alpine Linux image.
+
+scalibr --result=alpine-scan.textproto --remote-image=alpine:latest
+
+Command Output
+2025/02/04 05:22:31 End status: 45 dirs visited, 464 inodes visited, 22 Extract calls, 4.162351ms elapsed  
+2025/02/04 05:22:31 Scan status: SUCCEEDED  
+2025/02/04 05:22:31 Found 15 software inventories, 0 security findings  
+2025/02/04 05:22:31 Writing scan results to alpine-scan.textproto  
+
+When you run the scanner, it automatically performs these steps:
+- Downloads the container image from the registry  
+- Extracts all the contents from the image layers  
+- Identifies and catalogs all installed packages and dependencies  
+- Checks each package against vulnerability databases for known security issues  
+
+Let’s examine these results:
+
+cat alpine-scan.textproto
+
+Command Output
+    qualifiers:  {
+      key:  "origin"
+      value:  "zlib"
+    }
+  }
+  ecosystem:  "Alpine:v3.21"
+  locations:  "lib/apk/db/installed"
+  extractor:  "os/apk"
+  apk_metadata:  {
+    package_name:  "zlib"
+    origin_name:  "zlib"
+    os_id:  "alpine"
+    os_version_id:  "3.21.2"
+    maintainer:  "Natanael Copa <ncopa@alpinelinux.org>"
+    architecture:  "x86_64"
+    license:  "Zlib"
+  }
+}
+
+Let’s move to the next step.
+```
+```markdown
+Generating SPDX Reports
+Software Package Data Exchange (SPDX) is an open standard for documenting software bill of materials (SBOM). It provides a standardized way to share information about software components, their licenses, and dependencies.
+
+OSV-Scalibr can generate SPDX reports in various formats, helping you:
+
+- Track software components and dependencies  
+- Document license information  
+- Share software inventory data with other tools  
+- Meet compliance requirements  
+
+Let’s generate an SPDX report in JSON format:
+
+scalibr -o spdx23-json=webapp.spdx.json
+
+Command Output
+2025/02/04 05:26:01 End status: 18046 dirs visited, 135172 inodes visited, 1822 Extract calls, 1.841682496s elapsed  
+2025/02/04 05:26:01 Scan status: SUCCEEDED  
+2025/02/04 05:26:01 Found 4476 software inventories, 0 security findings  
+2025/02/04 05:26:01 Writing scan results to webapp.spdx.json  
+
+Not only we can generate SPDX reports in JSON format, but also we can customize the SPDX document metadata.
+
+Let’s customize the SPDX document metadata:
+
+scalibr \
+  --spdx-document-name="Django.nv Scan" \
+  --spdx-document-namespace="https://devsecops.training/django-nv" \
+  --spdx-creators=Organization:DevSecOps-Training \
+  -o spdx23-json=webapp-custom.spdx.json
+
+Command Output
+2025/02/04 05:29:01 End status: 18046 dirs visited, 135172 inodes visited, 1822 Extract calls, 1.723608258s elapsed  
+2025/02/04 05:29:01 Scan status: SUCCEEDED  
+2025/02/04 05:29:01 Found 4476 software inventories, 0 security findings  
+2025/02/04 05:29:01 Writing scan results to webapp-custom.spdx.json  
+
+After the scanning is completed, let’s examine our SPDX report:
+
+cat webapp-custom.spdx.json
+
+Command Output
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "Django.nv Scan",
+  "documentNamespace": "https://devsecops.training/django-nv",
+  "creationInfo": {
+    "creators": [
+      "Tool: SCALIBR",
+      "Organization: DevSecOps-Training"
+    ],
+    "created": "2025-02-04T05:29:01Z"
+  },
+  "packages": [
+
+... [SNIP] ...
+
+    {
+      "spdxElementId": "SPDXRef-Package-main-f9956188-bd71-4b43-b89a-3c93f7ff4c4b",
+      "relatedSpdxElement": "SPDXRef-Package-zwitch-5a79f10e-f728-4b01-aaca-c07f35444a63",
+      "relationshipType": "CONTAINS"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-zwitch-5a79f10e-f728-4b01-aaca-c07f35444a63",
+      "relatedSpdxElement": "NOASSERTION",
+      "relationshipType": "CONTAINS"
+    }
+  ]
+}
+
+The SPDX report that we generated before will include:
+
+- Package information  
+- License information  
+- File inventory  
+- Relationships between components  
+
+We can also generate YAML format if we want:
+
+scalibr -o spdx23-yaml=webapp.spdx.yaml
+
+Command Output
+2025/02/04 05:31:20 End status: 18049 dirs visited, 135176 inodes visited, 1822 Extract calls, 1.634190416s elapsed  
+2025/02/04 05:31:20 Scan status: SUCCEEDED  
+2025/02/04 05:31:20 Found 4476 software inventories, 0 security findings  
+2025/02/04 05:31:20 Writing scan results to webapp.spdx.yaml  
+
+Or the traditional tag-value format:
+
+scalibr -o spdx23-tag-value=webapp.spdx
+
+Command Output
+2025/02/04 05:31:50 End status: 18049 dirs visited, 135177 inodes visited, 1822 Extract calls, 1.67123317s elapsed  
+2025/02/04 05:31:50 Scan status: SUCCEEDED  
+2025/02/04 05:31:50 Found 4476 software inventories, 0 security findings  
+2025/02/04 05:31:50 Writing scan results to webapp.spdx  
+
+Let’s examine the SPDX report:
+
+cat webapp.spdx
+
+Command Output
+Relationship: SPDXRef-SPDXRef-Package-main-76789389-d48c-4f3f-a9ee-ebdbd5c35067 CONTAINS SPDXRef-SPDXRef-Package-zlib1g-dev-6e4efd8a-119e-487f-a604-24e0ce2a6f45  
+Relationship: SPDXRef-SPDXRef-Package-zlib1g-dev-6e4efd8a-119e-487f-a604-24e0ce2a6f45 CONTAINS NOASSERTION  
+Relationship: SPDXRef-SPDXRef-Package-main-76789389-d48c-4f3f-a9ee-ebdbd5c35067 CONTAINS SPDXRef-SPDXRef-Package-zwitch-aadf5f2d-d10a-4f2a-b6cb-0c6015cbbb69  
+Relationship: SPDXRef-SPDXRef-Package-zwitch-aadf5f2d-d10a-4f2a-b6cb-0c6015cbbb69 CONTAINS NOASSERTION  
+
+These SPDX reports can be used to:
+
+- Document software components  
+- Track dependencies  
+- Share software inventory data  
+- Comply with license obligations  
+
+Let’s move to the next step.
+```
+```markdown
+Working with Plugins
+OSV-Scalibr is designed to be extensible through plugins. It comes with built-in plugins for inventory extraction and vulnerability detection.
+
+Let’s look at running specific extractors:
+
+scalibr --extractors=python,os --result=specific.textproto
+
+Command Output
+2025/02/04 05:59:06 Found 743 software inventories, 0 security findings  
+2025/02/04 05:59:06 Writing scan results to specific.textproto  
+2025/02/04 05:59:06 Marshaled result proto has 450111 bytes  
+
+The above command will run only the Python and OS package extractors. Common extractors include:
+
+- python: For Python packages and dependencies  
+- javascript: For JavaScript/Node.js packages  
+- java: For Java packages and Maven dependencies  
+- go: For Golang modules  
+- os: For operating system packages  
+
+---
+
+Note  
+Not only can we specify extractors, we can also specify detectors by using the –detectors flag:
+
+scalibr --detectors=cis --result=cis-scan.textproto
+
+Command Output
+2025/02/04 06:02:04 End status: 18049 dirs visited, 135179 inodes visited, 1822 Extract calls, 1.874597188s elapsed  
+2025/02/04 06:02:04 Scan status: SUCCEEDED  
+2025/02/04 06:02:04 Found 4476 software inventories, 0 security findings  
+2025/02/04 06:02:04 Writing scan results to cis-scan.textproto  
+2025/02/04 06:02:04 Marshaled result proto has 1859064 bytes  
+
+The above command will run the CIS benchmark detector.
+
+---
+
+Understanding the Results
+Let’s examine our scan results in more detail for the specific.textproto file:
+
+cat specific.textproto
+
+Command Output
+....[SNIP]....
+
+  ecosystem:  "Ubuntu:22.04"
+  locations:  "var/lib/dpkg/status"
+
+  extractor:  "os/dpkg"
+  dpkg_metadata:  {
+    package_name:  "zlib1g-dev"
+    source_name:  "zlib"
+    package_version:  "1:1.2.11.dfsg-2ubuntu9.2"
+    os_id:  "ubuntu"
+    os_version_codename:  "jammy"
+    os_version_id:  "22.04"
+    maintainer:  "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>"
+    architecture:  "amd64"
+    status:  "install ok installed"
+  }
+}
+
+---
+
+Whats about the cis-scan.textproto file?
+
+cat cis-scan.textproto
+
+Command Output
+....[SNIP]....
+inventories:  {
+  name:  "zwitch"
+  version:  "1.0.5"
+  source_code:  {}
+  purl:  {
+    purl:  "pkg:npm/zwitch@1.0.5"
+    type:  "npm"
+    name:  "zwitch"
+    version:  "1.0.5"
+  }
+  ecosystem:  "npm"
+  locations:  "usr/local/lib/python3.10/dist-packages/ansible_collections/grafana/grafana/yarn.lock"
+  extractor:  "javascript/yarnlock"
+}
+
+The scan provides a comprehensive inventory of all installed packages across different ecosystems (Node.js, Python, Java, Go, OS packages) and their locations in the system.
+
+---
+
+Handling Multiple Scans
+We can scan multiple directories if you have a large number of files to scan:
+
+scalibr --result=multi.textproto dir1/ dir2/ dir3/
+
+---
+
+Note  
+Let’s move on to the next step.
+```
+```markdown
+Conclusion
+From the experiments that we have done, we can conclude that OSV-Scalibr is a powerful and flexible scanning tool that offers several key advantages:
+
+### Comprehensive Scanning Capabilities
+- Can scan both local filesystems and container images  
+- Detects packages across multiple ecosystems (Python, Node.js, Java, Go, etc.)  
+- Provides detailed metadata about discovered packages  
+- Supports various output formats including SPDX and Protocol Buffers  
+
+### Extensible Architecture
+- Supports plugin-based extractors for different package types  
+- Allows custom detectors for specific security checks  
+- Can be used as both a standalone tool and a library  
+- Enables integration into larger security workflows  
+
+### Standards Compliance
+- Generates standardized SPDX reports  
+- Supports multiple SPDX formats (JSON, YAML, tag-value)  
+- Provides detailed package URLs (purls)  
+- Maintains proper software bill of materials (SBOM)  
+
+### Enterprise-Ready Features
+- Handles large-scale scanning efficiently  
+- Supports recursive directory scanning  
+- Provides detailed inventory reports  
+- Enables customization of scan scope and output  
+
+---
+
+These capabilities make OSV-Scalibr an excellent choice for organizations needing to:
+
+- Track software dependencies  
+- Generate compliance documentation  
+- Perform security assessments  
+- Maintain software inventories  
+- Create standardized SBOMs  
+
+The tool’s flexibility and extensibility ensure it can adapt to various use cases while maintaining compatibility with industry standards.
+```
+```markdown
+Fix the Issues Reported by SCA Tools
+Preparing the Environment for Security Analysis
+To begin dependency scanning, we first need to download the source code of an application.
+
+Let’s use git clone to download the django.nv app’s source code into a directory named webapp.
+
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv webapp
+
+Command Output
+Cloning into 'webapp'...
+warning: redirecting to https://gitlab.practical-devsecops.training/pdso/django.nv.git/
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+
+After successfully cloning the project into our machine, we need to move into the project’s directory.
+
+cd webapp
+
+Command Output
+/webapp# 
+
+With the source code successfully cloned into the DevSecOps-Box and the webapp directory ready, the next step is to prepare the environment for a thorough security analysis. This involves setting up the package-lock.json file, which is essential for effectively using npm packages and tools.
+
+In the next step, we will use the package-lock.json file to run the OSV Scanner.
+
+---
+
+Installing npm and Generating package-lock.json
+To begin, we need to make sure that our package list is up-to-date and that npm, the package manager for JavaScript, is installed in our environment. Let’s enter the following commands to accomplish this:
+
+Update the package list to ensure we have the latest versions of available packages and can install new ones without any issues.
+
+apt update
+
+Install npm, which is crucial for managing JavaScript packages and will be used to generate the package-lock.json file.
+
+apt install npm -y
+
+With npm installed, the next step was to generate the package-lock.json file. The file is critical as it locks down the versions of npm package dependencies for the project, ensuring consistent installations across environments.
+
+Let’s input the command to generate the file:
+
+npm install
+
+During the process, you might see some warnings about vulnerabilities. These warnings could be overlooked for the moment because the main aim is to get the package-lock.json file ready. An example of what they might see is illustrated below:
+
+npm-output
+
+After running npm install, let’s input the ls command to list the files in the directory and confirm that the package-lock.json file has been successfully created:
+
+ls
+
+Command Output
+Dockerfile  bandit.ignore  manage.py     __package-lock.json__  requirements.txt  taskManager
+README.md   fixtures       node_modules  package.json       run.sh
+
+After checking with ls, we can see the package-lock.json file listed among others, which means the process was successful. Now, we are ready for the next step: installing a tool called the OSV Scanner to find and fix any hidden security issues in the project.
+
+With the package-lock.json file ready and a clear plan in place, we are one step closer to making the project secure.
+```
+```markdown
+Getting Started With OSV Scanner
+Imagine a team of developers eager to ensure their project was safe from any lurking digital threats. They learned about a tool that could help them, known as the OSV (Open Source Vulnerability) Scanner. The tool was like a digital detective that could sift through their project’s code, identifying any hidden vulnerabilities by examining a list of all the open-source components they were using, also known as the Software Bill of Materials (SBOM). For their JavaScript or Python projects, it could also scan specific files like package-lock.json or requirements.txt to check the versions of the dependencies they had employed.
+
+Reference: https://google.github.io/osv-scanner/
+
+---
+
+Setting Up the OSV Scanner
+First, we need to prepare the OSV scanner for use. Let us enter the command:
+
+wget -O /usr/bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v1.4.0/osv-scanner_1.4.0_linux_amd64 && sudo chmod +x /usr/bin/osv-scanner
+
+Command Output
+
+...[SNIP]...
+
+/usr/bin/osv-sca 100%[=========>]  15.70M  62.9MB/s    in 0.2s    
+
+2024-05-25 09:49:41 (62.9 MB/s) - ‘/usr/bin/osv-scanner’ saved [16457728/16457728]
+
+As we executed the command, we received a confirmation message indicating that the OSV Scanner was being downloaded.
+
+Now that the OSV Scanner is installed, let’s type the following command in the terminal to view the available options:
+
+osv-scanner --help
+
+Command Output
+NAME:
+   osv-scanner - scans various mediums for dependencies and matches it against the OSV database
+
+USAGE:
+   osv-scanner [global options] command [command options] [directory1 directory2...]
+
+VERSION:
+   1.4.0
+
+COMMANDS:
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --docker value, -D value [ --docker value, -D value ]      scan docker image with this name  
+   --lockfile value, -L value [ --lockfile value, -L value ]  scan package lockfile on this path  
+   --sbom value, -S value [ --sbom value, -S value ]          scan sbom file on this path  
+   --config value                                             set/override config file  
+   --format value, -f value                                   sets the output format (default: "table")  
+   --json                                                     sets output to json (deprecated, use --format json instead) (default: false)  
+   --output value                                             saves the result to the given file path  
+   --skip-git                                                 skip scanning git repositories (default: false)  
+   --recursive, -r                                            check subdirectories (default: false)  
+   --experimental-call-analysis                               attempt call analysis on code to detect only active vulnerabilities (default: false)  
+   --no-ignore                                                also scan files that would be ignored by .gitignore (default: false)  
+   --experimental-local-db                                    checks for vulnerabilities using local databases (default: false)  
+   --experimental-offline                                     checks for vulnerabilities using local databases that are already cached (default: false)  
+   --help, -h                                                 show help  
+   --version, -v                                              print the version  
+
+The help command displayed various commands demonstrating how to utilize the OSV Scanner effectively. It provided instructions on scanning projects using Docker images, lock files for JavaScript or Python projects, and more.
+
+---
+
+Let’s move on to the next step.
+```
+```markdown
+Scanning and Fixing requirements.txt
+With the required tools installed, our goal is to discover what insights the tool can provide about our project.
+
+---
+
+### Specific Scanning requirements.txt
+To ensure our project’s safety and address any potential issues, we will utilize a tool called the OSV Scanner. Our initial step involves examining the requirements.txt file for any issues. We can accomplish this by executing the following command:
+
+osv-scanner -L requirements.txt
+
+The scanner quickly got to work and highlighted security issues with the Django version we were using. The screen displayed several warnings along with links for more details.
+
+Command Output
+Scanned /webapp/requirements.txt file and found 1 package
+╭─────────────────────────────────────┬──────┬───────────┬─────────┬─────────┬──────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE │ VERSION │ SOURCE           │
+├─────────────────────────────────────┼──────┼───────────┼─────────┼─────────┼──────────────────┤
+│ https://osv.dev/GHSA-2m34-jcjv-45xf │ 6.1  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2020-32       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-3gh2-xw74-jmcw │ 8.8  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2020-36       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-68w8-qjq3-2gfm │ 4.9  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2021-98       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-fr28-569j-53c4 │ 7.5  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2020-34       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-fvgf-6h6h-3322 │ 5.3  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2021-9        │      │           │         │         │                  │
+│ https://osv.dev/GHSA-hmr4-m2h5-33qx │ 9.8  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2020-35       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-m6gj-h9gm-gw44 │ 7.5  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2020-33       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-p99v-5w3c-jqq9 │ 7.5  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2021-99       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-rxjp-mfm9-w4wr │ 7.5  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/GHSA-v6rh-hp5x-86rv │ 7.3  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/GHSA-vfq6-hq5r-27r6 │ 9.8  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/GHSA-wpjr-j57x-wxfw │ 5.9  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2020-31       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-xgxc-v2qg-chmh │ 5.3  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2021-6        │      │           │         │         │                  │
+│ https://osv.dev/GHSA-xpfp-f569-q3p2 │ 9.8  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+│ https://osv.dev/GHSA-xxj9-f6rv-m3x4 │ 5.9  │ PyPI      │ django  │ 3.0     │ requirements.txt │
+╰─────────────────────────────────────┴──────┴───────────┴─────────┴─────────┴──────────────────╯
+
+---
+
+### Resolve Issue in requirements.txt
+After noticing the warnings, we realized we should upgrade Django to a newer, safer version. To do this, we decided to modify our requirements.txt file to use Django 5.0 instead. To update Django, we need to enter the following command:
+
+cat > requirements.txt <<EOL
+Django==5.0
+EOL
+
+To ensure that the requirements are already updated, we need to check the file:
+
+cat requirements.txt
+
+Command Output
+Django==5.0
+
+And it was! The new version of Django was now in their list.
+
+---
+
+### Re-Scanning to Verify Fix
+With the update made, we need to re-scan again using OSV scanner to make sure our project was safe:
+
+osv-scanner -L requirements.txt
+
+Command Output
+Scanned /webapp/requirements.txt file and found 1 package
+╭─────────────────────────────────────┬──────┬───────────┬─────────┬─────────┬──────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE │ VERSION │ SOURCE           │
+├─────────────────────────────────────┼──────┼───────────┼─────────┼─────────┼──────────────────┤
+│ https://osv.dev/GHSA-vm8q-m57g-pff3 │      │ PyPI      │ django  │ 5.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2024-47       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-xxj9-f6rv-m3x4 │ 5.9  │ PyPI      │ django  │ 5.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2024-28       │      │           │         │         │                  │
+╰─────────────────────────────────────┴──────┴───────────┴─────────┴─────────┴──────────────────╯
+
+---
+
+### Variable Scan Results
+Your results might slightly vary because of the dynamic landscape of changing vulnerabilities and security updates.
+
+✅ Voila, the result is much fewer than the scanning before — we successfully reduced the vulnerabilities here.
+
+---
+
+Let’s attempt to fix the npm issue on the next page.
+```
+```markdown
+Scanning and Fixing NPM
+After successfully addressing the issue in the requirements.txt file, our next task is to tackle npm vulnerabilities. We have opted to utilize the OSV Scanner tool to inspect our package-lock.json file for any security concerns.
+
+---
+
+### Specific Scanning NPM
+To enhance the safety of our project further, we have decided to address not only the requirements.txt but also the NPM issues. Our initial step was to inspect the package-lock.json file for any potential problems.
+
+To perform this action, please input the following command:
+
+osv-scanner -L package-lock.json
+
+Just like that, the scanner got to work and found some security problems with a few packages we were using. It showed us lots of warnings and links to more details.
+
+Command Output
+Scanned /webapp/requirements.txt file and found 1 package  
+Scanned /webapp/package-lock.json file and found 1045 packages  
+╭─────────────────────────────────────┬──────┬───────────┬───────────────────┬─────────┬───────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE           │ VERSION │ SOURCE            │
+├─────────────────────────────────────┼──────┼───────────┼───────────────────┼─────────┼───────────────────┤
+│ https://osv.dev/GHSA-3v6h-hqm4-2rg6 │ 5.5  │ npm       │ adm-zip           │ 0.4.4   │ package-lock.json │
+│ https://osv.dev/GHSA-67hx-6x53-jw92 │ 9.3  │ npm       │ babel-traverse    │ 6.11.4  │ package-lock.json │
+│ https://osv.dev/GHSA-pp7h-53gx-mx7r │ 6.5  │ npm       │ bl                │ 1.0.3   │ package-lock.json │
+│ https://osv.dev/GHSA-pp7h-53gx-mx7r │ 6.5  │ npm       │ bl                │ 1.1.2   │ package-lock.json │
+│ https://osv.dev/GHSA-832h-xg76-4gv6 │ 7.5  │ npm       │ brace-expansion   │ 1.1.6   │ package-lock.json │
+│ https://osv.dev/GHSA-cwfw-4gq5-mrqx │      │ npm       │ braces            │ 1.8.5   │ package-lock.json │
+│ https://osv.dev/GHSA-g95f-p29q-9xw4 │ 3.7  │ npm       │ braces            │ 1.8.5   │ package-lock.json │
+│ https://osv.dev/GHSA-4jwp-vfvf-657p │ 5.4  │ npm       │ bson              │ 1.0.9   │ package-lock.json │
+│ https://osv.dev/GHSA-v8w9-2789-6hhr │ 9.8  │ npm       │ bson              │ 1.0.9   │ package-lock.json │
+│ https://osv.dev/GHSA-c6rq-rjc2-86v2 │ 2.5  │ npm       │ chownr            │ 1.0.1   │ package-lock.json │
+...[SNIP]...
+
+---
+
+### Resolve Issue in NPM
+The scan showed several vulnerabilities, including one in the **adm-zip** package. And we need to tackle this first.
+
+Command Output
+╭─────────────────────────────────────┬──────┬───────────┬───────────────────┬─────────┬───────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE           │ VERSION │ SOURCE            │
+├─────────────────────────────────────┼──────┼───────────┼───────────────────┼─────────┼───────────────────┤
+│ https://osv.dev/GHSA-3v6h-hqm4-2rg6 │ 5.5  │ npm       │ adm-zip           │ 0.4.4   │ package-lock.json │
+╰─────────────────────────────────────┴──────┴───────────┴───────────────────┴─────────┴───────────────────╯
+
+---
+
+### Step 1: Identify dependency usage
+npm list adm-zip
+
+Command Output
+owasp-nodejs-goat@1.3.0 /webapp  
+└─┬ selenium-webdriver@2.53.3  
+  └── adm-zip@0.4.4  
+
+From the above result, we see that the **adm-zip** package is used in **selenium-webdriver**.  
+
+---
+
+### Step 2: Update dependency
+npm install selenium-webdriver@latest --save
+
+Command Output
++ selenium-webdriver@4.21.0  
+added 5 packages from 17 contributors, removed 6 packages, updated 3 packages and audited 1379 packages in 5.942s  
+
+Check the update:
+
+npm list selenium-webdriver
+
+Command Output
+owasp-nodejs-goat@1.3.0 /webapp  
+└── selenium-webdriver@4.21.0  
+
+✅ Voila! It was updated from version 2.53.3 → 4.21.0.
+
+---
+
+### Step 3: Re-scan for issues
+osv-scanner -L package-lock.json
+
+Command Output
+Scanned /webapp/package-lock.json file and found 1043 packages  
+...[SNIP]...  
+The adm-zip package is gone, and we have successfully reduced the vulnerability.  
+
+---
+
+### Step 4: Fixing another vulnerable package (yargs-parser)
+Now let’s address the **yargs-parser** package.
+
+Check where it’s used:
+
+npm list yargs-parser
+
+Command Output
+owasp-nodejs-goat@1.3.0 /webapp  
+└─┬ grunt-if@0.2.0  
+  └─┬ grunt-contrib-nodeunit@1.0.0  
+    └─┬ nodeunit@0.9.5  
+      └─┬ tap@7.1.2  
+        └─┬ nyc@7.1.0  
+          ├─┬ yargs@4.8.1  
+          │ └── yargs-parser@2.4.1  deduped  
+          └── yargs-parser@2.4.1  
+
+Update grunt-if:
+
+npm install grunt-if@latest --save
+
+Command Output
++ yargs@17.7.2  
+added 5 packages from 7 contributors, updated 1 package, moved 1 package and audited 1638 packages in 6.896s  
+
+Verify:
+
+npm list yargs-parser
+
+Command Output
+owasp-nodejs-goat@1.3.0 /webapp  
+└─┬ grunt-if@0.1.5  
+  └─┬ grunt-contrib-nodeunit@0.3.3  
+    └─┬ nodeunit@0.8.8  
+      └─┬ tap@19.0.2  
+        └─┬ @tapjs/run@2.0.2  
+          └─┬ c8@9.1.0  
+            ├─┬ yargs@17.7.2  
+            │ └── yargs-parser@21.1.1  deduped  
+            └── yargs-parser@21.1.1  
+
+✅ It was updated from version 2.4.1 → 21.1.1.
+
+---
+
+### Step 5: Final Re-scan
+osv-scanner -L package-lock.json
+
+Command Output
+Scanned /webapp/package-lock.json file and found 1043 packages  
+...[SNIP]...  
+The yargs-parser package is gone, and we have successfully reduced the vulnerability count again.  
+
+---
+
+### Important Point: Python vs Node.js Package Management
+Comparison Aspect | Description
+---|---
+**Python’s requirements.txt** | Enumerates precise versions of each package needed. Like a shopping list with specific items.  
+**Node.js’s package.json** | Lists required packages but allows varying versions. Like asking for any variety of apples.  
+**Node.js’s package-lock.json** | Ensures everyone installs the exact same versions. Like a detailed shopping list that guarantees identical purchases.  
+
+The OSV scanner uses `requirements.txt` in Python and `package-lock.json` in Node.js because both are explicit about versions — ensuring reliable vulnerability detection.
+
+---
+```
+````markdown
+Advance Scanning Methods
+To ensure the security of our project’s dependencies, we learned about two advanced scanning methods offered by the OSV Scanner:
+
+1. **Experimental Local DB Scanning**  
+2. **False Positive Analysis Scanning**
+
+---
+
+### Implementation with Experimental Local DB
+We started with the **Experimental Local DB Scanning** method.  
+This method uses the `--experimental-local-db` option in the OSV Scanner, designed to download or update the local database and scan the package based on this database.
+
+Command:
+```bash
+osv-scanner --experimental-local-db .
+````
+
+Command Output
+
+```
+Scanning dir .
+Scanned /webapp/package-lock.json file and found 1020 packages
+Scanned /webapp/requirements.txt file and found 1 package
+Loaded npm local db from /root/.cache/osv-scanner/npm/all.zip
+Loaded PyPI local db from /root/.cache/osv-scanner/PyPI/all.zip
+╭─────────────────────────────────────┬──────┬───────────┬───────────────────┬─────────┬───────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE           │ VERSION │ SOURCE            │
+├─────────────────────────────────────┼──────┼───────────┼───────────────────┼─────────┼───────────────────┤
+│ https://osv.dev/GHSA-pp7h-53gx-mx7r │ 6.5  │ npm       │ bl                │ 1.0.3   │ package-lock.json │
+│ https://osv.dev/GHSA-pp7h-53gx-mx7r │ 6.5  │ npm       │ bl                │ 1.1.2   │ package-lock.json │
+│ https://osv.dev/GHSA-832h-xg76-4gv6 │ 7.5  │ npm       │ brace-expansion   │ 1.1.6   │ package-lock.json │
+...[SNIP]...
+╰─────────────────────────────────────┴──────┴───────────┴───────────────────┴─────────┴───────────────────╯
+```
+
+The databases are cached locally under `/root/.cache/osv-scanner/`.
+
+Inspect database contents:
+
+```bash
+zipinfo /root/.cache/osv-scanner/npm/all.zip
+```
+
+Command Output (excerpt)
+
+```
+-rw-r--r--  2.0 unx     2199 b- defN 23-Sep-26 06:18 MAL-2023-982.json
+-rw-r--r--  2.0 unx     2210 b- defN 23-Sep-26 06:18 MAL-2023-983.json
+...
+12410 files, 28171686 bytes uncompressed, 11624512 bytes compressed:  58.7%
+```
+
+---
+
+### Experimental Offline Scan
+
+Now, we try the **offline scan**:
+
+```bash
+osv-scanner --experimental-offline .
+```
+
+Command Output
+
+```
+Scanning dir .
+Scanned /webapp/package-lock.json file and found 1020 packages
+Scanned /webapp/requirements.txt file and found 1 package
+Loaded npm local db from /root/.cache/osv-scanner/npm/all.zip
+Loaded PyPI local db from /root/.cache/osv-scanner/PyPI/all.zip
+...[SNIP]...
+```
+
+---
+
+### Experimental Offline VS Local DB
+
+| Option                    | Description                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| `--experimental-local-db` | Downloads or updates the database online, stores in `/root/.cache/osv-scanner/`. |
+| `--experimental-offline`  | Uses existing cached database, requires no internet connection.                  |
+
+---
+
+### Ignoring Vulnerability For False Positive Analysis
+
+Now, let’s use **False Positive Analysis** by excluding certain vulnerability IDs.
+
+Run scan:
+
+```bash
+osv-scanner -L requirements.txt
+```
+
+Command Output
+
+```
+Scanned /webapp/requirements.txt file and found 1 package
+╭─────────────────────────────────────┬──────┬───────────┬─────────┬─────────┬──────────────────╮
+│ OSV URL                             │ CVSS │ ECOSYSTEM │ PACKAGE │ VERSION │ SOURCE           │
+├─────────────────────────────────────┼──────┼───────────┼─────────┼─────────┼──────────────────┤
+│ https://osv.dev/GHSA-vm8q-m57g-pff3 │      │ PyPI      │ django  │ 5.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2024-47       │      │           │         │         │                  │
+│ https://osv.dev/GHSA-xxj9-f6rv-m3x4 │ 5.9  │ PyPI      │ django  │ 5.0     │ requirements.txt │
+│ https://osv.dev/PYSEC-2024-28       │      │           │         │         │                  │
+╰─────────────────────────────────────┴──────┴───────────┴─────────┴─────────┴──────────────────╯
+```
+
+We decide to exclude **PYSEC-2024-47** and **PYSEC-2024-28**.
+
+Create config file:
+
+```bash
+cat > /webapp/config.toml <<EOF
+[[IgnoredVulns]]
+id = "PYSEC-2024-47"
+reason = "false positive"
+
+[[IgnoredVulns]]
+id = "PYSEC-2024-28"
+reason = "false positive"
+EOF
+```
+
+Run scan with config:
+
+```bash
+osv-scanner --config=/webapp/config.toml -L requirements.txt
+```
+
+Command Output
+
+```
+Scanned /webapp/requirements.txt file and found 1 package
+PYSEC-2024-47 and 1 alias have been filtered out because: false positive
+PYSEC-2024-28 and 1 alias have been filtered out because: false positive
+Filtered 4 vulnerabilities from output
+No vulnerabilities found
+```
+
+---
+
+✅ With configuration, we successfully filtered out false positives.
+You can extend this method by adding more IDs, expiry dates, or reasons in the `osv-scanner.toml`.
+
+---
+
+```
+```
+```markdown
+Conclusion
+The Open Source Vulnerabilities (OSV) scanner is a useful tool that helps in identifying known vulnerabilities in software packages, particularly within the context of open-source usage. OSV scanner does this by scanning specific files such as Python’s `requirements.txt`, Node.js’ `package-lock.json`, and similar lock files in other environments. Each line in the output presents a known vulnerability within a specific version of a package that has been detected within your software.
+
+Note that while OSV scanner can inspect a variety of package systems, as of the current version, OSV scanner does not directly support Node.js’ `package.json` due to its lack of specific versioning. Instead, OSV scanner requires `package-lock.json` for Node.js projects.
+
+As the digital landscape constantly evolves, so does the OSV scanner. It is always recommended to regularly check for updates and improvements in functionality.
+```
+```markdown
+Additional Resources
+For more detailed information, and for regular updates regarding the OSV scanner you can refer to:
+
+- [Official OSV Scanner Repository](https://github.com/google/osv-scanner)  
+- [OSV Website](https://osv.dev)  
+- [OSV Scanner Announcement](https://security.googleblog.com/2022/12/announcing-osv-scanner-vulnerability.html)  
+```
+````markdown
+How To Embed OSV Scanner Into GitLab
+---
+
+### A Simple CI/CD Pipeline with OSV Scanner
+Considering your DevOps team created a simple CI pipeline with the following contents. We will **add the OSV Scanner step** into this pipeline to perform Software Composition Analysis (SCA) during the CI process.
+
+---
+
+### Modified `.gitlab-ci.yml`
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker).
+                      # Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - sca
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+osv-scanner:
+  stage: sca
+  image:
+    name: golang:1.22  # OSV Scanner requires Go or binary installation
+    entrypoint: [""]
+  script:
+    - apt-get update && apt-get install -y wget unzip
+    - wget -O /usr/bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v1.4.0/osv-scanner_1.4.0_linux_amd64
+    - chmod +x /usr/bin/osv-scanner
+    # Run scan on lock files
+    - osv-scanner -L requirements.txt || true
+    - osv-scanner -L package-lock.json || true
+  allow_failure: true   # Let pipeline continue even if vulnerabilities are found
+  artifacts:
+    when: always
+    paths:
+      - osv-scanner-report.json
+    reports:
+      dotenv: osv-scanner-report.json
+````
+
+---
+
+### Explanation of Changes
+
+* **New Stage Added**: `sca` (software composition analysis).
+* **OSV Scanner Job**:
+
+  * Downloads and installs the `osv-scanner` binary.
+  * Runs scans against `requirements.txt` and `package-lock.json`.
+  * Uses `|| true` to ensure the pipeline continues even if vulnerabilities are found (can be removed if you want pipeline to fail on vulnerabilities).
+  * Generates an **artifact report** for later review.
+* **Artifacts**: Scan results are stored for visibility and compliance review.
+
+---
+
+### Verify the Pipeline
+
+1. Log into GitLab with the provided credentials:
+
+   * **Link**: [CI/CD Machine](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml)
+   * **Username**: root
+   * **Password**: pdso-training
+
+2. Replace the content of `.gitlab-ci.yml` with the above pipeline.
+
+   * Click **Edit** → Replace (Ctrl+A, Ctrl+V) → **Commit changes**.
+
+3. Navigate to **Pipelines**:
+   [Pipelines Page](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+4. The pipeline will start automatically.
+
+   * You should now see **build → test → osv-scanner → release → ...** in the job sequence.
+   * Click on the `osv-scanner` job to view vulnerability scan results.
+
+---
+
+✅ With this setup, your GitLab CI/CD pipeline now automatically performs dependency vulnerability scanning with **OSV Scanner** during every run.
+
+```
+
+Would you like me to also extend this pipeline to **fail the build if high/critical vulnerabilities are found**, instead of allowing it to pass?
+```
+```markdown
+Embed OSV Scanner In CI/CD Pipeline
+As discussed in the SCA using the OSV Scanner exercise, we can embed the OSV Scanner tool in our CI/CD pipeline.
+
+However, do remember that you need run commands manually in a local system like devsecops box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like devsecops box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Maybe you want to scan the components before performing SAST scans.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+osv-scanner:
+  stage: test
+  image: golang:1.22-alpine3.19
+  before_script:
+    - apk add npm
+    - npm install
+  script:
+    - go install github.com/google/osv-scanner/cmd/osv-scanner@v1
+    - osv-scanner .
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Do not forget to click on the Commit Changes button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Perfect! In the result above, we have noticed for the OSV Scanner output in the CI/CD pipeline in the table. You can see the vulnerability list of the package above in every suggested package.
+
+osv-scanner-output
+
+In the next step, you will learn the need to create artifact for OSV Scanner output in the builds.
+```
+````markdown
+Saving File As An Artifacts
+---
+
+In the previous step, we have understood the basic scanning process using OSV Scanner. Let’s now convert the scan output into a file format so that it can be easily analyzed. We will generate the OSV Scanner results in **JSON format** and save them as an artifact.
+
+---
+
+### Updated `.gitlab-ci.yml`
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker).
+                      # Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+osv-scanner:
+  stage: test
+  image: golang:1.22-alpine3.19
+  before_script:
+    - apk add npm
+    - npm install
+  script:
+    - go install github.com/google/osv-scanner/cmd/osv-scanner@v1
+    - osv-scanner --json . > osv-report.json
+  artifacts:
+    paths: [osv-report.json]
+    when: always
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+````
+
+---
+
+### Explanation of Changes
+
+* **`--json` output**: We added the `--json` flag so OSV Scanner generates results in JSON format.
+* **Redirecting output**: The results are saved to `osv-report.json`.
+* **Artifacts block**:
+
+  * Ensures the JSON report is always saved.
+  * Allows developers/security teams to download and review the OSV scan results.
+
+---
+
+### Key Notes
+
+* We discussed different installation methods:
+
+  * **Native installation** – directly on the system.
+  * **Package manager or binary** – faster and dependency-free.
+  * **Dockerized** – most recommended for CI/CD since it avoids dependency issues.
+
+* If the job fails with a **non-zero exit code (exit 1)**:
+
+  * It is because OSV Scanner found vulnerabilities.
+  * This is **expected behavior** for security tools.
+  * Options to handle:
+
+    * Fix the vulnerabilities.
+    * Or add `allow_failure: true` to let the pipeline continue without blocking other jobs.
+
+---
+
+### Verification
+
+1. Copy the updated CI script and paste it into the `.gitlab-ci.yml` file at:
+   [django-nv GitLab CI file](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml)
+
+2. Commit changes using **Commit changes** button.
+
+3. The pipeline will start automatically.
+
+   * Navigate to: [Pipelines Page](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+   * Click the `osv-scanner` job to download and inspect `osv-report.json`.
+
+---
+
+✅ In the next step, you will learn how to **allow failure** for the OSV Scanner job in the builds.
+
+```
+```
+````markdown
+Allow The Job Failure
+---
+
+In DevSecOps **Maturity Levels 1 and 2**, you usually **do not want to block the entire pipeline** because of tool findings, since there may be false positives.  
+Instead, you can let the security scan job fail, but **mark it as non-blocking** using the `allow_failure: true` option.
+
+This way:
+- The scanner still runs.  
+- You still get the vulnerability report (`osv-report.json`).  
+- The pipeline continues to the next stages, even if vulnerabilities are found.  
+
+---
+
+### Final `.gitlab-ci.yml`
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker).
+                      # Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+osv-scanner:
+  stage: test
+  image: golang:1.22-alpine3.19
+  before_script:
+    - apk add npm
+    - npm install
+  script:
+    - go install github.com/google/osv-scanner/cmd/osv-scanner@v1
+    - osv-scanner --json . > osv-report.json
+  artifacts:
+    paths: [osv-report.json]
+    when: always
+  allow_failure: true   # <--- allows scan failures without blocking pipeline
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true   # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual           # Continuous Delivery
+````
+
+---
+
+### Verification
+
+1. Add the above `.gitlab-ci.yml` to your GitLab repo:
+   [django-nv GitLab CI file](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml)
+
+2. Commit the changes.
+
+3. The pipeline starts automatically.
+
+   * Navigate to: [Pipeline Results](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+   * Click on the `osv-scanner` job to see the results and download the `osv-report.json`.
+
+---
+
+✅ Now the `osv-scanner` job may fail (exit code `1` if vulnerabilities are found), but it **won’t block the pipeline**, letting other jobs continue.
+
+Do you want me to also show you how to make the **failure conditional** (e.g., only fail if *critical* CVSS > 8 vulnerabilities are found)?
+
+```markdown
+Software Component Analysis Using Semgrep  
+Download the Source Code  
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to download the source code of the project from our git repository.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/django.nv](https://gitlab.practical-devsecops.training/pdso/django.nv) webapp
+
+```
+
+Command Output  
+```
+
+Cloning into 'webapp'...
+warning: redirecting to [https://gitlab.practical-devsecops.training/pdso/django.nv.git/](https://gitlab.practical-devsecops.training/pdso/django.nv.git/)
+remote: Enumerating objects: 302, done.
+remote: Total 302 (delta 0), reused 0 (delta 0), pack-reused 302
+Receiving objects: 100% (302/302), 1.05 MiB | 37.21 MiB/s, done.
+Resolving deltas: 100% (122/122), done.
+
+```
+
+Let’s cd into the application so we can scan the app.
+
+```
+
+cd webapp
+
+```
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Install Semgrep  
+Semgrep is a fast, open-source, static analysis engine for finding bugs, detecting vulnerabilities in third-party dependencies, and enforcing code standards. Semgrep analyzes code locally on your computer or in your build environment: code is never uploaded.  
+You can find more details about the project at semgrep.
+
+Let’s install the Semgrep tool on the system to perform software component analysis.
+
+```
+
+pip3 install semgrep==1.81.0
+
+```
+
+Command Output  
+```
+
+Collecting semgrep==1.31.0
+Downloading semgrep-1.31.0-cp37.cp38.cp39.cp310.cp311.py37.py38.py39.py310.py311-none-any.whl (31.4 MB)
+|████████████████████████████████| 31.4 MB 32.4 MB/s
+Collecting typing-extensions\~=4.2
+Downloading typing\_extensions-4.11.0-py3-none-any.whl (34 kB)
+Collecting urllib3\~=1.26
+Downloading urllib3-1.26.18-py2.py3-none-any.whl (143 kB)
+|████████████████████████████████| 143 kB 80.9 MB/s
+Collecting click\~=8.1
+Downloading click-8.1.7-py3-none-any.whl (97 kB)
+|████████████████████████████████| 97 kB 19.2 MB/s
+Collecting ruamel.yaml<0.18,>=0.16.0
+Downloading ruamel.yaml-0.17.40-py3-none-any.whl (113 kB)
+|████████████████████████████████| 113 kB 76.7 MB/s
+Requirement already satisfied: requests\~=2.22 in /usr/lib/python3/dist-packages (from semgrep==1.31.0) (2.22.0)
+\[\[\[....SNIPPED....]]]
+Found existing installation: urllib3 1.25.8
+Not uninstalling urllib3 at /usr/lib/python3/dist-packages, outside environment /usr
+Can't uninstall 'urllib3'. No files were found to uninstall.
+Successfully installed attrs-23.2.0 boltons-21.0.0 bracex-2.4 click-8.1.7 click-option-group-0.5.6 colorama-0.4.6 defusedxml-0.7.1 face-22.0.0 glom-22.1.0 jsonschema-4.21.1 jsonschema-specifications-2023.12.1 markdown-it-py-3.0.0 mdurl-0.1.2 peewee-3.17.2 pygments-2.17.2 python-lsp-jsonrpc-1.0.0 referencing-0.34.0 rich-13.7.1 rpds-py-0.18.0 ruamel.yaml-0.17.40 ruamel.yaml.clib-0.2.8 semgrep-1.31.0 tomli-2.0.1 typing-extensions-4.11.0 ujson-5.9.0 urllib3-1.26.18 wcmatch-8.5.1
+
+```
+
+We have successfully installed semgrep, let’s explore its functionality now.
+
+```
+
+semgrep --help
+
+```
+
+Command Output  
+```
+
+Usage: semgrep \[OPTIONS] COMMAND \[ARGS]...
+
+To get started quickly, run `semgrep scan --config auto`
+
+Run `semgrep SUBCOMMAND --help` for more information on each subcommand
+
+If no subcommand is passed, will run `scan` subcommand by default
+
+Options:
+-h, --help  Show this message and exit.
+
+Commands:
+ci                   The recommended way to run semgrep in CI
+install-semgrep-pro  Install the Semgrep Pro Engine
+login                Obtain and save credentials for semgrep.dev
+logout               Remove locally stored credentials to semgrep.dev
+lsp                  Start the Semgrep LSP server (useful for IDEs)
+publish              Upload rule to semgrep.dev
+scan                 Run semgrep rules on files
+show                 Show various information about Semgrep
+
+```
+
+For more information about the Semgrep scan feature, you can visit this link: **Semgrep Scan Command Options** or try inputting `semgrep scan --help`.
+
+---
+
+### Notes
+If you’re encountering the same error with every command inputted, like the following:
+
+Command Output  
+```
+
+/usr/lib/python3/dist-packages/requests/**init**.py:89: RequestsDependencyWarning: urllib3 (1.26.18) or chardet (3.0.4) doesn't match a supported version! warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported
+
+```
+
+It’s likely due to an outdated version of the Python requests library. You can update it using the following command:
+
+```
+
+pip3 install --upgrade requests
+
+```
+
+Let’s move to the next step.
+```
+```markdown
+SCA Using Semgrep  
+Let’s try and run the SCA scan using Semgrep.  
+SCA is referred as supply chain scan in the semgrep ecosystem.
+
+`--supply-chain` argument is a sub command of the `ci` command.
+
+```
+
+semgrep ci --supply-chain
+
+```
+
+Command Output  
+```
+
+run `semgrep login` before using `semgrep ci` or set `--config`
+
+```
+
+When we try and run the above command we get the error stating we need to login before we run the scan.
+
+For a successful SCA scan we need a bunch of rules against which our project will be assessed which are hosted on semgrep’s site.
+
+Let’s follow the instruction and try and login to the site.
+
+```
+
+semgrep login
+
+```
+
+You will be presented with a URL in the output that you will need to copy and paste in a new tab.
+
+This facilitates the Semgrep login verification. You can choose to sign in with Github or Gitlab to complete the login.
+
+You will be asked to validate your client token post login. Kindly go ahead and do so.
+
+---
+
+### Note
+Do not use your corporate Github or Gitlab account to login to Semgrep.
+
+---
+
+Command Output  
+```
+
+Login enables additional proprietary Semgrep Registry rules and running custom policies from Semgrep Cloud Platform.
+Opening login at: [https://semgrep.dev/login?cli-token=273fdcd0-382e-4734-8d3c-bcf715ea99ae\&docker=False\&gha=False](https://semgrep.dev/login?cli-token=273fdcd0-382e-4734-8d3c-bcf715ea99ae&docker=False&gha=False)
+
+Once you've logged in, return here and you'll be ready to start using new Semgrep rules.
+Saved login token
+
+```
+    76eb4af5827c0d3ad352148e0afd398cbb6302a0a4c1bf6d0d83945a3079f46b
+```
+
+in /root/.semgrep/settings.yml.
+Note: You can always generate more tokens at [https://semgrep.dev/orgs/-/settings/tokens](https://semgrep.dev/orgs/-/settings/tokens)
+
+```
+
+If everything goes correctly then you should see something like the above output.
+
+---
+
+### Note
+The token you see in the above output will be different for you.
+
+From the output we can deduce that our token is saved at this `/root/.semgrep/settings.yml` location.  
+We can validate it using:
+
+```
+
+cat /root/.semgrep/settings.yml
+
+```
+
+---
+
+Finally, let’s run the SCA scan.  
+
+The output number may vary as it is dynamic.
+
+```
+
+semgrep ci --supply-chain
+
+```
+
+Command Output  
+```
+
+Warning: 3 timeout error(s) in taskManager/static/taskManager/js/jquery.js when running the following
+rules: \[ssc-0c175d3d-9931-bc83-3b79-915b3bd8486d, ssc-20d1add6-68b6-7310-b587-7c694bc14de1,
+ssc-5e9dab7c-3887-460a-b992-4b0715556b8c]
+Semgrep stopped running rules on taskManager/static/taskManager/js/jquery.js after 3 timeout error(s). See
+`--timeout-threshold` for more info.
+
+```
+
+Let’s try and run the scan again with the `--timeout` argument.
+
+```
+
+semgrep ci --supply-chain --timeout 45
+
+```
+
+---
+
+### What the function of the above command?  
+
+Command Output (truncated for readability)  
+```
+
+┌────────────────┐
+│ Debugging Info │
+└────────────────┘
+
+SCAN ENVIRONMENT
+versions    - semgrep 1.81.0 on python 3.9.5
+environment - running in environment git, triggering event is unknown
+
+CONNECTION
+Initializing scan (deployment=practical-devsecops-com, scan\_id=37116279)
+Enabled products: Supply Chain
+
+ENGINE
+Semgrep Pro Engine will be installed in /usr/local/lib/python3.9/dist-packages/semgrep/bin/semgrep-core-proprietary
+Overwriting Semgrep Pro Engine already installed!
+Downloading... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 212.9/212.9 MB 156.7 MB/s 0:00:00
+
+Successfully installed Semgrep Pro Engine (version 1.80.0)!
+
+```
+
+---
+
+```
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+Scanning 148 files (only git-tracked) with 0 Code rules, 3111 Supply Chain rules:
+
+CODE RULES
+Nothing to scan.
+
+SUPPLY CHAIN RULES
+
+Ecosystem   Rules   Files   Lockfiles
+──────────────────────────────────────────────
+Pypi         3111      21   requirements.txt
+
+Analysis       Rules
+──────────────────────
+Basic           2787
+Reachability     324
+
+```
+
+---
+
+### Supported Languages and Package Managers
+
+| Language   | Supported package managers | Lockfile                     |
+|------------|-----------------------------|------------------------------|
+| Go         | Go modules (go mod)        | go.mod                       |
+| JavaScript / TypeScript | npm (Node.js) | package-lock.json            |
+| Yarn       | Yarn 2, Yarn 3             | yarn.lock                    |
+| pnpm       | pnpm                       | pnpm-lock.yaml               |
+| Python     | pip                        | requirements.txt             |
+| Pipenv     | pip-tools / Pipenv         | requirements.txt / Pipfile.lock |
+| Poetry     | Poetry                     | poetry.lock                  |
+| Ruby       | RubyGems                   | Gemfile.lock                 |
+| Java       | Gradle / Maven             | gradle.lockfile / Maven tree |
+| Rust       | Cargo                      | cargo.lock                   |
+| PHP        | Composer                   | composer.lock                |
+| C#         | NuGet                      | packages.lock.json           |
+
+---
+
+Command Output  
+```
+
+┌───────────────────────────────────┐
+│ 2 Reachable Supply Chain Findings │
+└───────────────────────────────────┘
+
+```
+requirements.txt
+```
+
+❯❯❱ django - CVE-2019-19844
+Severity: CRITICAL
+django 3.x before 3.0.1, django 2.x before 2.2.9, and django 1.x before 1.11.27 are
+vulnerable to weak password recovery mechanism for forgotten password. A malicious user
+could provide a Unicode homoglyph email address to Django and obtain a password reset
+token for another user due to unsafe normalization of Unicode characters when comparing
+email addresses. Upgrade to django 3.0.1, django 2.2.9, or django 1.11.27.
+
+```
+       ▶▶┆ Fixed for django at versions: 1.11.27, 2.2.9, 3.0.1
+        1┆ Django==3.0
+```
+
+❯❯❱ django - CVE-2021-33203
+Severity: MODERATE
+django versions before 2.2.24, >= 3.2.0 before 3.2.4, >= 3.0.0 before 3.1.12 are
+vulnerable to Improper Limitation Of A Pathname To A Restricted Directory ('Path
+Traversal'). Staff members can use the `admindocs` `TemplateDetailView` view to check
+the existence of arbitrary files. Additionally, if (and only if) the default admindocs
+templates have been customized by application developers to also show file contents,
+then not only the *existence* but also the *file contents* would have been exposed. In
+simpler terms, there is directory traversal outside of the template root directories.
+
+```
+       ▶▶┆ Fixed for django at versions: 2.2.24, 3.1.12, 3.2.4
+        1┆ Django==3.0
+```
+
+```
+
+---
+
+### What does "Reachable" mean?
+
+Unlike other SCA tools which would just scan the lockfile and flag vulnerabilities based on the pinned version of the package/dependency, Semgrep is slightly different.
+
+Semgrep performs **reachability analysis** for the identified SCA vulnerabilities.  
+Reachability pertains to whether a vulnerable code fragment from a dependency is actually used within the codebase.
+
+For a vulnerability to be classified as **reachable**, two conditions must be met:
+1. The code pattern in the dependency must match.  
+2. The vulnerable version must also match.  
+
+---
+
+Command Output  
+```
+
+┌──────────────────────────────────────┐
+│ 6 Undetermined Supply Chain Findings │
+└──────────────────────────────────────┘
+
+```
+requirements.txt
+❯❱ django - CVE-2024-24680
+      Severity: MODERATE                                                     
+      Affected versions of django are vulnerable to Reliance on Uncontrolled Component.
+
+       ▶▶┆ Fixed for django at versions: 3.2.24, 4.2.10, 5.0.2
+        1┆ Django==3.0
+```
+
+```
+
+---
+
+### What does "Undetermined" mean?
+
+An **undetermined supply chain finding** indicates that:
+- The version of the dependency includes a recognized vulnerability.  
+- But the particular vulnerable code component remains **unused** within your codebase.
+
+---
+
+Let’s move to the next step.
+```
+```markdown
+Save Semgrep SCA Output  
+We would like to save the output of the Semgrep SCA scan for further analysis.
+
+Let’s try and save the output in JSON format.
+
+```
+
+semgrep ci --supply-chain --timeout 45 --output semgrep-sca-output.json --json
+
+```
+
+Command Output  
+```
+
+┌────────────────┐
+│ Debugging Info │
+└────────────────┘
+
+SCAN ENVIRONMENT
+versions    - semgrep 1.81.0 on python 3.9.5
+environment - running in environment git, triggering event is unknown
+
+CONNECTION
+Initializing scan (deployment=practical-devsecops-com, scan\_id=37116697)
+Enabled products: Supply Chain
+
+ENGINE
+Using Semgrep Pro Version: 1.80.0
+Installed at /usr/local/lib/python3.9/dist-packages/semgrep/bin/semgrep-core-proprietary
+
+```
+```
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+Scanning 148 files (only git-tracked) with 0 Code rules, 3111 Supply Chain rules:
+
+CODE RULES
+Nothing to scan.
+
+SUPPLY CHAIN RULES
+
+Ecosystem   Rules   Files   Lockfiles
+──────────────────────────────────────────────
+Pypi         3111      21   requirements.txt
+
+Analysis       Rules
+──────────────────────
+Basic           2787
+Reachability     324
+
+```
+```
+
+PROGRESS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸  99% 0:00:53
+
+```
+```
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+Some files were skipped or only partially analyzed.
+Scan was limited to files tracked by git.
+Partially scanned: 41 files only partially analyzed due to parsing or internal Semgrep errors
+Scan skipped: 8 files matching --exclude patterns
+For a full list of skipped files, run semgrep with the --verbose flag.
+
+CI scan completed successfully.
+Found 10 findings (0 blocking) from 19639 rules.
+Uploading scan results
+Finalizing scan
+View results in Semgrep Cloud Platform:
+[https://semgrep.dev/orgs/practical-devsecops-com/findings?repo=local\_scan/webapp\&ref=main](https://semgrep.dev/orgs/practical-devsecops-com/findings?repo=local_scan/webapp&ref=main)
+[https://semgrep.dev/orgs/practical-devsecops-com/supply-chain](https://semgrep.dev/orgs/practical-devsecops-com/supply-chain)
+No blocking findings so exiting with code 0
+
+⏫  A new version of Semgrep is available. See [https://semgrep.dev/docs/upgrading](https://semgrep.dev/docs/upgrading)
+
+```
+
+---
+
+Let’s validate the existence of the output file using:
+
+```
+
+ls -l semgrep-sca-output.json
+
+```
+
+We can integrate **Semgrep SCA** into our **CI/CD pipeline** and also attach the generated report as an artifact for developer consumption.
+```
+```markdown
+Software Component Analysis Using Trivy  
+Installing Trivy  
+Trivy is a comprehensive vulnerability scanner for containers and file systems, designed to detect security vulnerabilities in OS packages and application dependencies.
+
+Source: Trivy Github Page.
+
+Let’s install trivy tool in our DevSecOps-Box.
+
+```
+
+wget [https://github.com/aquasecurity/trivy/releases/download/v0.48.1/trivy\_0.48.1\_Linux-64bit.deb](https://github.com/aquasecurity/trivy/releases/download/v0.48.1/trivy_0.48.1_Linux-64bit.deb) && dpkg -i trivy\_\*.deb
+
+```
+
+After Trivy is installed, we can explore the functionality of trivy using the following command.
+
+```
+
+trivy -h
+
+```
+
+Command Output  
+```
+
+Scanner for vulnerabilities in container images, file systems, and Git repositories, as well as for configuration issues and hard-coded secrets
+
+Usage:
+trivy \[global flags] command \[flags] target
+trivy \[command]
+
+Examples:
+
+# Scan a container image
+
+\$ trivy image python:3.4-alpine
+
+# Scan a container image from a tar archive
+
+\$ trivy image --input ruby-3.1.tar
+
+# Scan local filesystem
+
+\$ trivy fs .
+
+# Run in server mode
+
+\$ trivy server
+
+Scanning Commands
+aws         \[EXPERIMENTAL] Scan AWS account
+config      Scan config files for misconfigurations
+filesystem  Scan local filesystem
+image       Scan a container image
+kubernetes  \[EXPERIMENTAL] Scan kubernetes cluster
+repository  Scan a remote repository
+rootfs      Scan rootfs
+sbom        Scan SBOM for vulnerabilities
+vm          \[EXPERIMENTAL] Scan a virtual machine image
+
+Management Commands
+module      Manage modules
+plugin      Manage plugins
+
+Utility Commands
+completion  Generate the autocompletion script for the specified shell
+convert     Convert Trivy JSON report into a different format
+help        Help about any command
+server      Server mode
+version     Print the version
+
+Flags:
+\--cache-dir string          cache directory (default "/root/.cache/trivy")
+-c, --config string             config path (default "trivy.yaml")
+-d, --debug                     debug mode
+-f, --format string             version format (json)
+\--generate-default-config   write the default config to trivy-default.yaml
+-h, --help                      help for trivy
+\--insecure                  allow insecure server connections
+-q, --quiet                     suppress progress bar and log output
+\--timeout duration          timeout (default 5m0s)
+-v, --version                   show version
+
+Use "trivy \[command] --help" for more information about a command.
+
+```
+
+Let’s move to the next step.
+```
+```markdown
+Downloading The Source Code  
+First, we need to download the source code of the project from the git repository.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/django.nv.git](https://gitlab.practical-devsecops.training/pdso/django.nv.git) webapp
+
+```
+
+Command Output  
+```
+
+Cloning into 'webapp'...
+remote: Enumerating objects: 176, done.
+remote: Total 176 (delta 0), reused 0 (delta 0), pack-reused 176
+Receiving objects: 100% (176/176), 6.34 MiB | 36.87 MiB/s, done.
+Resolving deltas: 100% (44/44), done.
+
+```
+
+In the next step, we will run the Trivy tool.
+```
+```markdown
+Running The Scanner  
+In the previous step, we have downloaded the webapp directory.
+
+As we have seen in the first step, Trivy has a command known as **filesystem** which scans the packages from a certain directory.
+
+Let’s cd into the application code, so we can scan the repository.
+
+```
+
+cd webapp
+
+```
+
+We are now in the webapp directory.
+
+Next, let’s execute the scanner to scan `webapp` directory using **filesystem** command from Trivy.
+
+```
+
+trivy filesystem .
+
+```
+
+---
+
+### Database Rate Limit Error
+
+If you encounter the following error:
+
+Command Output  
+```
+
+init error: DB error: failed to download vulnerability DB: OCI artifact error: OCI artifact error: OCI repository error: GET [https://ghcr.io/v2/aquasecurity/trivy-db/manifests/2](https://ghcr.io/v2/aquasecurity/trivy-db/manifests/2): TOOMANYREQUESTS: retry-after: 101µs, allowed: 44000/minute
+
+```
+
+This occurs because the Trivy database download is hitting a rate limit. To resolve this, you can change the database repository by running:
+
+```
+
+export TRIVY\_DB\_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db
+
+```
+
+Then try running the scanning command again.
+
+---
+
+Command Output (successful run)  
+```
+
+2024-02-07T07:02:37.069Z        INFO    Need to update DB
+2024-02-07T07:02:37.069Z        INFO    DB Repository: ghcr.io/aquasecurity/trivy-db
+2024-02-07T07:02:37.069Z        INFO    Downloading DB...
+42.78 MiB / 42.78 MiB \[-------------------------------------------------------------------] 100.00% 25.67 MiB p/s 1.9s
+2024-02-07T07:02:39.566Z        INFO    Vulnerability scanning is enabled
+2024-02-07T07:02:39.566Z        INFO    Secret scanning is enabled
+2024-02-07T07:02:39.566Z        INFO    If your scanning is slow, please try '--security-checks vuln' to disable secret scanning
+2024-02-07T07:02:39.566Z        INFO    Please see also [https://aquasecurity.github.io/trivy/0.30.4/docs/secret/scanning/#recommendation](https://aquasecurity.github.io/trivy/0.30.4/docs/secret/scanning/#recommendation) for faster secret detection
+2024-02-07T07:02:39.933Z        INFO    Number of language-specific files: 1
+2024-02-07T07:02:39.933Z        INFO    Detecting pip vulnerabilities...
+
+requirements.txt (pip)
+
+Total: 14 (UNKNOWN: 0, LOW: 0, MEDIUM: 5, HIGH: 6, CRITICAL: 3)
+
+```
+
+......[SNIP]......
+
+```
+
+├─────────┼────────────────┼──────────┼───────────────────┼────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ Django  │ CVE-2021-31542 │ HIGH     │ 3.0               │ 2.2.21, 3.1.9, 3.2.1   │ Potential directory-traversal via uploaded files             │
+│         │                │          │                   │                        │ [https://avd.aquasec.com/nvd/cve-2021-31542](https://avd.aquasec.com/nvd/cve-2021-31542)                   │
+├─────────┼────────────────┼──────────┼───────────────────┼────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ Django  │ CVE-2021-33571 │ HIGH     │ 3.0               │ 2.2.24, 3.1.12, 3.2.4  │ Possible indeterminate SSRF, RFI, and LFI attacks since      │
+│         │                │          │                   │                        │ validators accepted leading zeros...                         │
+│         │                │          │                   │                        │ [https://avd.aquasec.com/nvd/cve-2021-33571](https://avd.aquasec.com/nvd/cve-2021-33571)                   │
+│         ├────────────────┤          │                   ├────────────────────────┼──────────────────────────────────────────────────────────────┤
+│         │ CVE-2021-44420 │          │                   │ 2.2.25, 3.1.14, 3.2.10 │ potential bypass of an upstream access control based on URL  │
+│         │                │          │                   │                        │ paths                                                        │
+│         │                │          │                   │                        │ [https://avd.aquasec.com/nvd/cve-2021-44420](https://avd.aquasec.com/nvd/cve-2021-44420)                   │
+├─────────┼────────────────┼──────────┼───────────────────┼────────────────────────┼──────────────────────────────────────────────────────────────┤
+
+```
+
+......[SNIP]......
+
+---
+
+The output number may vary as it is dynamic.
+
+As you can see, **Trivy found vulnerabilities** by scanning the contents of the `django.nv` source code present in the `django.nv` directory.
+
+By scanning a specific repository with **Trivy filesystem**, you can:
+- Proactively address security risks.  
+- Ensure compliance with security standards.  
+- Maintain overall code integrity within the development and deployment cycles of the repository’s applications.
+
+---
+
+Let’s move to the next step.
+```
+```markdown
+Conclusion  
+By scanning a Docker image at the filesystem level, **Trivy** highlights potential security risks identified within each layer of an image which helps DevOps engineers and developers to address vulnerabilities based on their severity and impact.
+
+The critical advantage of Trivy is in its **simplicity of setup and execution**. Thus, Trivy requires very few steps for installation and operation compared to other scanners. Also, the ability to scan not only images in a Docker registry but also files saved in the local filesystem, provides flexibility and broadens the tool’s utility.
+
+---
+
+### Additional Resources
+- https://sadilchamishka.medium.com/trivy-for-vulnerability-scanning-f9e967aea85f  
+- https://www.youtube.com/watch?v=QXLpZruy6mM  
+- https://medium.com/@maheshwar.ramkrushna/scanning-docker-images-for-vulnerabilities-using-trivy-for-effective-security-analysis-fa3e2844db22  
+- https://www.devoteam.com/expert-view/shift-left-security-in-your-cloud-native-environment-with-trivy/  
+```
+```markdown
+How To Embed Trivy Into GitLab
+A Simple CI/CD Pipeline
+Considering your DevOps team created a simple CI pipeline with the following contents. Please add the Trivy scan to this pipeline.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+Let’s log into GitLab using the following details and run the above pipeline.
+
+GitLab CI/CD Machine
+Name	Value
+Link	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline runs
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Embed Trivy in CI/CD pipeline
+As discussed in the SCA using the Trivy exercise, we can embed the Trivy tool in our CI/CD pipeline.
+
+However, do remember that you need run commands manually in a local system like devsecops box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like devsecops box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Maybe you want to scan the components before performing SAST scans.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+trivy:
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src hysnsec/trivy fs . --exit-code 1 -f json -o trivy-report.json
+  artifacts:
+    paths: [trivy-report.json]
+    when: always # What is this for?
+    expire_in: one week
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Do not forget to click on the Commit Changes button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+You will notice that the Trivy job stores the output to a file trivy-report.json. This is done to ensure we can process the results further via APIs or vulnerability management systems like DefectDojo.
+
+Database Rate Limit Error
+
+If you encounter the following error:
+
+Command Output
+init error: DB error: failed to download vulnerability DB: OCI artifact error: OCI artifact error: OCI repository error: GET https://ghcr.io/v2/aquasecurity/trivy-db/manifests/2: TOOMANYREQUESTS: retry-after: 101µs, allowed: 44000/minute
+This occurs because the Trivy database download is hitting a rate limit. To resolve this, you can change the database repository by running:
+
+export TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db
+
+Then try running the scanning command again.
+
+If you notice, the Trivy job indicates exit code 1, which prevents other jobs from continuing the pipeline process.
+
+Now, let’s move on to the next step, where we will learn how to manage this failure.
+```
+```markdown
+Allow the Job Failure
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise
+After two hours, in case of a 404, you need to refresh the exercise page and click on Start the Exercise button to continue working
+We do not want to fail the builds/jobs/scan in DevSecOps Maturity Levels 1 and 2, as security tools spit a significant amount of false positives.
+
+You can use the allow_failure tag to not fail the build even though the tool found issues.
+
+trivy_scanning:
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src hysnsec/trivy fs . --exit-code 1 -f json -o trivy-report.json
+  artifacts:
+    paths: [trivy-report.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+After adding the allow_failure tag, the pipeline would look like the following.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+trivy:
+  stage: test
+  script:
+    - docker run --rm -v $(pwd):/src hysnsec/trivy fs . --exit-code 1 -f json -o trivy-report.json
+  artifacts:
+    paths: [trivy-report.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+You will notice that the container_scanning job failed. However, it didn’t block other jobs from continuing further.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Perfect! You’ll now see that the Trivy job processes the failure correctly and the rest of the tasks can proceed as expected.
+```
+```markdown
+Software Component Analysis Using Sandworm
+Download the Source Code
+We will initially perform all exercises locally on DevSecOps-Box, so let’s begin the exercise.
+
+First, we need to download the source code of the project from our Git repository.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/django.nv](https://gitlab.practical-devsecops.training/pdso/django.nv) webapp
+
+```
+
+Command Output
+```
+
+Cloning into 'webapp'...
+warning: redirecting to [https://gitlab.practical-devsecops.training/pdso/django.nv.git/](https://gitlab.practical-devsecops.training/pdso/django.nv.git/)
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+
+```
+
+Lets cd into the application code so we can scan the app.
+
+```
+
+cd webapp
+
+```
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Installing Sandworm
+Sandworm is an audit tool designed to help assess security vulnerabilities and compliance levels within a system. It offers features to scan codebases for known vulnerabilities, analyze dependencies for issues, and ensure adherence to coding standards and best practices. Sandworm aids in identifying and addressing security flaws, thereby enhancing the overall security posture of a project or system.
+
+Source: https://github.com/sandworm-hq/sandworm-audit
+
+Sandworm is based on Node.js. Firstly, we need to install it.
+
+```
+
+curl -fsSL [https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key](https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key) | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE\_MAJOR=20
+echo "deb \[signed-by=/etc/apt/keyrings/nodesource.gpg] [https://deb.nodesource.com/node\_\$NODE\_MAJOR.x](https://deb.nodesource.com/node_$NODE_MAJOR.x) nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+apt update
+apt install nodejs -y
+
+```
+
+Then we can install the Sandworm tool on the system to identify insecure libraries within our source code.
+
+```
+
+npm install -g @sandworm/audit
+
+```
+
+Let’s explore the options that sandworm provides.
+
+```
+
+sandworm --help
+
+```
+
+Command Output
+```
+
+Sandworm
+
+Security & License Compliance For Your App's Dependencies 🪱
+
+Commands:
+Sandworm audit              Security & License Compliance For Your App's
+Dependencies 🪱                           \[default]
+Sandworm resolve \[issueId]  Security & License Compliance For Your App's
+Dependencies 🪱
+
+Options:
+\--help                  Show help                                \[boolean]
+-v, --version               Show version number                      \[boolean]
+-o, --output-path           The path of the output directory, relative to the
+application path    \[string] \[default: "sandworm"]
+-d, --include-dev           Include dev dependencies\[boolean] \[default: false]
+\--sv, --show-versions   Show package versions in chart names
+\[boolean] \[default: false]
+-p, --path                  The path to the application to audit      \[string]
+\--pt, --package-type    The type of package to search for at the given
+path                                      \[string]
+\--md, --max-depth       Max depth to represent in charts          \[number]
+\--ms, --min-severity    Min issue severity to represent in charts \[string]
+\--lp, --license-policy  Custom license policy JSON string         \[string]
+-f, --from                  Load data from "registry" or "disk"
+\[string] \[default: "registry"]
+\--fo, --fail-on         Fail policy JSON string   \[string] \[default: "\[]"]
+-s, --summary               Print a summary of the audit results to the
+console                  \[boolean] \[default: true]
+\--root-vulnerabilites   Include vulnerabilities for the root project
+\[boolean] \[default: false]
+\--skip-license-issues   Skip scanning for license issues
+\[boolean] \[default: false]
+\--skip-meta-issues      Skip scanning for meta issues
+\[boolean] \[default: false]
+\--skip-tree             Don't output the dependency tree chart
+\[boolean] \[default: false]
+\--force-tree            Force build large dependency tree charts
+\[boolean] \[default: false]
+\--skip-treemap          Don't output the dependency treemap chart
+\[boolean] \[default: false]
+\--skip-csv              Don't output the dependency csv file
+\[boolean] \[default: false]
+\--skip-report           Don't output the report json file
+\[boolean] \[default: false]
+\--skip-all              Don't output any file   \[boolean] \[default: false]
+\--show-tips             Show usage tips          \[boolean] \[default: true]
+
+```
+
+It provides two flags with different purposes, one is to scan the dependencies, and the other is to resolve them automatically based on the findings. We will explore this in the next step.
+
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+Let’s run the tool using the command below to identify vulnerabilities in third-party components.
+
+```
+
+sandworm audit
+
+```
+
+Command Output
+```
+
+Sandworm 🪱
+Security and License Compliance Audit
+⠋ Building dependency graph...
+❌ Failed: No lockfile found
+
+```
+
+The output above indicates that sandworm couldn’t find any lockfile. A lock file describes the entire dependency tree, and most Software Component Analysis (SCA) tools that scan Node.js packages need to install the package first to obtain this kind of information.
+
+So let’s install the dependencies and re-run the tool again.
+
+```
+
+npm install
+
+```
+
+Then, execute the same command for a basic scan.
+
+```
+
+sandworm audit
+
+```
+
+Command Output
+```
+
+Sandworm 🪱
+Security and License Compliance Audit
+✔ Built dependency graph
+✔ Got vulnerabilities
+✔ Scanned licenses
+✔ Scanned issues
+✔ Tree chart done
+✔ Treemap chart done
+✔ CSV done
+✔ Report written to disk
+
+⚠️ Identified 13 critical severity, 31 high severity, 7 moderate severity, 11 low severity issues
+🔴 bson\@1.0.9 Deserialization of Untrusted Data in bson GHSA-v8w9-2789-6hhr
+
+...\[SNIP]...
+
+✨ Done
+
+//
+// 💡 Configure Sandworm with a config file
+//    .sandworm.config.json
+//    [https://docs.sandworm.dev/audit/configuration](https://docs.sandworm.dev/audit/configuration)
+//
+
+```
+
+The output number may vary as it is dynamic.
+
+The scanner’s result doesn’t provide JSON format output in the terminal, but it is stored in the sandworm directory within the current directory. You can verify this by using the ls command.
+
+```
+
+ls -l sandworm
+
+```
+
+Command Output
+```
+
+total 1824
+-rw-r--r-- 1 root root 140055 Mar 11 22:53 [owasp-nodejs-goat@1.3.0-dependencies.csv](mailto:owasp-nodejs-goat@1.3.0-dependencies.csv)
+-rw-r--r-- 1 root root 143559 Mar 11 22:53 [owasp-nodejs-goat@1.3.0-report.json](mailto:owasp-nodejs-goat@1.3.0-report.json)
+-rw-r--r-- 1 root root 855904 Mar 11 22:53 [owasp-nodejs-goat@1.3.0-tree.svg](mailto:owasp-nodejs-goat@1.3.0-tree.svg)
+-rw-r--r-- 1 root root 717029 Mar 11 22:53 [owasp-nodejs-goat@1.3.0-treemap.svg](mailto:owasp-nodejs-goat@1.3.0-treemap.svg)
+
+```
+
+The tool provides us with different output formats such as JSON and CSV for easier parsing when reading the report.
+
+**Note**
+
+As we have learned in the DevSecOps Gospel, we should always try to save the tool’s output in a machine-readable format. This output will enable us to parse it via script(s).
+
+If you wish to ignore CSV, for example, please use the following command.
+
+```
+
+sandworm audit --skip-csv
+
+```
+
+Do not forget to remove the entire directory output using `rm -rf sandworm` before running the above command, as it contains the JSON output inside.
+
+We have finished our first scan, but what’s next?
+
+We will use the jq command to parse the output and filter the necessary information we need. This will enable us to see how many vulnerabilities were found and the severity of each finding, as sandworm does not provide us with a summary of these.
+
+Let’s display all keys of the output file.
+
+```
+
+cat sandworm/owasp-[nodejs-goat@1.3.0-report.json](mailto:nodejs-goat@1.3.0-report.json) | jq 'keys'
+
+```
+
+**Note**
+
+`keys` is used to retrieve the key names from a JSON document. It is simple and more efficient to extract information from within the JSON file instead of reading the entire file to identify the keys we need to filter.
+
+Command Output
+```
+
+\[
+"configuration",
+"createdAt",
+"dependencyVulnerabilities",
+"errors",
+"licenseIssues",
+"licenseUsage",
+"metaIssues",
+"name",
+"resolvedIssues",
+"rootVulnerabilities",
+"system",
+"version"
+]
+
+```
+
+There is an interesting key we can use, `dependencyVulnerabilities`.
+
+```
+
+cat sandworm/owasp-[nodejs-goat@1.3.0-report.json](mailto:nodejs-goat@1.3.0-report.json) | jq '.dependencyVulnerabilities'
+
+```
+
+Command Output
+```
+
+...\[SNIP]...
+
+{
+"findings": {
+"sources": \[
+{
+"name": "underscore",
+"version": "1.8.3",
+"flags": {
+"prod": true,
+"dev": true
+}
+}
+],
+"affects": \[
+{
+"name": "underscore",
+"version": "1.8.3",
+"flags": {
+"prod": true,
+"dev": true
+}
+}
+],
+"rootDependencies": \[
+{
+"name": "underscore",
+"version": "1.8.3",
+"flags": {
+"prod": true,
+"dev": true
+}
+}
+],
+"paths": \[
+"underscore"
+]
+},
+"source": 1095097,
+"githubAdvisoryId": "GHSA-cf4h-3jhx-xvhq",
+"name": "underscore",
+"title": "Arbitrary Code Execution in underscore",
+"type": "vulnerability",
+"url": "[https://github.com/advisories/GHSA-cf4h-3jhx-xvhq](https://github.com/advisories/GHSA-cf4h-3jhx-xvhq)",
+"severity": "critical",
+"range": ">=1.3.2 <1.12.1",
+"recommendation": "Update grunt-retire to 1.0.9"
+}
+]
+
+```
+
+Now, the output is better, allowing us to extract more specific information, such as the number of each severity type in the findings.
+
+Let’s check how many vulnerabilities are found by filtering the `severity` field.
+
+```
+
+cat sandworm/owasp-[nodejs-goat@1.3.0-report.json](mailto:nodejs-goat@1.3.0-report.json) | jq '.dependencyVulnerabilities | length'
+
+```
+
+Command Output
+```
+
+21
+
+```
+
+**Remember**
+
+The total findings are not sorted out because the same component can have multiple vulnerabilities, resulting in duplicated component names. You will observe this in the next command.
+
+How can we ensure the above statement is accurate?
+
+We have provided the command you can use to check which components are vulnerable and their severity.
+
+```
+
+cat sandworm/owasp-[nodejs-goat@1.3.0-report.json](mailto:nodejs-goat@1.3.0-report.json) | jq '.dependencyVulnerabilities\[] | "(.name) (.severity)"'
+
+```
+
+Command Output
+```
+
+"braces low"
+"braces low"
+"bson moderate"
+"bson critical"
+"debug moderate"
+"debug high"
+"glob-parent high"
+"helmet-csp moderate"
+"marked high"
+"marked high"
+"minimist moderate"
+"minimist moderate"
+"minimist critical"
+"minimist critical"
+"mongodb high"
+"ms moderate"
+"nconf high"
+"swig high"
+"timespan high"
+"uglify-js high"
+"underscore critical"
+
+```
+
+You can explore more advanced uses of `jq`, but for now, we will use the above output.
+
+Let’s move to the next step.
+```
+```markdown
+Configure the Exit Codes
+We have previously discussed the importance of exit codes in certain exercises, especially when integrating DevSecOps into your CI/CD pipeline. Now, we will explore the tool to ensure it can appropriately fail the pipeline or provide an exit code indicating the presence of vulnerabilities with specific severity levels.
+
+Let’s check the audit flag to see if it provides the argument or not.
+
+```
+
+sandworm audit --help
+
+```
+
+Command Output
+```
+
+Sandworm audit
+
+Security & License Compliance For Your App's Dependencies 🪱
+
+Options:
+\--help                  Show help                                \[boolean]
+-v, --version               Show version number                      \[boolean]
+-o, --output-path           The path of the output directory, relative to the
+application path    \[string] \[default: "sandworm"]
+-d, --include-dev           Include dev dependencies\[boolean] \[default: false]
+\--sv, --show-versions   Show package versions in chart names
+\[boolean] \[default: false]
+-p, --path                  The path to the application to audit      \[string]
+\--pt, --package-type    The type of package to search for at the given
+path                                      \[string]
+\--md, --max-depth       Max depth to represent in charts          \[number]
+\--ms, --min-severity    Min issue severity to represent in charts \[string]
+\--lp, --license-policy  Custom license policy JSON string         \[string]
+-f, --from                  Load data from "registry" or "disk"
+\[string] \[default: "registry"]
+\--fo, --fail-on         Fail policy JSON string   \[string] \[default: "\[]"]
+-s, --summary               Print a summary of the audit results to the
+console                  \[boolean] \[default: true]
+\--root-vulnerabilites   Include vulnerabilities for the root project
+\[boolean] \[default: false]
+\--skip-license-issues   Skip scanning for license issues
+\[boolean] \[default: false]
+\--skip-meta-issues      Skip scanning for meta issues
+\[boolean] \[default: false]
+\--skip-tree             Don't output the dependency tree chart
+\[boolean] \[default: false]
+\--force-tree            Force build large dependency tree charts
+\[boolean] \[default: false]
+\--skip-treemap          Don't output the dependency treemap chart
+\[boolean] \[default: false]
+\--skip-csv              Don't output the dependency csv file
+\[boolean] \[default: false]
+\--skip-report           Don't output the report json file
+\[boolean] \[default: false]
+\--skip-all              Don't output any file   \[boolean] \[default: false]
+\--show-tips             Show usage tips          \[boolean] \[default: true]
+
+```
+
+The --fail-on flag seems interesting to explore. It describes the fail policy, indicating that we might need to create the configuration file or define it directly.
+
+After some experimentation, we found the documentation at https://web.archive.org/web/20250419010940/https://docs.sandworm.dev/audit/fail-policies to configure the tool to fail on specific severity levels.
+
+Before that, let’s rerun the tool again to check the default exit code.
+
+```
+
+sandworm audit
+
+```
+
+Then, use the command below to check the exit code after the tool has executed.
+
+```
+
+echo \$?
+
+```
+
+Command Output
+```
+
+0
+
+```
+
+In the Sandworm documentation, fail conditions can be defined in different types, such as dependencies, licenses, meta, or even all that meet specific criteria.
+
+We will use dependencies as conditions and fail the build when high severity issues are found. The final command will be as follows:
+
+```
+
+sandworm-audit --fail-on='\["dependencies.high"]'
+
+```
+
+Check the exit code once again.
+
+```
+
+echo \$?
+
+```
+
+Command Output
+```
+
+1
+
+```
+
+Perfect, it fails the build when the output is non-zero, which is 1 or a higher value, as indicated below:
+
+exit 0: Indicates that the command or program executed successfully without any errors.
+exit 1 or non-zero : Catch-all exit code for a variety of general errors.
+
+In this case, error refers to vulnerabilities found by the security tool. If you wish to understand more about exit codes, kindly refer to the Working With Linux Exit Code exercise.
+```
+```markdown
+Addressing Issues With Sandworm
+Download the Source Code
+We will initially perform all exercises locally on DevSecOps-Box, so let’s begin the exercise.
+
+First, we need to download the source code of the project from our Git repository.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/django.nv](https://gitlab.practical-devsecops.training/pdso/django.nv) webapp
+
+```
+
+Command Output
+```
+
+Cloning into 'webapp'...
+warning: redirecting to [https://gitlab.practical-devsecops.training/pdso/django.nv.git/](https://gitlab.practical-devsecops.training/pdso/django.nv.git/)
+remote: Enumerating objects: 299, done.
+remote: Counting objects: 100% (71/71), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 299 (delta 34), reused 0 (delta 0), pack-reused 228
+Receiving objects: 100% (299/299), 1.05 MiB | 29.16 MiB/s, done.
+Resolving deltas: 100% (120/120), done.
+
+```
+
+Lets cd into the application code so we can scan the app.
+
+```
+
+cd webapp
+
+```
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Installing Sandworm
+Sandworm is an audit tool designed to help assess security vulnerabilities and compliance levels within a system. It offers features to scan codebases for known vulnerabilities, analyze dependencies for issues, and ensure adherence to coding standards and best practices. Sandworm aids in identifying and addressing security flaws, thereby enhancing the overall security posture of a project or system.
+
+Source: https://github.com/sandworm-hq/sandworm-audit
+
+Sandworm is based on Node.js. Firstly, we need to install it.
+
+```
+
+curl -fsSL [https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key](https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key) | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE\_MAJOR=20
+echo "deb \[signed-by=/etc/apt/keyrings/nodesource.gpg] [https://deb.nodesource.com/node\_\$NODE\_MAJOR.x](https://deb.nodesource.com/node_$NODE_MAJOR.x) nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+apt update
+apt install nodejs -y
+
+```
+
+Then we can install the Sandworm tool on the system to identify insecure libraries within our source code.
+
+```
+
+npm install -g @sandworm/audit
+
+```
+
+Let’s explore the options that sandworm provides.
+
+```
+
+sandworm resolve --help
+
+```
+
+Command Output
+```
+
+Sandworm resolve \[issueId]
+
+Security & License Compliance For Your App's Dependencies 🪱
+
+Options:
+\--help                Show help                                  \[boolean]
+-v, --version             Show version number                        \[boolean]
+\--issueId             The unique id of the issue to resolve
+\[string] \[required]
+-p, --path                The path to the application to audit        \[string]
+\--pt, --package-type  The type of package to search for at the given path
+\[string]
+-o, --output-path         The path of the audit output directory, relative to
+the application path  \[string] \[default: "sandworm"]
+
+```
+
+In the previous exercise, we learned how to use the audit flag along with the exit code. This exercise will cover how to utilize the resolve flag to automatically patch the findings based on the specified issue we aim to fix.
+
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+Let’s install the dependencies before run the tool.
+
+```
+
+npm install
+
+```
+
+Next, run the tool using the command below to identify vulnerabilities in third-party components.
+
+```
+
+sandworm audit
+
+```
+
+Command Output
+```
+
+Sandworm 🪱
+Security and License Compliance Audit
+✔ Built dependency graph
+✔ Got vulnerabilities
+✔ Scanned licenses
+✔ Scanned issues
+✔ Tree chart done
+✔ Treemap chart done
+✔ CSV done
+✔ Report written to disk
+
+⚠️ Identified 13 critical severity, 31 high severity, 7 moderate severity, 11 low severity issues
+🔴 bson\@1.0.9 Deserialization of Untrusted Data in bson GHSA-v8w9-2789-6hhr
+
+...\[SNIP]...
+
+```
+In the above scan results, we not only identify vulnerabilities but also license issues. For this exercise, let’s focus on fixing the third-party library vulnerabilities and ignore the license issues.
+
+```
+
+sandworm audit --skip-license-issues
+
+```
+
+Command Output
+```
+
+Sandworm 🪱
+Security and License Compliance Audit
+✔ Built dependency graph
+✔ Got vulnerabilities
+✔ Scanned issues
+✔ Tree chart done
+✔ Treemap chart done
+✔ CSV done
+✔ Report written to disk
+
+⚠️ Identified 4 critical severity, 22 high severity, 7 moderate severity, 2 low severity issues
+🔴 bson\@1.0.9 Deserialization of Untrusted Data in bson GHSA-v8w9-2789-6hhr
+🔴 minimist\@0.0.10 Prototype Pollution in minimist GHSA-xvch-5gv4-984h
+🔴 minimist\@1.2.0 Prototype Pollution in minimist GHSA-xvch-5gv4-984h
+🔴 underscore\@1.8.3 Arbitrary Code Execution in underscore GHSA-cf4h-3jhx-xvhq
+
+...\[SNIP]...
+
+```
+The output number may vary as it is dynamic.
+
+The output of the second scan is less compared to the first scan.
+
+To address the issue using the sandworm resolve command, we require something called an issueId. How can we obtain this?
+
+You can refer to the output in the terminal, or you can read the output file in JSON/CSV format. If you choose to read the output file, use jq as a tool to parse the JSON file effortlessly. We have provided you with the direct syntax.
+
+```
+
+cat sandworm/owasp-[nodejs-goat@1.3.0-report.json](mailto:nodejs-goat@1.3.0-report.json) | jq '.dependencyVulnerabilities\[] | select(.severity == "critical") | .githubAdvisoryId'
+
+```
+
+Command Output
+```
+
+"GHSA-v8w9-2789-6hhr"
+"GHSA-xvch-5gv4-984h"
+"GHSA-xvch-5gv4-984h"
+"GHSA-cf4h-3jhx-xvhq"
+
+```
+
+Let’s move to the next step.
+```
+```markdown
+Fixing the Issues
+In the previous steps, we identified four findings with critical severity. Now, let’s address them using sandworm resolve command without having to determine which secure version to use from the npm registry, as it could be time-consuming.
+
+Let’s begin fixing the issue using the command below:
+
+```
+
+sandworm resolve --issueId GHSA-v8w9-2789-6hhr
+
+```
+
+Command Output
+```
+
+Sandworm 🪱
+Security and License Compliance Audit
+Resolving issue GHSA-v8w9-2789-6hhr:
+🔴 Deserialization of Untrusted Data in bson
+
+✔ Select paths to resolve › mongodb>mongodb-core>bson
+✔ Enter resolution notes: … fix the issue
+
+✨ Done
+
+```
+The above command will prompt as follows:
+
+Command Output
+```
+
+? Select paths to resolve
+
+```
+You can type a to select all, and the ordered list will change to green color. Then press Enter.
+
+At the end, it will ask for resolution notes. You can write fix the issue and press Enter.
+
+Note
+
+The issueId flag does not support multiple values. Therefore, you need to execute the command one by one for each issue ID.
+
+After all critical issues have been resolved, re-run the tool to verify the results.
+
+```
+
+sandworm audit --skip-license-issues
+
+```
+
+Command Output
+```
+
+Sandworm 🪱
+Security and License Compliance Audit
+✔ Built dependency graph
+✔ Got vulnerabilities
+✔ Scanned issues
+✔ Tree chart done
+✔ Treemap chart done
+✔ CSV done
+✔ Report written to disk
+
+🙌 4 issues already resolved
+⚠️ Identified 22 high severity, 7 moderate severity, 2 low severity issues
+
+...\[SNIP]...
+
+```
+Remember
+
+After upgrading the version, it is essential to verify that our application is functioning correctly. Keep in mind that these fixes might potentially break your application.
+
+Cool! we fixed the issues found in our application’s components.
+
+Note
+
+You need to talk to the development team to see if they can upgrade the package to a specific version without breaking the application. The release note explains why the new version is safer than the previous one, and how to determine what the developer needs in the relevant version based on the release note.
+
+For best practices, we must ensure that the components are free from any critical issues currently. If you wish to address high issues, you can proceed with the experiment.
+```
+```markdown
+Software Component Analysis Using pip-licenses
+In this scenario, you will learn how to install and run pip-licenses to check the licenses of Python packages in your project.
+
+You will learn how to:
+
+- Install pip-licenses  
+- Run pip-licenses to scan the dependencies licenses  
+- Generate a report in different formats like Markdown, HTML, JSON  
+
+---
+
+### Installing pip-licenses
+pip-licenses is a CLI tool for checking the software licenses of Python packages installed with pip. It helps development teams ensure license compliance in their projects.
+
+pip-licenses scans your Python environment and identifies the licenses of all installed packages. It was inspired by the composer licenses command in PHP’s Composer package manager.
+
+First, we clone the sample application that we will use to scan the dependencies licenses.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/django.nv](https://gitlab.practical-devsecops.training/pdso/django.nv) webapp
+
+```
+
+Let’s change into the application directory so we can scan the app.
+
+```
+
+cd webapp
+
+```
+
+Next, let’s install the pip-licenses tool on the system to perform license analysis of Python dependencies.
+
+```
+
+pip install pip-licenses==5.0.0
+
+```
+
+Command Output
+```
+
+...\[SNIP]...
+Installing collected packages: wcwidth, tomli, prettytable, pip-licenses
+Successfully installed pip-licenses-5.0.0 prettytable-3.16.0 tomli-2.2.1 wcwidth-0.2.13
+
+```
+
+We have successfully installed pip-licenses scanner, let’s explore the functionality it provides us.
+
+```
+
+pip-licenses --help
+
+```
+
+Command Output
+```
+
+usage: pip-licenses \[-h] \[-v] \[--python PYTHON\_EXEC] \[--from SOURCE] \[-o COL] \[-f STYLE] \[--summary]
+\[--output-file OUTPUT\_FILE] \[-i PKG \[PKG ...]] \[-p PKG \[PKG ...]] \[-s] \[-a]
+\[--with-maintainers] \[-u] \[-d] \[-nv] \[-l] \[--no-license-path] \[--with-notice-file]
+\[--filter-strings] \[--filter-code-page CODE] \[--fail-on FAIL\_ON] \[--allow-only ALLOW\_ONLY]
+\[--partial-match]
+
+Dump the software license list of Python packages installed with pip.
+
+options:
+-h, --help                  show this help message and exit
+-v, --version               show program's version number and exit
+
+```
+
+**Common options:**
+```
+
+\--python PYTHON\_EXEC         path to python executable to search distributions from
+\--from SOURCE                where to find license information ("meta", "classifier, "mixed", "all")
+-o COL, --order COL          order by column ("name", "license", "author", "url")
+-f STYLE, --format STYLE     dump as set format style ("plain", "markdown", "html", "json", etc.)
+\--summary                    dump summary of each license
+\--output-file OUTPUT\_FILE    save license list to file
+-i, --ignore-packages        ignore package names
+-p, --packages               only include selected packages in output
+
+```
+
+**Format options:**
+```
+
+-s, --with-system            include system packages
+-a, --with-authors           include package authors
+\--with-maintainers           include package maintainers
+-u, --with-urls              include package urls
+-d, --with-description       include package description
+-nv, --no-version            dump without package version
+-l, --with-license-file      include license file path and contents (JSON output)
+\--with-notice-file           include notice file path and contents
+
+```
+
+**Verify options:**
+```
+
+\--fail-on FAIL\_ON            fail (exit with code 1) on first occurrence of listed licenses
+\--allow-only ALLOW\_ONLY      fail (exit with code 1) if license is not in allowed list
+\--partial-match              enables partial matching for --allow-only/--fail-on
+
+```
+
+---
+
+### Common Challenges When Using pip-licenses
+When scanning your Python dependencies with pip-licenses, you might encounter several issues:
+
+- Some packages may not provide proper license metadata, resulting in **UNKNOWN** licenses in your report that require manual investigation.  
+- You might discover **license conflicts** that could create legal issues, especially when combining GPL-licensed packages with proprietary code.  
+- The package you directly depend on might pull in **transitive dependencies** with problematic licenses that aren’t immediately obvious.  
+- The `--fail-on` and `--allow-only` flags might flag legitimate packages due to **license naming inconsistencies** (e.g., “MIT” vs. “MIT License”).  
+
+---
+
+Command Output
+```
+
+# Example of missing license information
+
+\$ pip-licenses
+Name          Version  License
+some-package  1.2.3    UNKNOWN
+
+# Example of license incompatibility error
+
+\$ pip-licenses --fail-on GPL
+Error: Package 'some-dependency' has a GPL license which is not allowed
+
+```
+
+---
+
+Let’s move to the next step to see how we can use pip-licenses to scan the licenses of Python dependencies.
+```
+```markdown
+Run pip-licenses on Python dependencies
+Let’s run the pip-licenses tool to scan the dependencies licenses and generate a report.
+
+First, let’s check the output of pip-licenses:
+
+```
+
+pip-licenses
+
+```
+
+Command Output
+```
+
+Jinja2              3.1.5          BSD License
+MarkupSafe          3.0.2          BSD License
+PyGObject           3.42.1         GNU Lesser General Public License v2 or later (LGPLv2+)
+PyJWT               2.3.0          MIT License
+PyYAML              6.0.2          MIT License
+SecretStorage       3.3.1          BSD License
+ansible             8.7.0          GNU General Public License v3 or later (GPLv3+)
+ansible-core        2.15.13        GNU General Public License v3 or later (GPLv3+)
+blinker             1.4            MIT License
+certifi             2024.12.14     Mozilla Public License 2.0 (MPL 2.0)
+charset-normalizer  3.4.1          MIT License
+cryptography        3.4.8          Apache Software License; BSD License
+dbus-python         1.2.18         MIT License
+distro              1.7.0          Apache Software License
+httplib2            0.20.2         MIT License
+idna                3.10           BSD License
+importlib-metadata  4.6.4          Apache Software License
+jeepney             0.7.1          MIT License
+keyring             23.5.0         MIT License; Python Software Foundation License
+launchpadlib        1.10.16        GNU Library or Lesser General Public License (LGPL)
+lazr.restfulclient  0.14.4         GNU Library or Lesser General Public License (LGPL)
+lazr.uri            1.0.6          GNU Library or Lesser General Public License (LGPL)
+more-itertools      8.10.0         MIT License
+oauthlib            3.2.0          BSD License
+packaging           24.2           Apache Software License; BSD License
+pyparsing           2.4.7          MIT License
+python-apt          2.4.0+ubuntu4  GNU GPL
+requests            2.32.3         Apache Software License
+resolvelib          1.0.1          ISC License (ISCL)
+six                 1.16.0         MIT License
+urllib3             2.3.0          MIT License
+wadllib             1.3.6          GNU Library or Lesser General Public License (LGPL)
+zipp                1.0.0          MIT License
+
+```
+
+Good, we have the report of pip-licenses. From the above output, we can see that pip-licenses is able to detect the license of the packages — for example, **Jinja2** is under **BSD License**.
+
+---
+
+In the next step, we will explore how to format this report and add more details.
+
+Let’s move to the next step.
+```
+```markdown
+Formatting Reports and Extracting License Details
+In this step, we will explore multiple output formats for pip-licenses reports and learn how to include additional package information such as authors, URLs, and license summaries.
+
+---
+
+### Generate a report in Markdown format
+Let’s generate a report in Markdown format using the following command:
+
+```
+
+pip-licenses --format=markdown
+
+```
+
+Command Output
+```
+
+| Name               | Version    | License                                                 |
+| ------------------ | ---------- | ------------------------------------------------------- |
+| Jinja2             | 3.1.5      | BSD License                                             |
+| MarkupSafe         | 3.0.2      | BSD License                                             |
+| PyGObject          | 3.42.1     | GNU Lesser General Public License v2 or later (LGPLv2+) |
+| PyJWT              | 2.3.0      | MIT License                                             |
+| PyYAML             | 6.0.2      | MIT License                                             |
+| SecretStorage      | 3.3.1      | BSD License                                             |
+| ansible            | 8.7.0      | GNU General Public License v3 or later (GPLv3+)         |
+| ansible-core       | 2.15.13    | GNU General Public License v3 or later (GPLv3+)         |
+| blinker            | 1.4        | MIT License                                             |
+| certifi            | 2024.12.14 | Mozilla Public License 2.0 (MPL 2.0)                    |
+| charset-normalizer | 3.4.1      | MIT License                                             |
+| cryptography       | 3.4.8      | Apache Software License; BSD License                    |
+| dbus-python        | 1.2.18     | MIT License                                             |
+| distro             | 1.7.0      | Apache Software License                                 |
+| httplib2           | 0.20.2     | MIT License                                             |
+| idna               | 3.10       | BSD License                                             |
+| importlib-metadata | 4.6.4      | Apache Software License                                 |
+| jeepney            | 0.7.1      | MIT License                                             |
+| keyring            | 23.5.0     | MIT License; Python Software Foundation License         |
+| ...\[SNIP]...      |            |                                                         |
+
+```
+
+---
+
+### Generate a report in HTML format
+```
+
+pip-licenses --format=html
+
+````
+
+Command Output
+```html
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Version</th>
+            <th>License</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Jinja2</td>
+            <td>3.1.5</td>
+            <td>BSD License</td>
+        </tr>
+        <tr>
+            <td>MarkupSafe</td>
+            <td>3.0.2</td>
+            <td>BSD License</td>
+        </tr>
+        <tr>
+            <td>PyGObject</td>
+            <td>3.42.1</td>
+            <td>GNU Lesser General Public License v2 or later (LGPLv2+)</td>
+        </tr>
+        ...[SNIP]...
+    </tbody>
+</table>
+````
+
+---
+
+### Generate a report in JSON format
+
+```
+pip-licenses --format=json
+```
+
+Command Output
+
+```json
+[
+  {
+    "License": "BSD License",
+    "Name": "Jinja2",
+    "Version": "3.1.5"
+  },
+  {
+    "License": "BSD License",
+    "Name": "MarkupSafe",
+    "Version": "3.0.2"
+  },
+  {
+    "License": "GNU Lesser General Public License v2 or later (LGPLv2+)",
+    "Name": "PyGObject",
+    "Version": "3.42.1"
+  },
+  {
+    "License": "MIT License",
+    "Name": "PyJWT",
+    "Version": "2.3.0"
+  },
+  ...[SNIP]...
+]
+```
+
+Great, we already generated reports in **3 different formats** (Markdown, HTML and JSON). You can generate reports in other formats supported by pip-licenses such as CSV, RST, or Confluence.
+
+---
+
+### Add more details with Author
+
+We can include the author in the report by using the `--with-authors` option.
+
+```
+pip-licenses --with-authors
+```
+
+Command Output
+
+```
+ Name                Version        License                                                  Author
+ Jinja2              3.1.5          BSD License                                              UNKNOWN
+ MarkupSafe          3.0.2          BSD License                                              UNKNOWN
+ PyGObject           3.42.1         GNU Lesser General Public License v2 or later (LGPLv2+)  James Henstridge
+ PyJWT               2.3.0          MIT License                                              Jose Padilla
+ PyYAML              6.0.2          MIT License                                              Kirill Simonov
+ SecretStorage       3.3.1          BSD License                                              Dmitry Shachnev
+ ansible             8.7.0          GNU General Public License v3 or later (GPLv3+)          Ansible, Inc.
+ ...[SNIP]...
+```
+
+---
+
+### Add more details with URL
+
+We can include the URL in the report by using the `--with-urls` option.
+
+```
+pip-licenses --with-urls
+```
+
+Command Output
+
+```
+ Name       Version  License          URL
+ Jinja2     3.1.5    BSD License      https://github.com/pallets/jinja/
+ MarkupSafe 3.0.2    BSD License      https://github.com/pallets/markupsafe/
+ PyJWT      2.3.0    MIT License      https://github.com/jpadilla/pyjwt
+ PyYAML     6.0.2    MIT License      https://pyyaml.org/
+ ...[SNIP]...
+```
+
+---
+
+### Generate a summary of licenses
+
+We can also generate a summary of the licenses used in our project. This helps us quickly see license distribution.
+
+```
+pip-licenses --summary
+```
+
+Command Output
+
+```
+ 3      Apache Software License
+ 2      Apache Software License; BSD License
+ 5      BSD License
+ 1      GNU GPL
+ 2      GNU General Public License v3 or later (GPLv3+)
+ 1      GNU Lesser General Public License v2 or later (LGPLv2+)
+ 4      GNU Library or Lesser General Public License (LGPL)
+ 1      ISC License (ISCL)
+ 12     MIT License
+ 1      MIT License; Python Software Foundation License
+ 1      Mozilla Public License 2.0 (MPL 2.0)
+```
+
+---
+
+✅ That’s all for now. We have learned how to:
+
+* Generate reports in different formats
+* Add more details to the pip-licenses report (authors, URLs)
+* Generate a summary of licenses used in the project
+
+```
+```
+```markdown
+Managing Allowed Licenses
+In this step, you’ll learn how to enforce license compliance by specifying a whitelist of allowed licenses using pip-licenses. This is a crucial feature for ensuring your project only uses dependencies with licenses that align with your organization’s policies.
+
+---
+
+### Why Use an Allowed License List?
+Controlling the licenses of the software components you use is a key aspect of **software supply chain management** and **legal compliance**. Here’s why organizations implement allow-lists for licenses:
+
+- **Legal and Policy Compliance**  
+  Many organizations have strict policies about the types of open-source licenses they can accept.  
+  For example, some licenses (like the **GNU General Public License - GPL**) have “viral” characteristics, meaning that if you use a GPL-licensed component in your software, your entire software might also need to be licensed under GPL, potentially forcing you to open-source proprietary code. An allow-list helps prevent the accidental inclusion of such licenses.
+
+- **Risk Mitigation**  
+  Certain licenses might come with **patent clauses** or other terms that could introduce legal risks or complexities for your project or organization.
+
+- **Intellectual Property Protection**  
+  By ensuring that all components use approved licenses, companies can better protect their own intellectual property and avoid unintended obligations.
+
+- **Standardization**  
+  Maintaining an allow-list promotes consistency in how open source software is consumed across different projects within an organization.
+
+⚠️ Using **GPL** or **LGPL** licensed code can be problematic, especially for businesses, due to the viral nature of these licenses and the legal gray areas when distributing software that incorporates them. (Source: *Human Who Codes*)
+
+By using an allow-list, you proactively manage these risks and ensure your project adheres to acceptable licensing standards.
+
+---
+
+### Using the `--allow-only` option
+The `--allow-only` option is used to specify a whitelist of acceptable licenses.  
+It ensures that only packages with licenses from this list are permitted.  
+
+If any package is found with a license **not** in the allow-list, `pip-licenses` will fail and exit with a **non-zero status code**.
+
+Example:  
+Let’s say your project policy only allows packages with **MIT License** or **BSD License**.  
+You can enforce this using the following command:
+
+```
+
+pip-licenses --allow-only "MIT License;BSD License"
+
+```
+
+Command Output
+```
+
+license Mozilla Public License 2.0 (MPL 2.0) not in allow-only licenses was found for package certifi:2024.12.14
+
+```
+
+If a package like **certifi** (which often has MPL 2.0) is present and its license is not in the allow-list, the command will fail and output an error message similar to the one above.
+
+---
+
+### Verify Exit Code
+This behavior makes it a strong control for ensuring license compliance, as it will halt any process (like a CI/CD pipeline) that relies on its success if a non-approved license is detected.  
+
+You can verify this non-zero exit code in your terminal. For example, after the command fails:
+
+```
+
+echo \$?
+
+```
+
+Command Output
+```
+
+1
+
+```
+
+---
+
+### NOTE
+- The **license names must exactly match** the names `pip-licenses` recognizes.  
+- You might need to run `pip-licenses` without filters first to see the exact license names for your dependencies.
+
+---
+
+✅ This feature is invaluable for maintaining a compliant and secure software supply chain, especially when integrated into **CI/CD pipelines**.
+```
+```markdown
+Conclusion
+In this hands-on exercise, we have successfully learned how to use **pip-licenses** to analyze and manage Python package licenses in your projects.  
+This important component analysis tool helps ensure your software remains **compliant with license requirements**.
+
+---
+
+### What We Achieved
+- Discovered pip-licenses as a handy **command-line tool** for scanning Python dependencies and pulling up license information.  
+- Installed and ran our **first report**.  
+- Explored how to **present results** in various formats like **Markdown, HTML, or JSON** so different teams can use the data.  
+- Dug deeper by adding useful details like **author names** and **project URLs**.  
+- Learned to generate a **clean summary** for a quick snapshot of license compliance.  
+- Understood how to enforce an **allow-list of licenses** to ensure only compliant dependencies are used.  
+
+---
+
+### Keep Exploring!
+We’ve covered the basics, but there’s much more to discover with pip-licenses.  
+We encourage you to:
+
+- Experiment with the `--packages` and `--ignore-packages` options to **focus on specific dependencies**.  
+- Explore more output formats like **CSV** or **RST** for different documentation needs.  
+- Check the official documentation for advanced features:  
+  👉 https://github.com/raimon49/pip-licenses  
+
+---
+
+✅ The best way to learn is by experimenting with your own projects.  
+Try running pip-licenses on different Python applications to see what licenses they depend on!
+```
+```markdown
+A Simple CI/CD Pipeline
+Considering your DevOps team created a simple CI pipeline with the following contents. Please add the Safety scan to the below Gitlab CI Script.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+# --- Added Safety (OAST/SCA) job ---
+safety:
+  stage: test
+  image: python:3.6
+  before_script:
+    - pip3 install --upgrade pip
+    - pip3 install safety
+  script:
+    - safety check -r requirements.txt --full-report --json --output safety-report.json --exit-code 1
+  artifacts:
+    paths: [safety-report.json]
+    when: always # What is this for?
+    expire_in: one week
+# -----------------------------------
+
+There are some jobs in the pipeline, and we need to embed the OAST tool in this pipeline.
+
+Let’s login into GitLab using the following details and execute this pipeline once again.
+
+GitLab CI/CD Machine
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline run
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Embed pip-licenses in CI/CD pipeline
+We can embed the pip-licenses tool in our CI/CD pipeline.
+
+However, do remember that you need run commands manually in a local system like devsecops box before embedding commands for automated execution in CI/CD pipelines.
+
+Manually testing commands in a local environment like devsecops box helps in easy troubleshooting.
+
+Do you wonder which stage this job should go into?
+
+Most of the code (up to 95%) in any software project is open-source/third-party components. It makes sense to perform SCA scans before static analysis.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+license:
+  stage: test
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+    - virtualenv env
+    - source env/bin/activate
+    - pip install -r requirements.txt
+    - pip install pip-licenses==5.0.0
+    - pip-licenses --allow-only "MIT License;BSD License" --format=json --output-file=license-results.json
+  artifacts:
+    paths: [license-results.json]
+    when: always # What does this do?
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Instead of manually removing the container after the scan, we can use the --rm option so the container can clean up after itself.
+
+Copy the above CI script and add it to the .gitlab.ci.yml file on Gitlab repo at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+
+Do not forget to click on the “Commit Changes” button to save the file.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+You will notice that the license job is failing. Why? you can see the output in the job logs. and you will see the following error:
+
+Command Output
+license UNKNOWN not in allow-only licenses was found for package typing_extensions:4.14.0
+This means that the typing_extensions package is not in the allow-only licenses. Because the license is UNKNOWN.
+
+Note
+
+If none of the license in the allow list match, the check will fail and return an non-zero exit code. https://github.com/raimon49/pip-licenses?tab=readme-ov-file#option-allow-only
+
+Did you remember we already discussed about non-zero exit code?
+In the next step, you will learn the need to not fail the builds.
+```
+```markdown
+Allow the Job Failure
+Remember! Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise. You need to refresh the exercise page and click on Start the Exercise button to continue working on it.
+
+You do not want to fail the builds in DevSecOps Maturity Levels 1 and 2. If a security tool fails a build upon security findings, you would want to allow it to fail and not block the pipeline as there would be false positives in the results.
+
+You can use the allow_failure tag to “not fail the build” even though the tool found issues.
+
+license:
+  stage: test
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+    - virtualenv env
+    - source env/bin/activate
+    - pip install -r requirements.txt
+    - pip install pip-licenses==5.0.0
+    - pip-licenses --allow-only "MIT License;BSD License" --format=json --output-file=license-results.json
+  artifacts:
+    paths: [license-results.json]
+    when: always        # What does this do?
+  allow_failure: true   # <--- allow the build to fail but don't mark it as such
+The pipeline would look like the following.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+license:
+  stage: test
+  image: python:3.10
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+    - virtualenv env
+    - source env/bin/activate
+    - pip install -r requirements.txt
+    - pip install pip-licenses==5.0.0
+    - pip-licenses --allow-only "MIT License;BSD License" --format=json --output-file=license-results.json
+  artifacts:
+    paths: [license-results.json]
+    when: always        # What does this do?
+  allow_failure: true   # <--- allow the build to fail but don't mark it as such
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step."
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Go ahead and add it to the .gitlab-ci.yml file to run the pipeline.
+
+You will notice that the license job has failed but didn’t block the other jobs from running.
+
+As discussed, any change to the repo kick starts the pipeline.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Why the command is not giving the expected output?
+The job is failing because the license is not in the allow list.
+
+If the job fails, pip-licenses will not generate the output file. This is why the license job is not storing the artifacts.
+
+Understanding -v option in docker command
+In docker command above, you can see -v tag to bind the volume with the following:
+
+Command Output
+-v $(pwd):/src
+-v: This option is used to mount a volume from the host machine to the Docker container.
+$(pwd): A shell command that outputs the current working directory on your local machine.
+/src: Specifies the path inside the container where the current working directory will be mounted.
+When running a specific Docker command with the -v option, Docker will mount the current directory into a specific directory inside the container. In this case, the local directory will be mounted to /src. In practice, if we open the container, we will be redirected to the / directory.
+
+For some tools, we need to define and specify the file path, for example, /src/filename.json, so that the output file can be reflected in our current local directory.
+
+For further explanation, you can review our “Manage Data in Docker” exercise.
+```

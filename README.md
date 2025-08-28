@@ -18079,3 +18079,2193 @@ For some tools, we need to define and specify the file path, for example, /src/f
 
 For further explanation, you can review our “Manage Data in Docker” exercise.
 ```
+```markdown
+Dynamic Analysis Using Nikto
+Install Nikto
+Nikto is a web server assessment tool. It’s designed to find various default and insecure files, configurations, and programs on any type of web server.
+
+Nikto is built on LibWhisker2 (by RFP) and can run on any platform that has a Perl environment. It supports SSL, proxies, host authentication, attack encoding, and more.
+
+Source: Nikto official.
+
+Let’s install Nikto to perform Dynamic Analysis.
+
+
+apt install -y libnet-ssleay-perl
+
+The above command is needed to support SSL scan in Nikto
+
+
+git clone https://github.com/sullo/nikto
+
+
+cd nikto/program
+git checkout tags/2.1.6
+
+We have successfully installed the Nikto scanner. Let’s explore the functionality it provides us.
+
+
+./nikto.pl -Help
+
+Command Output
+Option host requires an argument
+
+   Options:
+       -ask+               Whether to ask about submitting updates
+                               yes   Ask about each (default)
+                               no    Don't ask, don't send
+                               auto  Don't ask, just send
+       -Cgidirs+           Scan these CGI dirs: "none", "all", or values like "/cgi/ /cgi-a/"
+       -config+            Use this config file
+       -Display+           Turn on/off display outputs:
+                               1     Show redirects
+                               2     Show cookies received
+                               3     Show all 200/OK responses
+                               4     Show URLs which require authentication
+                               D     Debug output
+                               E     Display all HTTP errors
+                               P     Print progress to STDOUT
+                               S     Scrub output of IPs and hostnames
+                               V     Verbose output
+       -dbcheck           Check database and other key files for syntax errors
+       -evasion+          Encoding technique:
+                               1     Random URI encoding (non-UTF8)
+                               2     Directory self-reference (/./)
+                               3     Premature URL ending
+                               4     Prepend long random string
+                               5     Fake parameter
+                               6     TAB as request spacer
+                               7     Change the case of the URL
+                               8     Use Windows directory separator (\)
+                               A     Use a carriage return (0x0d) as a request spacer
+                               B     Use binary value 0x0b as a request spacer
+       -Format+           Save file (-o) format:
+                               csv   Comma-separated-value
+                               json  JSON Format
+                               htm   HTML Format
+                               nbe   Nessus NBE format
+                               sql   Generic SQL (see docs for schema)
+                               txt   Plain text
+                               xml   XML Format
+                               (if not specified the format will be taken from the file extension passed to -output)
+       -Help              This help information
+       -host+             Target host/URL
+       -404code           Ignore these HTTP codes as negative responses (always). Format is "302,301".
+       -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
+       -id+               Host authentication to use, format is id:pass or id:pass:realm
+       -key+              Client certificate key file
+       -list-plugins      List all available plugins, perform no testing
+       -maxtime+          Maximum testing time per host (e.g., 1h, 60m, 3600s)
+       -mutate+           Guess additional file names:
+                               1     Test all files with all root directories
+                               2     Guess for password file names
+                               3     Enumerate user names via Apache (/~user type requests)
+                               4     Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type requests)
+                               5     Attempt to brute force sub-domain names, assume that the host name is the parent domain
+                               6     Attempt to guess directory names from the supplied dictionary file
+       -mutate-options    Provide information for mutates
+       -nointeractive     Disables interactive features
+       -nolookup          Disables DNS lookups
+       -nossl             Disables the use of SSL
+       -no404             Disables nikto attempting to guess a 404 page
+       -Option            Over-ride an option in nikto.conf, can be issued multiple times
+       -output+           Write output to this file ('.' for auto-name)
+       -Pause+            Pause between tests (seconds)
+       -Plugins+          List of plugins to run (default: ALL)
+       -port+             Port to use (default 80)
+       -RSAcert+          Client certificate file
+       -root+             Prepend root value to all requests, format is /directory
+       -Save              Save positive responses to this directory ('.' for auto-name)
+       -ssl               Force ssl mode on port
+       -Tuning+           Scan tuning:
+                               1     Interesting File / Seen in logs
+                               2     Misconfiguration / Default File
+                               3     Information Disclosure
+                               4     Injection (XSS/Script/HTML)
+                               5     Remote File Retrieval - Inside Web Root
+                               6     Denial of Service
+                               7     Remote File Retrieval - Server Wide
+                               8     Command Execution / Remote Shell
+                               9     SQL Injection
+                               0     File Upload
+                               a     Authentication Bypass
+                               b     Software Identification
+                               c     Remote Source Inclusion
+                               d     WebService
+                               e     Administrative Console
+                               x     Reverse Tuning Options (i.e., include all except specified)
+       -timeout+          Timeout for requests (default 10 seconds)
+       -Userdbs           Load only user databases, not the standard databases
+                               all   Disable standard dbs and load only user dbs
+                               tests Disable only db_tests and load udb_tests
+       -useragent         Over-rides the default useragent
+       -until             Run until the specified time or duration
+       -update            Update databases and plugins from CIRT.net
+       -url+              Target host/URL (alias of -host)
+       -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
+       -Version           Print plugin and database versions
+       -vhost+            Virtual host (for Host header)
+                + requires a value
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+As we have learned in the DevSecOps Gospel, we should save the output in the machine-readable format (CSV, JSON, XML) so it can be parsed by the machines easily.
+
+Let’s run the Nikto with the following options.
+
+
+./nikto.pl -output nikto_output.xml -h prod-kr6k1mdm
+
+-h: flag used to set the target application which we want to scan
+-output: flag used to set the output file in which we want to store the result
+Command Output
+- Nikto v2.1.6
+---------------------------------------------------------------------------
++ Target IP:          x.x.x.x
++ Target Hostname:    prod-kr6k1mdm.lab.practical-devsecops.training
++ Target Port:        80
++ Start Time:         2021-07-11 05:46:26 (GMT0)
+---------------------------------------------------------------------------
++ Server: nginx/1.14.0 (Ubuntu)
++ The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type.
++ No CGI Directories found (use '-C all' to force check all possible dirs)
++ nginx/1.14.0 appears to be outdated (current is at least 1.18.0)
++ OSVDB-17113: /SilverStream: SilverStream allows directory listing
++ 8135 requests: 0 error(s) and 3 item(s) reported on remote host
++ End Time:           2021-07-11 05:47:14 (GMT0) (48 seconds)
+---------------------------------------------------------------------------
++ 1 host(s) tested
+Now, executing cat command on the output file will show the nikto result in XML format.
+
+
+cat nikto_output.xml
+
+Command Output
+<?xml version="1.0" ?>
+<!DOCTYPE niktoscan SYSTEM "docs/nikto.dtd">
+<niktoscan>
+<niktoscan hoststest="0" options="-h prod-kr6k1mdm.lab.practical-devsecops.training -output nikto_output.xml" version="2.1.6" scanstart="Sun Jul 11 05:47:55
+2021" scanend="Thu Jan  1 00:00:00 1970" scanelapsed=" seconds" nxmlversion="1.2">
+
+<scandetails targetip="134.209.130.45" targethostname="prod-kr6k1mdm.lab.practical-devsecops.training" targetport="80" targetbanner="nginx/1.14.0 (Ubuntu)" s
+tarttime="2021-07-11 05:47:56" sitename="http://prod-kr6k1mdm.lab.practical-devsecops.training:80/" siteip="http://134.209.130.45:80/" hostheader="prod-wciku
+6wj.lab.practical-devsecops.training" errors="0" checks="6955">
+
+
+<item id="999103" osvdbid="0" osvdblink="" method="GET">
+<description><![CDATA[The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion
+to the MIME type.]]></description>
+<uri><![CDATA[/]]></uri>
+<namelink><![CDATA[http://prod-kr6k1mdm.lab.practical-devsecops.training:80/]]></namelink>
+<iplink><![CDATA[http://134.209.130.45:80/]]></iplink>
+</item>
+
+<item id="600575" osvdbid="0" osvdblink="" method="HEAD">
+<description><![CDATA[nginx/1.14.0 appears to be outdated (current is at least 1.18.0)]]></description>
+<uri><![CDATA[/]]></uri>
+<namelink><![CDATA[http://prod-kr6k1mdm.lab.practical-devsecops.training:80/]]></namelink>
+<iplink><![CDATA[http://134.209.130.45:80/]]></iplink>
+</item>
+
+<item id="000398" osvdbid="17113" osvdblink="https://vulners.com/osvdb/OSVDB:17113" method="GET">
+<description><![CDATA[/SilverStream: SilverStream allows directory listing]]></description>
+<uri><![CDATA[/SilverStream]]></uri>
+<namelink><![CDATA[http://prod-kr6k1mdm.lab.practical-devsecops.training:80/SilverStream]]></namelink>
+<iplink><![CDATA[http://134.209.130.45:80/SilverStream]]></iplink>
+</item>
+
+<statistics elapsed="55" itemsfound="3" itemstested="6955" endtime="2021-07-11 05:48:51" />
+</scandetails>
+
+</niktoscan>
+
+
+</niktoscan>
+Let’s move to the next step.
+```
+```markdown
+Parameters
+Before diving into the challenges, let’s explore some of the important flags and options in the nikto.conf file, which is found in the /nikto/program/ directory. Understanding these options will be invaluable in running Nikto more efficiently.
+
+Here is the list of some important parameters:
+
+Parameter	Description and Usage
+SKIPIDS	Function: Allows skipping certain false-positive checks during the scan. Usage: Specify a comma-separated list of test ID numbers to skip. For example, exclude checks that consistently produce false positives for your target application.
+SKIPPORTS	Function: Specifies ports that Nikto will not scan, even if they are open. Usage: Provide a comma-separated list of ports to skip during the scan. For instance, exclude secure ports like 443 (HTTPS) if you don’t want to scan them.
+CLIOPTS	Function: Defines the command-line options to be used with Nikto. Usage: Customize Nikto’s behavior by specifying desired command-line options. For example, set the output format, target host, and other scan-specific settings.
+STATIC-COOKIE	Function: Allows setting a static string as the Cookie: header in HTTP requests sent by Nikto. Usage: Set a static cookie value if required for authentication or accessing specific resources. Ensure Nikto includes this static cookie in its requests during the scan.
+TIMEOUT	Function: Sets the timeout value (in seconds) for HTTP requests made by Nikto. Usage: Adjust the timeout based on network conditions and target server responsiveness. Longer timeouts may be necessary for slow or unreliable connections.
+EXTRAREQS	Function: Determines whether Nikto should use extra, non-normative HTTP methods to attempt to reveal additional information or vulnerabilities. Usage: Set to 0 (disable) or 1 (enable). Enabling may reveal additional vulnerabilities but could increase scan time and trigger security alerts on the target server.
+Let’s move to the next step.
+```
+```markdown
+Challenges
+Tasks
+
+# 1
+List Available Plugins in Nikto
+
+**Answer**
+
+Run the following command in your terminal to generate the list of available plugins:
+
+```
+
+./nikto.pl -list-plugins
+
+```
+
+Once you execute this command, Nikto will output a detailed list of plugins along with their descriptions. Take your time to review this list and familiarize yourself with the various plugins that Nikto offers. This knowledge will be valuable for performing targeted scans and tests in subsequent tasks.
+
+
+# 2
+Perform Scan Using the ‘headers’ Plugin scan against prod-kr6k1mdm in Nikto
+
+**Answer**
+
+
+# 3
+Configure Nikto (nikto.conf) in the /nikto/program/ directory to exclude ports 21, 22, and 111 from scanning, and then save the scan results in CSV format with the output file named result.csv
+
+**Answer**
+```
+```markdown
+Dynamic Analysis Using SSLyze
+Install DAST Tool
+SSLyze is a fast and powerful SSL/TLS scanning library.
+
+It allows you to analyze the SSL/TLS configuration of a server by connecting to it, in order to detect various issues (bad certificate, weak cipher suites, Heartbleed, ROBOT, TLS 1.3 support, etc.).
+
+SSLyze can either be used as command line tool or as a Python library.
+
+Source: SSLyze Github
+
+Let’s install SSlyze to perform Dynamic analysis.
+
+
+pip3 install sslyze==5.0.3
+
+Command Output
+Collecting sslyze==5.0.3
+  Downloading sslyze-5.0.3.tar.gz (977 kB)
+     |████████████████████████████████| 977 kB 37.4 MB/s 
+Collecting cryptography<37.0.0,>=2.6
+  Downloading cryptography-36.0.2-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.7 MB)
+     |████████████████████████████████| 3.7 MB 98.8 MB/s 
+Collecting nassl<5.0.0,>=4.0.1
+  Downloading nassl-4.0.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+     |████████████████████████████████| 3.1 MB 86.7 MB/s 
+Collecting pydantic<1.10,>=1.7
+  Downloading pydantic-1.9.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.8 MB)
+     |████████████████████████████████| 12.8 MB 55.9 MB/s 
+
+...[SNIP]...
+
+Successfully installed cryptography-36.0.2 nassl-4.0.2 pydantic-1.9.2 sslyze-5.0.3 tls-parser-2.0.0 typing-extensions-4.4.0
+We have successfully installed SSLyze scanner, let’s explore the functionality it provides us.
+
+
+sslyze --help
+
+Command Output
+usage: sslyze [-h] [--update_trust_stores] [--cert CERTIFICATE_FILE] [--key KEY_FILE] [--keyform KEY_FORMAT] [--pass PASSPHRASE] [--json_out JSON_FILE] [--targets_in TARGET_FILE]
+              [--quiet] [--slow_connection] [--https_tunnel PROXY_SETTINGS] [--starttls PROTOCOL] [--xmpp_to HOSTNAME] [--sni SERVER_NAME_INDICATION] [--tlsv1_2] [--robot] [--reneg]
+              [--sslv3] [--fallback] [--sslv2] [--tlsv1_1] [--compression] [--openssl_ccs] [--http_headers] [--tlsv1] [--certinfo] [--certinfo_ca_file CERTINFO_CA_FILE] [--heartbleed]
+              [--elliptic_curves] [--tlsv1_3] [--resum] [--resum_attempts RESUM_ATTEMPTS] [--early_data] [--mozilla_config {modern,intermediate,old,disable}]
+              [target [target ...]]
+
+SSLyze version 5.0.3
+
+positional arguments:
+  target                The list of servers to scan.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --mozilla_config {modern,intermediate,old,disable}
+                        Shortcut to queue various scan commands needed to check the server's TLS configurations against one of Mozilla's recommended TLS configuration. Set to
+                        "intermediate" by default. Use "disable" to disable this check.
+
+Trust stores options:
+  --update_trust_stores
+                        Update the default trust stores used by SSLyze. The latest stores will be downloaded from https://github.com/nabla-c0d3/trust_stores_observatory. This option is
+                        meant to be used separately, and will silence any other command line option supplied to SSLyze.
+
+Client certificate options:
+  --cert CERTIFICATE_FILE
+                        Client certificate chain filename. The certificates must be in PEM format and must be sorted starting with the subject's client certificate, followed by
+                        intermediate CA certificates if applicable.
+  --key KEY_FILE        Client private key filename.
+  --keyform KEY_FORMAT  Client private key format. DER or PEM (default).
+  --pass PASSPHRASE     Client private key passphrase.
+
+Input and output options:
+  --json_out JSON_FILE  Write the scan results as a JSON document to the file JSON_FILE. If JSON_FILE is set to '-', the JSON output will instead be printed to stdout. The resulting
+                        JSON file is a serialized version of the ScanResult objects described in SSLyze's Python API: the nodes and attributes will be the same. See
+                        https://nabla-c0d3.github.io/sslyze/documentation/available-scan-commands.html for more details.
+  --targets_in TARGET_FILE
+                        Read the list of targets to scan from the file TARGET_FILE. It should contain one host:port per line.
+  --quiet               Do not output anything to stdout; useful when using --json_out.
+
+Contectivity options:
+  --slow_connection     Greatly reduce the number of concurrent connections initiated by SSLyze. This will make the scans slower but more reliable if the connection between your host
+                        and the server is slow, or if the server cannot handle many concurrent connections. Enable this option if you are getting a lot of timeouts or errors.
+  --https_tunnel PROXY_SETTINGS
+                        Tunnel all traffic to the target server(s) through an HTTP CONNECT proxy. HTTP_TUNNEL should be the proxy's URL: 'http://USER:PW@HOST:PORT/'. For proxies
+                        requiring authentication, only Basic Authentication is supported.
+  --starttls PROTOCOL   Perform a StartTLS handshake when connecting to the target server(s). StartTLS should be one of: auto, smtp, xmpp, xmpp_server, pop3, imap, ftp, ldap, rdp,
+                        postgres. The 'auto' option will cause SSLyze to deduce the protocol (ftp, imap, etc.) from the supplied port number, for each target servers.
+  --xmpp_to HOSTNAME    Optional setting for STARTTLS XMPP. XMPP_TO should be the hostname to be put in the 'to' attribute of the XMPP stream. Default is the server's hostname.
+  --sni SERVER_NAME_INDICATION
+                        Use Server Name Indication to specify the hostname to connect to. Will only affect TLS 1.0+ connections.
+
+Scan commands:
+  --tlsv1_2             Test a server for TLS 1.2 support.
+  --robot               Test a server for the ROBOT vulnerability.
+  --reneg               Test a server for for insecure TLS renegotiation and client-initiated renegotiation.
+  --sslv3               Test a server for SSL 3.0 support.
+  --fallback            Test a server for the TLS_FALLBACK_SCSV mechanism to prevent downgrade attacks.
+  --sslv2               Test a server for SSL 2.0 support.
+  --tlsv1_1             Test a server for TLS 1.1 support.
+  --compression         Test a server for TLS compression support, which can be leveraged to perform a CRIME attack.
+  --openssl_ccs         Test a server for the OpenSSL CCS Injection vulnerability (CVE-2014-0224).
+  --http_headers        Test a server for the presence of security-related HTTP headers.
+  --tlsv1               Test a server for TLS 1.0 support.
+  --certinfo            Retrieve and analyze a server's certificate(s) to verify its validity.
+  --certinfo_ca_file CERTINFO_CA_FILE
+                        To be used with --certinfo. Path to a file containing root certificates in PEM format that will be used to verify the validity of the server's certificate.
+  --heartbleed          Test a server for the OpenSSL Heartbleed vulnerability.
+  --elliptic_curves     Test a server for supported elliptic curves.
+  --tlsv1_3             Test a server for TLS 1.3 support.
+  --resum               Test a server for TLS 1.2 session resumption support using session IDs and TLS tickets.
+  --resum_attempts RESUM_ATTEMPTS
+                        To be used with --resum. Number of session resumptions (both with Session IDs and TLS Tickets) that SSLyze should attempt. The default value is 5, but a higher
+                        value such as 100 can be used to get a more accurate measure of how often session resumption succeeds or fails with the server.
+  --early_data          Test a server for TLS 1.3 early data support.
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+As we have learned in the DevSecOps Gospel we should save the output in the machine-readable format so that It can be parsed by the computers easily.
+
+Let’s run sslyze with the following options.
+
+
+sslyze --json_out sslyze-output.json prod-kr6k1mdm.lab.practical-devsecops.training:443
+
+Note, we are using the target as prod-kr6k1mdm.lab.practical-devsecops.training:443
+
+--json_out flag is used to store the output in a json format.
+Command Output
+ CHECKING CONNECTIVITY TO SERVER(S)
+ ----------------------------------
+
+   prod-kr6k1mdm.lab.practical-devsecops.training:443 => x.x.x.x
+
+ SCAN RESULTS FOR PROD-kr6k1mdm.lab.practical-devsecops.training:443 - x.x.x.x
+ ---------------------------------------------------------------------------------------
+
+ * Certificates Information:
+       Hostname sent for SNI:             prod-kr6k1mdm.lab.practical-devsecops.training
+       Number of certificates detected:   1
+
+
+     Certificate #0 ( _RSAPublicKey )
+       SHA1 Fingerprint:                  db3a431ee42dd04996ad55309346451db68adf24
+       Common Name:                       *.lab.practical-devsecops.training
+       Issuer:                            R3
+       Serial Number:                     395167699542365030141969571236326375107177
+       Not Before:                        2022-03-24
+       Not After:                         2022-06-22
+       Public Key Algorithm:              _RSAPublicKey
+       Signature Algorithm:               sha256
+       Key Size:                          2048
+       Exponent:                          65537
+       DNS Subject Alternative Names:     ['*.lab.practical-devsecops.training']
+
+     Certificate #0 - Trust
+       Hostname Validation:               OK - Certificate matches server hostname
+       Android CA Store (12.1.0_r1):      OK - Certificate is trusted
+       Apple CA Store (iOS 15.1, iPadOS 15.1, macOS 12.1, tvOS 15.1, and watchOS 8.1):OK - Certificate is trusted
+       Java CA Store (jdk-13.0.2):        OK - Certificate is trusted
+       Mozilla CA Store (2021-12-19):     OK - Certificate is trusted
+       Windows CA Store (2022-02-06):     OK - Certificate is trusted
+       Symantec 2018 Deprecation:         OK - Not a Symantec-issued certificate
+       Received Chain:                    *.lab.practical-devsecops.training --> R3 --> ISRG Root X1
+       Verified Chain:                    *.lab.practical-devsecops.training --> R3 --> ISRG Root X1
+       Received Chain Contains Anchor:    OK - Anchor certificate not sent
+       Received Chain Order:              OK - Order is valid
+       Verified Chain contains SHA1:      OK - No SHA1-signed certificate in the verified certificate chain
+
+     Certificate #0 - Extensions
+       OCSP Must-Staple:                  NOT SUPPORTED - Extension not found
+       Certificate Transparency:          WARNING - Only 2 SCTs included but Google recommends 3 or more
+
+     Certificate #0 - OCSP Stapling
+                                          NOT SUPPORTED - Server did not send back an OCSP response
+
+ * SSL 2.0 Cipher Suites:
+     Attempted to connect using 7 cipher suites; the server rejected all cipher suites.
+
+ * SSL 3.0 Cipher Suites:
+     Attempted to connect using 80 cipher suites; the server rejected all cipher suites.
+
+ * TLS 1.0 Cipher Suites:
+     Attempted to connect using 80 cipher suites; the server rejected all cipher suites.
+
+ * TLS 1.1 Cipher Suites:
+     Attempted to connect using 80 cipher suites; the server rejected all cipher suites.
+
+ * TLS 1.2 Cipher Suites:
+     Attempted to connect using 156 cipher suites.
+
+     The server accepted the following 5 cipher suites:
+        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256       256       ECDH: X25519 (253 bits)
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384             256       ECDH: prime256v1 (256 bits)
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384             256       ECDH: prime256v1 (256 bits)
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256             128       ECDH: prime256v1 (256 bits)
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256             128       ECDH: prime256v1 (256 bits)
+
+     The group of cipher suites supported by the server has the following properties:
+       Forward Secrecy                    OK - Supported
+       Legacy RC4 Algorithm               OK - Not Supported
+
+
+ * TLS 1.3 Cipher Suites:
+     Attempted to connect using 5 cipher suites.
+
+     The server accepted the following 3 cipher suites:
+        TLS_CHACHA20_POLY1305_SHA256                      256       ECDH: X25519 (253 bits)
+        TLS_AES_256_GCM_SHA384                            256       ECDH: X25519 (253 bits)
+        TLS_AES_128_GCM_SHA256                            128       ECDH: X25519 (253 bits)
+
+
+ * Deflate Compression:
+                                          OK - Compression disabled
+
+ * OpenSSL CCS Injection:
+                                          OK - Not vulnerable to OpenSSL CCS injection
+
+ * OpenSSL Heartbleed:
+                                          OK - Not vulnerable to Heartbleed
+
+ * ROBOT Attack:
+                                          OK - Not vulnerable, RSA cipher suites not supported.
+
+ * Session Renegotiation:
+       Client Renegotiation DoS Attack:   OK - Not vulnerable
+       Secure Renegotiation:              OK - Supported
+
+ * Elliptic Curve Key Exchange:
+       Supported curves:                  X25519, X448, prime256v1, secp384r1, secp521r1
+       Rejected curves:                   prime192v1, secp160k1, secp160r1, secp160r2, secp192k1, secp224k1, secp224r1, secp256k1, sect163k1, sect163r1, sect163r2, sect193r1, sect193r2, sect233k1, sect233r1, sect239k1, sect283k1, sect283r1, sect409k1, sect409r1, sect571k1, sect571r1
+
+ SCANS COMPLETED IN 0.679006 S
+ -----------------------------
+
+       Wrote JSON output to "/sslyze-output.json".
+
+ COMPLIANCE AGAINST MOZILLA TLS CONFIGURATION
+ --------------------------------------------
+
+    Checking results against Mozilla's "intermediate" configuration. See https://ssl-config.mozilla.org/ for more details.
+
+    prod-kr6k1mdm.lab.practical-devsecops.training:443: FAILED - Not compliant.
+        * ciphers: Cipher suites {'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384'} are supported, but should be rejected.
+We can check the scan output using the following command.
+
+
+cat sslyze-output.json
+
+Command Output
+...[SNIP]...
+
+                "tls_1_3_early_data": {
+                    "error_reason": null,
+                    "error_trace": null,
+                    "result": null,
+                    "status": "NOT_SCHEDULED"
+                },
+                "tls_compression": {
+                    "error_reason": null,
+                    "error_trace": null,
+                    "result": {
+                        "supports_compression": false
+                    },
+                    "status": "COMPLETED"
+                },
+                "tls_fallback_scsv": {
+                    "error_reason": null,
+                    "error_trace": null,
+                    "result": null,
+                    "status": "NOT_SCHEDULED"
+                }
+            },
+            "scan_status": "COMPLETED",
+            "server_location": {
+                "connection_type": "DIRECT",
+                "hostname": "prod-kr6k1mdm.lab.practical-devsecops.training",
+                "http_proxy_settings": null,
+                "ip_address": "x.x.x.x",
+                "port": 443
+            },
+            "uuid": "6038d51f-31e1-4c43-bd7a-bbbe2b032342"
+        }
+    ],
+    "sslyze_url": "https://github.com/nabla-c0d3/sslyze",
+    "sslyze_version": "5.0.3"
+```
+```markdown
+Dynamic Analysis Using Nmap
+Install DAST Tool
+Nmap (“Network Mapper”) is a free and open source (license) utility for network discovery and security auditing. Many systems and network administrators also find it useful for tasks such as network inventory, managing service upgrade schedules, and monitoring host or service uptime.
+
+Source Nmap official website
+
+Let’s install nmap to perform Dynamic Analysis.
+
+
+apt-get update && apt-get install nmap -y
+
+Command Output
+Get:1 http://security.ubuntu.com/ubuntu bionic-security InRelease [88.7 kB]
+Hit:2 https://download.docker.com/linux/ubuntu bionic InRelease                                                                    
+Hit:3 http://archive.ubuntu.com/ubuntu bionic InRelease                                                                            
+Get:4 http://security.ubuntu.com/ubuntu bionic-security/main amd64 Packages [2221 kB]
+Get:5 http://security.ubuntu.com/ubuntu bionic-security/universe amd64 Packages [1418 kB]       
+Get:6 http://archive.ubuntu.com/ubuntu bionic-updates InRelease [88.7 kB]                                 
+Get:7 http://archive.ubuntu.com/ubuntu bionic-backports InRelease [74.6 kB]           
+Get:8 http://archive.ubuntu.com/ubuntu bionic-updates/universe amd64 Packages [2188 kB]
+Get:9 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 Packages [2658 kB]
+Fetched 8737 kB in 1s (7297 kB/s)                         
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following additional packages will be installed:
+  libblas3 liblinear3 liblua5.3-0 libpcap0.8
+Suggested packages:
+  liblinear-tools liblinear-dev ndiff
+The following NEW packages will be installed:
+  libblas3 liblinear3 liblua5.3-0 libpcap0.8 nmap
+0 upgraded, 5 newly installed, 0 to remove and 7 not upgraded.
+Need to get 5585 kB of archives.
+After this operation, 25.3 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 libpcap0.8 amd64 1.8.1-6ubuntu1.18.04.2 [118 kB]
+Get:2 http://archive.ubuntu.com/ubuntu bionic/main amd64 libblas3 amd64 3.7.1-4ubuntu1 [140 kB]
+Get:3 http://archive.ubuntu.com/ubuntu bionic/main amd64 liblinear3 amd64 2.1.0+dfsg-2 [39.3 kB]
+Get:4 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 liblua5.3-0 amd64 5.3.3-1ubuntu0.18.04.1 [115 kB]
+Get:5 http://archive.ubuntu.com/ubuntu bionic/main amd64 nmap amd64 7.60-1ubuntu5 [5174 kB]
+Fetched 5585 kB in 1s (6437 kB/s)
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package libpcap0.8:amd64.
+(Reading database ... 19683 files and directories currently installed.)
+Preparing to unpack .../libpcap0.8_1.8.1-6ubuntu1.18.04.2_amd64.deb ...
+Unpacking libpcap0.8:amd64 (1.8.1-6ubuntu1.18.04.2) ...
+Selecting previously unselected package libblas3:amd64.
+Preparing to unpack .../libblas3_3.7.1-4ubuntu1_amd64.deb ...
+Unpacking libblas3:amd64 (3.7.1-4ubuntu1) ...
+Selecting previously unselected package liblinear3:amd64.
+Preparing to unpack .../liblinear3_2.1.0+dfsg-2_amd64.deb ...
+Unpacking liblinear3:amd64 (2.1.0+dfsg-2) ...
+Selecting previously unselected package liblua5.3-0:amd64.
+Preparing to unpack .../liblua5.3-0_5.3.3-1ubuntu0.18.04.1_amd64.deb ...
+Unpacking liblua5.3-0:amd64 (5.3.3-1ubuntu0.18.04.1) ...
+Selecting previously unselected package nmap.
+Preparing to unpack .../nmap_7.60-1ubuntu5_amd64.deb ...
+Unpacking nmap (7.60-1ubuntu5) ...
+Setting up libblas3:amd64 (3.7.1-4ubuntu1) ...
+update-alternatives: using /usr/lib/x86_64-linux-gnu/blas/libblas.so.3 to provide /usr/lib/x86_64-linux-gnu/libblas.so.3 (libblas.so.3-x86_64-linux-gnu) in auto mode
+Setting up liblinear3:amd64 (2.1.0+dfsg-2) ...
+Setting up liblua5.3-0:amd64 (5.3.3-1ubuntu0.18.04.1) ...
+Setting up libpcap0.8:amd64 (1.8.1-6ubuntu1.18.04.2) ...
+Setting up nmap (7.60-1ubuntu5) ...
+Processing triggers for libc-bin (2.27-3ubuntu1.4) ...
+We have successfully installed Nmap scanner, let’s explore the functionality it provides us.
+
+
+nmap -help
+
+Command Output
+Nmap 7.60 ( https://nmap.org )
+Usage: nmap [Scan Type(s)] [Options] {target specification}
+TARGET SPECIFICATION:
+  Can pass hostnames, IP addresses, networks, etc.
+  Ex: scanme.nmap.org, microsoft.com/24, 192.168.0.1; 10.0.0-255.1-254
+  -iL <inputfilename>: Input from list of hosts/networks
+  -iR <num hosts>: Choose random targets
+  --exclude <host1[,host2][,host3],...>: Exclude hosts/networks
+  --excludefile <exclude_file>: Exclude list from file
+HOST DISCOVERY:
+  -sL: List Scan - simply list targets to scan
+  -sn: Ping Scan - disable port scan
+  -Pn: Treat all hosts as online -- skip host discovery
+  -PS/PA/PU/PY[portlist]: TCP SYN/ACK, UDP or SCTP discovery to given ports
+  -PE/PP/PM: ICMP echo, timestamp, and netmask request discovery probes
+  -PO[protocol list]: IP Protocol Ping
+  -n/-R: Never do DNS resolution/Always resolve [default: sometimes]
+  --dns-servers <serv1[,serv2],...>: Specify custom DNS servers
+  --system-dns: Use OS's DNS resolver
+  --traceroute: Trace hop path to each host
+SCAN TECHNIQUES:
+  -sS/sT/sA/sW/sM: TCP SYN/Connect()/ACK/Window/Maimon scans
+  -sU: UDP Scan
+  -sN/sF/sX: TCP Null, FIN, and Xmas scans
+  --scanflags <flags>: Customize TCP scan flags
+  -sI <zombie host[:probeport]>: Idle scan
+  -sY/sZ: SCTP INIT/COOKIE-ECHO scans
+  -sO: IP protocol scan
+  -b <FTP relay host>: FTP bounce scan
+PORT SPECIFICATION AND SCAN ORDER:
+  -p <port ranges>: Only scan specified ports
+    Ex: -p22; -p1-65535; -p U:53,111,137,T:21-25,80,139,8080,S:9
+  --exclude-ports <port ranges>: Exclude the specified ports from scanning
+  -F: Fast mode - Scan fewer ports than the default scan
+  -r: Scan ports consecutively - don't randomize
+  --top-ports <number>: Scan <number> most common ports
+  --port-ratio <ratio>: Scan ports more common than <ratio>
+SERVICE/VERSION DETECTION:
+  -sV: Probe open ports to determine service/version info
+  --version-intensity <level>: Set from 0 (light) to 9 (try all probes)
+  --version-light: Limit to most likely probes (intensity 2)
+  --version-all: Try every single probe (intensity 9)
+  --version-trace: Show detailed version scan activity (for debugging)
+SCRIPT SCAN:
+  -sC: equivalent to --script=default
+  --script=<Lua scripts>: <Lua scripts> is a comma separated list of
+           directories, script-files or script-categories
+  --script-args=<n1=v1,[n2=v2,...]>: provide arguments to scripts
+  --script-args-file=filename: provide NSE script args in a file
+  --script-trace: Show all data sent and received
+  --script-updatedb: Update the script database.
+  --script-help=<Lua scripts>: Show help about scripts.
+           <Lua scripts> is a comma-separated list of script-files or
+           script-categories.
+OS DETECTION:
+  -O: Enable OS detection
+  --osscan-limit: Limit OS detection to promising targets
+  --osscan-guess: Guess OS more aggressively
+TIMING AND PERFORMANCE:
+  Options which take <time> are in seconds, or append 'ms' (milliseconds),
+  's' (seconds), 'm' (minutes), or 'h' (hours) to the value (e.g. 30m).
+  -T<0-5>: Set timing template (higher is faster)
+  --min-hostgroup/max-hostgroup <size>: Parallel host scan group sizes
+  --min-parallelism/max-parallelism <numprobes>: Probe parallelization
+  --min-rtt-timeout/max-rtt-timeout/initial-rtt-timeout <time>: Specifies
+      probe round trip time.
+  --max-retries <tries>: Caps number of port scan probe retransmissions.
+  --host-timeout <time>: Give up on target after this long
+  --scan-delay/--max-scan-delay <time>: Adjust delay between probes
+  --min-rate <number>: Send packets no slower than <number> per second
+  --max-rate <number>: Send packets no faster than <number> per second
+FIREWALL/IDS EVASION AND SPOOFING:
+  -f; --mtu <val>: fragment packets (optionally w/given MTU)
+  -D <decoy1,decoy2[,ME],...>: Cloak a scan with decoys
+  -S <IP_Address>: Spoof source address
+  -e <iface>: Use specified interface
+  -g/--source-port <portnum>: Use given port number
+  --proxies <url1,[url2],...>: Relay connections through HTTP/SOCKS4 proxies
+  --data <hex string>: Append a custom payload to sent packets
+  --data-string <string>: Append a custom ASCII string to sent packets
+  --data-length <num>: Append random data to sent packets
+  --ip-options <options>: Send packets with specified ip options
+  --ttl <val>: Set IP time-to-live field
+  --spoof-mac <mac address/prefix/vendor name>: Spoof your MAC address
+  --badsum: Send packets with a bogus TCP/UDP/SCTP checksum
+OUTPUT:
+  -oN/-oX/-oS/-oG <file>: Output scan in normal, XML, s|<rIpt kIddi3,
+     and Grepable format, respectively, to the given filename.
+  -oA <basename>: Output in the three major formats at once
+  -v: Increase verbosity level (use -vv or more for greater effect)
+  -d: Increase debugging level (use -dd or more for greater effect)
+  --reason: Display the reason a port is in a particular state
+  --open: Only show open (or possibly open) ports
+  --packet-trace: Show all packets sent and received
+  --iflist: Print host interfaces and routes (for debugging)
+  --append-output: Append to rather than clobber specified output files
+  --resume <filename>: Resume an aborted scan
+  --stylesheet <path/URL>: XSL stylesheet to transform XML output to HTML
+  --webxml: Reference stylesheet from Nmap.Org for more portable XML
+  --no-stylesheet: Prevent associating of XSL stylesheet w/XML output
+MISC:
+  -6: Enable IPv6 scanning
+  -A: Enable OS detection, version detection, script scanning, and traceroute
+  --datadir <dirname>: Specify custom Nmap data file location
+  --send-eth/--send-ip: Send using raw ethernet frames or IP packets
+  --privileged: Assume that the user is fully privileged
+  --unprivileged: Assume the user lacks raw socket privileges
+  -V: Print version number
+  -h: Print this help summary page.
+EXAMPLES:
+  nmap -v -A scanme.nmap.org
+  nmap -v -sn 192.168.0.0/16 10.0.0.0/8
+  nmap -v -iR 10000 -Pn -p 80
+SEE THE MAN PAGE (https://nmap.org/book/man.html) FOR MORE OPTIONS AND EXAMPLES
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+As we have learned in the DevSecOps Gospel, we should save the output in a machine-readable format so that it can be parsed by computers easily.
+
+Let’s run nmap with the following options.
+
+
+nmap prod-kr6k1mdm -oX nmap_out.xml
+
+-oX: flag used to tells the tool that the output should be saved in XML format
+Command Output
+Starting Nmap 7.60 ( https://nmap.org ) at 2021-05-03 07:37 UTC
+Nmap scan report for prod-kr6k1mdm (x.x.x.x)
+Host is up (0.000027s latency).
+rDNS record for x.x.x.x: prod-kr6k1mdm.kr6k1mdm
+Not shown: 997 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+8000/tcp open  http-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 1.59 seconds
+We can check the scan output using the following command:
+
+
+cat nmap_out.xml
+
+Command Output
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.60 scan initiated Tue Mar 23 12:02:33 2021 as: nmap -oX nmap_out.xml prod-kr6k1mdm -->
+<nmaprun scanner="nmap" args="nmap -oX nmap_out.xml prod-kr6k1mdm" start="1616500953" startstr="Tue Mar 23 12:02:33 2021" version="7.60" xmloutputversion="1.
+04">
+<scaninfo type="syn" protocol="tcp" numservices="1000" services="1,3-4,6-7,9,13,17,19-26,30,32-33,37,42-43,49,53,70,79-85,88-90,99-100,106,109-111,113,119,12
+5,135,139,143-144,146,161,163,179,199,211-212,222,254-256,259,264,280,301,306,311,340,366,389,406-407,416-417,425,427,443-445,458,464-465,481,497,500,512-515
+,524,541,543-545,548,554-555,563,587,593,616-617,625,631,636,646,648,666-668,683,687,691,700,705,711,714,720,722,726,749,765,777,783,787,800-801,808,843,873,
+880,888,898,900-903,911-912,981,987,990,992-993,995,999-1002,1007,1009-1011,1021-1100,1102,1104-1108,1110-1114,1117,1119,1121-1124,1126,1130-1132,1137-1138,1
+141,1145,1147-1149,1151-1152,1154,1163-1166,1169,1174-1175,1183,1185-1187,1192,1198-1199,1201,1213,1216-1218,1233-1234,1236,1244,1247-1248,1259,1271-1272,127
+7,1287,1296,1300-1301,1309-1311,1322,1328,1334,1352,1417,1433-1434,1443,1455,1461,1494,1500-1501,1503,1521,1524,1533,1556,1580,1583,1594,1600,1641,1658,1666,
+1687-1688,1700,1717-1721,1723,1755,1761,1782-1783,1801,1805,1812,1839-1840,1862-1864,1875,1900,1914,1935,1947,1971-1972,1974,1984,1998-2010,2013,2020-2022,20
+30,2033-2035,2038,2040-2043,2045-2049,2065,2068,2099-2100,2103,2105-2107,2111,2119,2121,2126,2135,2144,2160-2161,2170,2179,2190-2191,2196,2200,2222,2251,2260
+,2288,2301,2323,2366,2381-2383,2393-2394,2399,2401,2492,2500,2522,2525,2557,2601-2602,2604-2605,2607-2608,2638,2701-2702,2710,2717-2718,2725,2800,2809,2811,2
+869,2875,2909-2910,2920,2967-2968,2998,3000-3001,3003,3005-3007,3011,3013,3017,3030-3031,3052,3071,3077,3128,3168,3211,3221,3260-3261,3268-3269,3283,3300-330
+1,3306,3322-3325,3333,3351,3367,3369-3372,3389-3390,3404,3476,3493,3517,3527,3546,3551,3580,3659,3689-3690,3703,3737,3766,3784,3800-3801,3809,3814,3826-3828,
+3851,3869,3871,3878,3880,3889,3905,3914,3918,3920,3945,3971,3986,3995,3998,4000-4006,4045,4111,4125-4126,4129,4224,4242,4279,4321,4343,4443-4446,4449,4550,45
+67,4662,4848,4899-4900,4998,5000-5004,5009,5030,5033,5050-5051,5054,5060-5061,5080,5087,5100-5102,5120,5190,5200,5214,5221-5222,5225-5226,5269,5280,5298,5357
+,5405,5414,5431-5432,5440,5500,5510,5544,5550,5555,5560,5566,5631,5633,5666,5678-5679,5718,5730,5800-5802,5810-5811,5815,5822,5825,5850,5859,5862,5877,5900-5
+904,5906-5907,5910-5911,5915,5922,5925,5950,5952,5959-5963,5987-5989,5998-6007,6009,6025,6059,6100-6101,6106,6112,6123,6129,6156,6346,6389,6502,6510,6543,654
+7,6565-6567,6580,6646,6666-6669,6689,6692,6699,6779,6788-6789,6792,6839,6881,6901,6969,7000-7002,7004,7007,7019,7025,7070,7100,7103,7106,7200-7201,7402,7435,
+7443,7496,7512,7625,7627,7676,7741,7777-7778,7800,7911,7920-7921,7937-7938,7999-8002,8007-8011,8021-8022,8031,8042,8045,8080-8090,8093,8099-8100,8180-8181,81
+92-8194,8200,8222,8254,8290-8292,8300,8333,8383,8400,8402,8443,8500,8600,8649,8651-8652,8654,8701,8800,8873,8888,8899,8994,9000-9003,9009-9011,9040,9050,9071
+,9080-9081,9090-9091,9099-9103,9110-9111,9200,9207,9220,9290,9415,9418,9485,9500,9502-9503,9535,9575,9593-9595,9618,9666,9876-9878,9898,9900,9917,9929,9943-9
+944,9968,9998-10004,10009-10010,10012,10024-10025,10082,10180,10215,10243,10566,10616-10617,10621,10626,10628-10629,10778,11110-11111,11967,12000,12174,12265
+,12345,13456,13722,13782-13783,14000,14238,14441-14442,15000,15002-15004,15660,15742,16000-16001,16012,16016,16018,16080,16113,16992-16993,17877,17988,18040,
+18101,18988,19101,19283,19315,19350,19780,19801,19842,20000,20005,20031,20221-20222,20828,21571,22939,23502,24444,24800,25734-25735,26214,27000,27352-27353,2
+7355-27356,27715,28201,30000,30718,30951,31038,31337,32768-32785,33354,33899,34571-34573,35500,38292,40193,40911,41511,42510,44176,44442-44443,44501,45100,48
+080,49152-49161,49163,49165,49167,49175-49176,49400,49999-50003,50006,50300,50389,50500,50636,50800,51103,51493,52673,52822,52848,52869,54045,54328,55055-550
+56,55555,55600,56737-56738,57294,57797,58080,60020,60443,61532,61900,62078,63331,64623,64680,65000,65129,65389"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1616500953" endtime="1616500954"><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.17.0.5" addrtype="ipv4"/>
+<address addr="02:42:AC:11:00:05" addrtype="mac"/>
+<hostnames>
+<hostname name="prod-kr6k1mdm" type="user"/>
+<hostname name="prod-kr6k1mdm.lab" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="998">
+<extrareasons reason="resets" count="998"/>
+</extraports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ssh" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8000"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http-alt" method="table" conf="3"/></port>
+</ports>
+<times srtt="25" rttvar="27" to="100000"/>
+</host>
+<runstats><finished time="1616500954" timestr="Tue Mar 23 12:02:34 2021" elapsed="1.64" summary="Nmap done at Tue Mar 23 12:02:34 2021; 1 IP address (1 host up) scanned in 1.64 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>
+```
+```markdown
+Embed Nikto, SSLyze, and Nmap Into GitLab
+A Simple CI/CD Pipeline
+Imagine your boss asked you to embed DAST tools in a project’s CI pipeline. You have access to the source code, and you saw they were using the following .gitlab-ci.yml script.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - deploy
+  - test
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+You saw that the CI Script has two jobs, the build job and the test job. Assuming you do not understand Python or any programming language, we can safely consider the DevOps team is building and testing the code.
+
+Let’s log into GitLab using the following details and execute this pipeline once again.
+
+GitLab CI/CD Machine
+Name	Value
+Link	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline run
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Build Docker Images in CI/CD Pipeline
+Before embedding the DAST scan, we will add a job to build the image whenever any changes are pushed and deploy it to the production machine.
+
+Click on the Edit button and replace the current build job with the following content to the .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+build:
+  stage: build
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA        # Push the image into registry
+
+Save changes to the file using the Commit changes button.
+
+In the above code, you will notice that we use predefined variables provided by GitLab and we don’t need to manually define the image name.
+
+Once the pipeline is finished, you will notice that the build job failed with the error message **denied: access forbidden**. To fix this, we need to log into the registry with the correct credentials before pushing the image.
+
+Next, please visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+**Note**
+
+If you encounter a 404 Page Not Found error, please make sure to log in using the following details:
+
+Name	Value  
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training  
+Username	root  
+Password	pdso-training  
+
+Click on the Edit button and replace the build job with the following code.
+
+Click anywhere to copy
+
+build:
+  stage: build
+  before_script:
+   - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA        # Push the image into registry
+
+**Note**
+
+Where do we get `CI_REGISTRY_IMAGE` and `CI_COMMIT_SHA`?  
+Even though we haven’t defined it yet in GitLab CI/CD variables, we use predefined variables to authenticate with the registry on GitLab, so we don’t need to add any secrets to the settings. Please refer to the predefined environment variables here.
+
+Save changes to the file using the Commit changes button. Once the pipeline is completed, you will notice that the build job is passed.
+
+To check if the image has been pushed, you can visit **Deploy → Container Registry** in your project.
+
+Let’s move to the next step to deploy this container to the production machine.
+```
+```markdown
+Deploy Application from CI/CD Pipeline
+**Note**
+
+To run DAST exercises, we need a running application on the staging/production machine.
+
+The following steps help you in setting up the django.nv application on the prod machine.
+
+We have updated a build job to build and push the container into the registry. Next, we will add the prod job to deploy our application after the build process.
+
+**Remember**
+
+The steps would be the same for either staging or production environment.
+
+---
+
+### Add Variables
+We need to add the following variables (Go to **Project (django.nv) → Settings → CI/CD → Variables → Expand**).
+
+| Name | Value |
+|------|-------|
+| Key: PROD_USERNAME | Value: root |
+| Key: PROD_HOSTNAME | Value: prod-kr6k1mdm |
+| Key: PROD_SSH_PRIVKEY | Value: Copy the private key from the production machine using SSH |
+
+The SSH key is available at `/root/.ssh/id_rsa`. You can use the following command to accomplish that.
+
+Log into the production machine using SSH:
+
+```
+
+ssh root\@prod-kr6k1mdm
+
+```
+
+Then view the value of id_rsa:
+
+```
+
+more /root/.ssh/id\_rsa
+
+````
+
+**Note**
+
+Please copy the complete value from the beginning (`-----BEGIN RSA PRIVATE KEY-----`) to the last line (`-----END RSA PRIVATE KEY-----`).
+
+---
+
+### Security Best Practices
+Storing SSH keys in GitLab variables poses significant security risks due to plain text storage and limited access controls. For production environments, it’s recommended to use dedicated key management solutions like **HashiCorp Vault** for secure key storage, rotation, and access control. Learn more about managing SSH access at scale here.
+
+---
+
+### Update `.gitlab-ci.yml`
+Once the variables are saved on the CI system, we need to edit the `.gitlab-ci.yml` file content once again and replace the prod job with the following code.
+
+Click anywhere to copy
+
+```yaml
+prod:
+  stage: deploy
+  image: kroniak/ssh-client:3.6
+  environment: production
+  only:
+      - main
+  before_script:
+   - mkdir -p ~/.ssh
+   - echo "$PROD_SSH_PRIVKEY" > ~/.ssh/id_rsa
+   - chmod 600 ~/.ssh/id_rsa
+   - eval "$(ssh-agent -s)"
+   - ssh-add ~/.ssh/id_rsa
+   - ssh-keyscan -H $PROD_HOSTNAME >> ~/.ssh/known_hosts
+  script:
+   - echo
+   - |
+      ssh $PROD_USERNAME@$PROD_HOSTNAME << EOF
+        docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASS} ${CI_REGISTRY}
+        docker rm -f django.nv
+        docker run -d --name django.nv -p 8000:8000 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      EOF
+````
+
+---
+
+### Full Pipeline Example
+
+```yaml
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+  - test
+
+build:
+  stage: build
+  before_script:
+   - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA        # Push the image into registry
+
+prod:
+  stage: deploy
+  image: kroniak/ssh-client:3.6
+  environment: production
+  needs:
+    - build
+  only:
+    - main
+  before_script:
+   - mkdir -p ~/.ssh
+   - echo "$PROD_SSH_PRIVKEY" > ~/.ssh/id_rsa
+   - chmod 600 ~/.ssh/id_rsa
+   - eval "$(ssh-agent -s)"
+   - ssh-add ~/.ssh/id_rsa
+   - ssh-keyscan -H $PROD_HOSTNAME >> ~/.ssh/known_hosts
+  script:
+   - echo
+   - |
+      ssh $PROD_USERNAME@$PROD_HOSTNAME << EOF
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+        docker rm -f django.nv
+        docker run -d --name django.nv -p 8000:8000 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      EOF
+```
+
+---
+
+### Explanation
+
+* **build**: Creates and pushes the Docker image.
+* **prod**: Connects via SSH to the production machine, logs into registry, removes any existing container, and deploys the new container.
+
+---
+
+### Verify
+
+* Visit [GitLab Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines).
+* Click on the appropriate job name to see the output.
+* If successful, you should see the **Task Manager application** running at the provided URL.
+
+**Login Credentials**
+Username: `admin`
+Password: `admin`
+
+---
+
+### Challenge
+
+Recall the techniques you have learned in the previous module (**CI/CD, OAST, and SAST**).
+Visit the respective tool’s documentation page to create an appropriate command to run and test the tool locally first, before integrating the tools into the CI/CD pipeline.
+
+Please follow the **DevSecOps Gospel** and other best practices while trying to embed the above scanners.
+
+---
+
+### Tasks
+
+# 1
+
+Create a job named `nikto`, `nmap`, and `sslyze` using **hysnsec** docker images in the CI/CD pipeline to run scans against the production machine [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+**Answer**
+
+Add this job to `.gitlab-ci.yml`
+
+```yaml
+nikto:
+  stage: test
+  script:
+    - docker pull hysnsec/nikto
+    - docker run --rm -v $(pwd):/tmp hysnsec/nikto -h http://prod-kr6k1mdm.lab.practical-devsecops.training -o /tmp/nikto-output.xml
+  artifacts:
+    paths: [nikto-output.xml]
+    when: always
+
+sslyze:
+  stage: test
+  script:
+    - docker pull hysnsec/sslyze
+    - docker run --rm -v $(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json_out /tmp/sslyze-output.json
+  artifacts:
+    paths: [sslyze-output.json]
+    when: always
+
+nmap:
+  stage: test
+  script:
+    - docker pull hysnsec/nmap
+    - docker run --rm -v $(pwd):/tmp hysnsec/nmap prod-kr6k1mdm -oX /tmp/nmap-output.xml
+  artifacts:
+    paths: [nmap-output.xml]
+    when: always
+```
+
+```
+```
+````markdown
+Embed DAST in CI/CD Pipeline
+As discussed in the Dynamic Analysis exercises, we can integrate DAST tools like **Nikto**, **SSLyze**, and **Nmap** in our CI/CD pipelines.
+
+There is no specific standard for when to run DAST. It’s recommended to scan your live application post-deployment in all your environments: **development, staging, and production**. You can choose to do this for all environments or selectively, depending on your organization’s needs.
+
+What will you do if the tools are not installed?  
+You can either install them yourself (if you have permission to do so) or ask your operations team for assistance.
+
+---
+
+### Example `.gitlab-ci.yml`
+
+Click anywhere to copy
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - deploy
+  - test
+
+build:
+  stage: build
+  before_script:
+   - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA        # Push the image into registry
+
+prod:
+  stage: deploy
+  image: kroniak/ssh-client:3.6
+  environment: production
+  needs:
+    - build
+  only:
+    - main
+  before_script:
+   - mkdir -p ~/.ssh
+   - echo "$PROD_SSH_PRIVKEY" > ~/.ssh/id_rsa
+   - chmod 600 ~/.ssh/id_rsa
+   - eval "$(ssh-agent -s)"
+   - ssh-add ~/.ssh/id_rsa
+   - ssh-keyscan -H $PROD_HOSTNAME >> ~/.ssh/known_hosts
+  script:
+   - echo
+   - |
+      ssh $PROD_USERNAME@$PROD_HOSTNAME << EOF
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+        docker rm -f django.nv
+        docker run -d --name django.nv -p 8000:8000 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      EOF
+
+nikto:
+  stage: test
+  script:
+    - docker pull hysnsec/nikto
+    - docker run --rm -v $(pwd):/tmp hysnsec/nikto -h prod-kr6k1mdm -o /tmp/nikto-output.xml
+  artifacts:
+    paths: [nikto-output.xml]
+    when: always
+
+sslyze:
+  stage: test
+  script:
+    - docker pull hysnsec/sslyze
+    - docker run --rm -v $(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json_out /tmp/sslyze-output.json
+  artifacts:
+    paths: [sslyze-output.json]
+    when: always
+
+nmap:
+  stage: test
+  script:
+    - docker pull hysnsec/nmap
+    - docker run --rm -v $(pwd):/tmp hysnsec/nmap prod-kr6k1mdm -oX /tmp/nmap-output.xml
+  artifacts:
+    paths: [nmap-output.xml]
+    when: always
+````
+
+---
+
+### Key Points
+
+* **Any change to the repo kick starts the pipeline.**
+* We discussed three ways of using the tools:
+
+  * **Native Installation**: Direct install on system.
+  * **Package Manager / Binary**: Install using package managers or prebuilt binaries.
+  * **Docker**: Run tools inside Docker containers.
+
+---
+
+### Summary
+
+* **All methods are suitable** for CI/CD integration.
+* **Docker is recommended** for CI/CD since it avoids dependency issues.
+* **Binary files** are efficient, avoiding extra dependencies.
+* Ultimately, the choice depends on your team’s **infrastructure and permissions**.
+
+---
+
+We can see the results of this pipeline by visiting:
+[GitLab Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to see the output.
+
+---
+
+👉 In the next step, you will learn **why you should not fail the builds**.
+
+```
+```
+````markdown
+Allow the Job Failure
+**Remember!**
+
+- Except for **DevSecOps-Box**, every other machine closes after two hours, even if you are in the middle of the exercise.  
+- After two hours, in case of a **404**, you need to refresh the exercise page and click on **Start the Exercise** button to continue working.  
+- You do **not** want to fail the builds in DevSecOps Maturity Levels 1 and 2.  
+
+If a security tool fails a job, it won’t allow other DevOps jobs like release/deploy to run, hence causing great distress to the DevOps Team. Moreover, the security tools suffer from **false positives**. Failing a build on inaccurate data is a sure recipe for disaster.  
+
+⚡ **ProTip**  
+Don’t block builds unless you are sure about the result’s quality.  
+
+You can use the `allow_failure` tag to not fail the build even though the tool found issues.
+
+---
+
+### Example Job
+```yaml
+sslscan:
+  stage: test
+  script:
+    - docker pull hysnsec/sslyze
+    - docker run --rm -v $(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json_out /tmp/sslyze-output.json
+  artifacts:
+    paths: [sslyze-output.json]
+    when: always
+  allow_failure: true   # <--- allow the build to fail but don't mark it as such
+````
+
+---
+
+### Full Pipeline With `allow_failure`
+
+Click anywhere to copy
+
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - deploy
+  - test
+
+build:
+  stage: build
+  before_script:
+   - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA        # Push the image into registry
+
+prod:
+  stage: deploy
+  image: kroniak/ssh-client:3.6
+  environment: production
+  needs:
+    - build
+  only:
+    - main
+  before_script:
+   - mkdir -p ~/.ssh
+   - echo "$PROD_SSH_PRIVKEY" > ~/.ssh/id_rsa
+   - chmod 600 ~/.ssh/id_rsa
+   - eval "$(ssh-agent -s)"
+   - ssh-add ~/.ssh/id_rsa
+   - ssh-keyscan -H $PROD_HOSTNAME >> ~/.ssh/known_hosts
+  script:
+   - echo
+   - |
+      ssh $PROD_USERNAME@$PROD_HOSTNAME << EOF
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+        docker rm -f django.nv
+        docker run -d --name django.nv -p 8000:8000 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      EOF
+
+nikto:
+  stage: test
+  script:
+    - docker pull hysnsec/nikto
+    - docker run --rm -v $(pwd):/tmp hysnsec/nikto -h prod-kr6k1mdm -o /tmp/nikto-output.xml
+  artifacts:
+    paths: [nikto-output.xml]
+    when: always
+  allow_failure: true
+
+sslscan:
+  stage: test
+  script:
+    - docker pull hysnsec/sslyze
+    - docker run --rm -v $(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json_out /tmp/sslyze-output.json
+  artifacts:
+    paths: [sslyze-output.json]
+    when: always
+  allow_failure: true
+
+nmap:
+  stage: test
+  script:
+    - docker pull hysnsec/nmap
+    - docker run --rm -v $(pwd):/tmp hysnsec/nmap prod-kr6k1mdm -oX /tmp/nmap-output.xml
+  artifacts:
+    paths: [nmap-output.xml]
+    when: always
+  allow_failure: true
+```
+
+---
+
+### Summary
+
+* **`allow_failure: true`** prevents pipelines from breaking due to tool findings or false positives.
+* DevOps jobs like **release/deploy** will continue to run smoothly.
+* Security results are still saved as artifacts for review.
+
+---
+
+We can see the results of this pipeline by visiting:
+[GitLab Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to see the output.
+
+---
+
+✅ Let’s move to the next step.
+
+```
+```
+```markdown
+# Extra Mile Challenge: Create a Docker Image for SSLyze and Run It in the Pipeline
+
+### Who should do this exercise?
+This exercise is **beyond the scope of the CDP course** and is added to help folks who already know these concepts in and out:
+
+- You know how to write small scripts in **Python/Ruby/Golang**  
+- You are comfortable writing **Dockerfile**  
+- You consider yourself an **expert or advanced user in DAST**  
+
+---
+
+### Challenges
+1. Recall techniques you have learned in the **Docker Security course**.  
+2. **Read the SSLyze documentation.**  
+3. **Dockerize the SSLyze tool** with the assistance of a Dockerfile and utilize **alpine** as the base image.  
+4. Run the **docker image in CI/CD pipeline** against the `django.nv` web application.  
+
+---
+
+### Notes
+- We will **not provide solutions** for this extra mile exercise.  
+- The idea is to challenge you to apply your skills in:
+  - Writing a custom **Dockerfile**  
+  - Installing and configuring **SSLyze** in an Alpine-based container  
+  - Running that container inside a **GitLab CI/CD pipeline**  
+  - Executing scans against a target (`django.nv`) and collecting artifacts.  
+
+---
+
+🔥 This is where you push yourself: combine **DAST + Docker Security + CI/CD** to create a reusable, lightweight SSLyze container image tailored for pipelines.
+```
+````markdown
+Dynamic Analysis Using ZAP
+---
+
+### OWASP Zed Attack Proxy Tool
+ZAP is an **open-source web application security scanner** to perform security testing (**Dynamic Testing**) on web applications.  
+
+OWASP ZAP is the **flagship OWASP project** used extensively by penetration testers.  
+ZAP can also run in a **daemon mode** for hands-off scans for CI/CD pipeline and provides extensive **API (SDK) and REST API** to help users create custom scripts.
+
+📖 Source: [https://www.zaproxy.org/getting-started/](https://www.zaproxy.org/getting-started/)
+
+---
+
+### Passive Scanning
+In this exercise, we will use **ZAP Baseline Scan** to find security issues passively.
+
+- **Passive scanning** with ZAP involves **quietly observing** all messages sent to the web app without altering them.  
+- This keeps things safe and does not slow down the app’s exploration.
+
+---
+
+### Usage of ZAP Docker for Baseline Scan
+```bash
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py --help
+````
+
+---
+
+### Command Output
+
+```
+Usage: zap-baseline.py -t <target> [options]
+    -t target         target URL including the protocol, e.g. https://www.example.com
+Options:
+    -h                print this help message
+    -c config_file    config file to use to INFO, IGNORE or FAIL warnings
+    -u config_url     URL of config file to use to INFO, IGNORE or FAIL warnings
+    -g gen_file       generate default config file (all rules set to WARN)
+    -m mins           the number of minutes to spider for (default 1)
+    -r report_html    file to write the full ZAP HTML report
+    -w report_md      file to write the full ZAP Wiki (Markdown) report
+    -x report_xml     file to write the full ZAP XML report
+    -J report_json    file to write the full ZAP JSON document
+    -a                include the alpha passive scan rules as well
+    -d                show debug messages
+    -P                specify listen port
+    -D secs           delay in seconds to wait for passive scanning
+    -i                default rules not in the config file to INFO
+    -I                do not return failure on warning
+    -j                use the Ajax spider in addition to the traditional one
+    -l level          minimum level to show: PASS, IGNORE, INFO, WARN or FAIL, use with -s to hide example URLs
+    -n context_file   context file which will be loaded prior to spidering the target
+    -p progress_file  progress file which specifies issues that are being addressed
+    -s                short output format - dont show PASSes or example URLs
+    -T mins           max time in minutes to wait for ZAP to start and the passive scan to run
+    -U user           username to use for authenticated scans - must be defined in the given context file
+    -z zap_options    ZAP command line options e.g. -z "-config aaa=bbb -config ccc=ddd"
+    --hook            path to python file that define your custom hooks
+    --auto            use the automation framework if supported for the given parameters (this is now the default)
+    --autooff         do not use the automation framework even if supported for the given parameters
+```
+
+For more details see:
+👉 [ZAP Baseline Scan Docker Docs](https://www.zaproxy.org/docs/docker/baseline-scan/)
+
+---
+
+### Note
+
+Did you notice that we did not run `docker pull` at the beginning?
+The image is **automatically pulled** if it does not exist locally, without explicitly using `docker pull`.
+
+---
+
+✅ Let’s move to the next step.
+
+```
+```
+````markdown
+Running the Scanner
+---
+
+As we have learned in the **DevSecOps Gospel**, we should save the output in a **machine-readable format** like **JSON, CSV, or XML**.
+
+---
+
+### Run zap-baseline.py with Basic Options
+```bash
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training
+````
+
+---
+
+### Note
+
+The ZAP scanning process may take **more than 5 minutes** to complete. Please be patient.
+
+---
+
+### Command Output (Partial)
+
+```
+Using the Automation Framework
+Total of 61 URLs
+PASS: In Page Banner Information Leak [10009]
+PASS: Cookie No HttpOnly Flag [10010]
+PASS: Cookie Without Secure Flag [10011]
+...
+PASS: Loosely Scoped Cookie [90033]
+
+...[SNIP]...
+
+WARN-NEW: Strict-Transport-Security Header Not Set [10035] x 13
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/sitemap.xml (404 Not Found)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/static/taskManager/css/bootstrap.css (200 OK)
+
+WARN-NEW: Server Leaks Version Information via "Server" HTTP Response Header Field [10036] x 13
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/robots.txt (404 Not Found)
+
+...[SNIP]...
+
+WARN-NEW: Permissions Policy Header Not Set [10063] x 12
+        https://prod-kr6k1mdm.lab.practical-devsecops.training (200 OK)
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/ (200 OK)
+
+WARN-NEW: Source Code Disclosure - SQL [10099] x 1
+        https://prod-kr6k1mdm.lab.practical-devsecops.training/taskManager/tutorials/injection/ (200 OK)
+
+...[SNIP]...
+
+FAIL-NEW: 0     FAIL-INPROG: 0  WARN-NEW: 17    WARN-INPROG: 0  INFO: 0 IGNORE: 0       PASS: 48
+```
+
+⚠️ **The output may vary** depending on vulnerabilities and security updates at the time of scan.
+
+---
+
+### Save Output in JSON Format
+
+```bash
+docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+```
+
+* `-J zap-output.json` → saves results in JSON format
+* `-v $(pwd):/zap/wrk:rw` → mounts your working directory so the report is stored locally
+
+---
+
+### Verify Output
+
+```bash
+cat zap-output.json
+```
+
+---
+
+✅ You now have ZAP baseline scan results stored in **machine-readable JSON** format.
+
+```
+```
+```markdown
+How To Embed Zed Attack Proxy (ZAP) Into GitLab
+---
+
+We already have a simple pipeline with `build` and `test` jobs.  
+Now, as security engineers, we want to **embed ZAP Baseline Scan** into the pipeline to scan our running application.
+
+---
+
+### Challenge Tasks
+
+---
+
+#### # 1  
+**Embed ZAP scanning in the `integration` stage with job name `zap-baseline`.**  
+Use the `hysnsec/zap` Docker image to perform scans against the endpoint:
+
+```
+
+[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)
+
+````
+
+**Answer**
+
+```yaml
+zap-baseline:
+  stage: integration
+  script:
+    - docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+````
+
+---
+
+#### # 2
+
+**Save the result as JSON file with name `zap-output.json` and upload it using artifacts attribute.**
+
+**Answer**
+
+```yaml
+zap-baseline:
+  stage: integration
+  script:
+    - docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+  artifacts:
+    paths: [zap-output.json]
+    when: always
+```
+
+---
+
+### ✅ Final Notes
+
+* The job runs ZAP **Baseline Scan** passively against the target.
+* Results are stored as `zap-output.json`.
+* The `artifacts` keyword ensures results are always uploaded, regardless of whether warnings are found.
+
+You can now check results directly in GitLab by downloading the artifact from the job output.
+
+```
+```
+````markdown
+### Explanation of `when: always` in artifacts
+
+In GitLab CI/CD, the **`artifacts`** keyword is used to specify files that should be saved and uploaded after a job finishes.  
+By default, artifacts are **only uploaded when the job succeeds**.
+
+- `when: on_success` (default) → upload artifacts **only if the job succeeds**.  
+- `when: on_failure` → upload artifacts **only if the job fails**.  
+- `when: always` → upload artifacts **regardless of job outcome** (whether success, failure, or canceled).
+
+---
+
+### In Your Case
+```yaml
+artifacts:
+  paths: [zap-output.json]
+  when: always
+````
+
+This means:
+
+* The file **`zap-output.json`** will be **saved and available in GitLab** even if the ZAP scan fails or produces warnings.
+* Ensures you **never lose the scan results**, no matter what happens in the job.
+
+---
+
+👉 Combined with:
+
+```yaml
+allow_failure: true
+```
+
+* The **pipeline won’t break** if ZAP finds issues (false positives, warnings, etc.).
+* But you’ll **still get the report** (`zap-output.json`) as an artifact for review.
+
+✅ This is a **best practice** for DAST tools in CI/CD pipelines — don’t block deployments, but always **collect evidence** for security analysis.
+
+```
+```
+````markdown
+Embed ZAP in CI/CD Pipeline
+---
+
+### ⚠️ Remember!
+- Except for **DevSecOps-Box**, every other machine closes after **two hours**, even if you are in the middle of the exercise.  
+- After two hours, in case of a **404**, refresh the exercise page and click on **Start the Exercise** button to continue working.  
+
+---
+
+### Why Test Locally First?
+- It’s important to **locally test a tool** before embedding it into CI/CD.  
+- Troubleshooting is **much easier locally** than inside a pipeline.  
+- Exploring the tool manually helps you **understand its options and features**.  
+
+Now we embed **ZAP Baseline Scan** into the pipeline.
+
+---
+
+### Example `.gitlab-ci.yml`
+```yaml
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # docker-in-docker is needed to run containerized jobs
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py check
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+zap-baseline:
+  stage: integration
+  script:
+    - docker pull hysnsec/zap:2.16.1
+    - docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+  after_script:
+    - docker rmi hysnsec/zap:2.16.1  # clean up the image to save disk space
+  artifacts:
+    paths: [zap-output.json]
+    when: always   # ensures artifact is uploaded regardless of job result
+  allow_failure: true
+````
+
+---
+
+### Explanation of Key Options
+
+* **`rw` volume mount**
+  The `rw` in `-v $(pwd):/zap/wrk:rw` explicitly mounts the volume in **read-write mode**.
+  It’s optional, but **ZAP documentation recommends** using `rw`.
+
+* **`-w /zap`**
+  Sets `/zap` as the **working directory inside the container**.
+  Required for ZAP container to run the baseline scan properly.
+
+* **`artifacts: when: always`**
+  Ensures **zap-output.json** is uploaded whether the job succeeds or fails.
+  Without this, you might lose scan results if the job fails.
+
+* **`allow_failure: true`**
+
+  * If `true`: pipeline continues even if ZAP finds warnings/vulnerabilities.
+  * If `false`: pipeline **fails** when ZAP finds issues.
+
+Try switching it to `false` to see how pipeline behavior changes.
+
+---
+
+### Methods of Using ZAP
+
+* **Native Installation** – install directly on system.
+* **Package Manager/Binary** – lightweight, fewer dependencies.
+* **Docker (Recommended)** – no dependency issues, consistent across environments.
+
+---
+
+### Results
+
+* Any commit triggers the pipeline.
+* ZAP runs in the **integration stage**, scanning the target application.
+* Results saved in **zap-output.json** as artifacts.
+
+Check results here:
+👉 [GitLab Pipelines](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to view scan results.
+
+```
+```
+````markdown
+How To Integrate a Tool Into a CI/CD Pipeline
+---
+
+### 🚀 Getting Started
+This exercise helps you practice **configuring volumes** when running security tools inside a **CI/CD pipeline**.  
+We focus on two tools:
+1. **ZAP (Zed Attack Proxy)**  
+2. **hysnsec/safety**
+
+---
+
+### ✅ Learning Objectives
+By the end of this exercise, you will be able to:
+- Gather information about **ZAP** and **hysnsec/safety** from their documentation.  
+- Understand **volume configuration requirements** when running tools in containers.  
+- Test **ZAP** and **hysnsec/safety** locally with correct volume mounts.  
+- Prepare the tools for smooth integration into **CI/CD pipelines**.  
+
+---
+
+### 🔍 Why Volumes Matter?
+When integrating tools into pipelines:
+- Tools often need to **read/write reports** (JSON, XML, HTML).  
+- By default, files written inside containers may not persist.  
+- **Volume mounts** (`-v $(pwd):/zap/wrk:rw`) ensure results are stored **on the host** (and later uploaded as GitLab artifacts).  
+
+---
+
+### 🛠️ Local Testing (Best Practice Before CI/CD)
+1. **ZAP (Baseline Scan Example)**
+   ```bash
+   docker run --rm \
+     --user $(id -u):$(id -g) \
+     -w /zap \
+     -v $(pwd):/zap/wrk:rw \
+     hysnsec/zap:2.16.1 \
+     zap-baseline.py -t https://example.com -J zap-output.json
+````
+
+* `-v $(pwd):/zap/wrk:rw` → mounts your current directory into container’s `/zap/wrk` (read-write).
+* Results (`zap-output.json`) are saved locally.
+
+2. **hysnsec/safety (Dependency Security Check Example)**
+
+   ```bash
+   docker run --rm \
+     -v $(pwd):/app \
+     hysnsec/safety check -r /app/requirements.txt --json > safety-output.json
+   ```
+
+   * Mount project folder into `/app` inside container.
+   * Tool reads `requirements.txt` and writes JSON results.
+
+---
+
+### 📦 Preparing for CI/CD Integration
+
+Once tested locally:
+
+* Add these tools as **jobs** in `.gitlab-ci.yml`.
+* Use **artifacts** to collect results.
+* Use **`allow_failure: true`** if you don’t want scans to break the pipeline.
+
+---
+
+👉 Next step: we’ll embed these local test commands into a GitLab CI/CD pipeline.
+
+```
+```
+````markdown
+Testing and Integrating ZAP into Your CI/CD Pipeline
+---
+
+### 🔎 Understanding the Tool
+
+#### Exploring the Documentation
+- First step is always to **search for ZAP official documentation**.  
+- Review **functionality, requirements, and configuration options**.  
+- Pay special attention to **volume mount requirements**, since ZAP expects specific directories when running scans inside Docker.
+
+👉 Official docs: [ZAP Getting Started](https://www.zaproxy.org/getting-started/)
+
+---
+
+### 📂 Understanding Volume Configuration
+- ZAP containers expect reports and artifacts to be saved under `/zap/wrk`.  
+- When mounting volumes, you map your current working directory (`$(pwd)`) to `/zap/wrk`.  
+- Example:  
+  ```bash
+  -v $(pwd):/zap/wrk/:rw
+````
+
+* `:rw` → ensures **read/write access**.
+* Without this, reports like JSON/HTML cannot be saved properly.
+
+---
+
+### 🖥️ Discovering ZAP’s Help Command Options
+
+Run the ZAP help command inside the container to explore available scan types and options:
+
+```bash
+docker run ghcr.io/zaproxy/zaproxy:stable zap-baseline.py --help
+```
+
+This will list options for:
+
+* Targets (`-t`)
+* Output formats (`-r`, `-J`, etc.)
+* Timeouts, context files, Ajax spider, etc.
+
+---
+
+### 🐳 Exploring ZAP on Docker Hub
+
+* Search for ZAP on Docker Hub or GitHub Container Registry (GHCR).
+* Official image:
+
+  ```
+  ghcr.io/zaproxy/zaproxy:stable
+  ```
+* Using official containers ensures updates and patches are included.
+
+---
+
+### 🧪 Local Testing
+
+Before integrating into CI/CD, **always test locally**.
+
+#### Why test locally?
+
+* Easier to debug tool issues.
+* Experiment with flags and volume mounts.
+* Prevents wasting pipeline runs on misconfigurations.
+
+---
+
+#### Step 1: Pull ZAP Image
+
+```bash
+docker pull ghcr.io/zaproxy/zaproxy:stable
+```
+
+#### Step 2: Run ZAP Baseline Scan
+
+```bash
+docker run -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable \
+  zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -r testreport.html
+```
+
+* **Why `/zap/wrk/`?**
+  Because ZAP is configured to store reports there by default.
+
+#### Step 3: Run with User Mapping (to avoid permissions issues)
+
+```bash
+docker run --user $(id -u):$(id -g) \
+  -v $(pwd):/zap/wrk/:rw \
+  -t ghcr.io/zaproxy/zaproxy:stable \
+  zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -r testreport.html
+```
+
+* `--user $(id -u):$(id -g)` maps your **host user and group IDs** inside the container.
+* Prevents file permission problems when writing to mounted volumes.
+
+---
+
+### ❓ Why do we use `zap-baseline.py`?
+
+* It’s a **lightweight passive scan** script provided by ZAP.
+* It crawls the target application (using a spider), then **applies passive scan rules** without actively exploiting.
+* Safe for CI/CD pipelines.
+
+---
+
+### 🔗 Integrating ZAP into Your CI/CD Pipeline
+
+If local testing works, integration is simple:
+
+1. **Identify ZAP’s volume requirements** → `/zap/wrk` must be mounted.
+2. **Use the same run command** in your CI/CD job.
+3. **Upload reports as artifacts** for later review.
+4. **Use `allow_failure: true`** if you don’t want ZAP warnings to break the pipeline.
+
+---
+
+✅ In the next exercise, we’ll test ZAP **inside the pipeline** and confirm that volume mounts and output artifacts work correctly.
+
+```
+```
+````markdown
+Testing and Integrating Safety into Your CI/CD Pipeline
+---
+
+### 🛠️ Understanding the Tool
+We will use **hysnsec/safety**, a Practical DevSecOps wrapper around the original **safety** tool.  
+It performs **dependency vulnerability checks** on Python applications.
+
+---
+
+### 🔎 Exploring the Documentation
+- First step: Search for **hysnsec/safety** on DockerHub.  
+- Documentation explains:
+  - How the container is built  
+  - Default directory scanned (`/src`)  
+  - Options for output (`--json`, `--full-report`, etc.)  
+  - Volume mount requirements  
+
+👉 DockerHub: [hysnsec/safety](https://hub.docker.com/r/hysnsec/safety)
+
+---
+
+### 📂 Understanding Volume Configuration
+- **Safety expects `/src`** inside the container as the project directory.  
+- Therefore, when running locally or in CI/CD:
+  ```bash
+  -v $(pwd):/src
+````
+
+* Mounts your **current project folder** into `/src` inside the container.
+* Tool automatically scans `/src` without extra arguments.
+
+---
+
+### 🖥️ Local Testing Using Docker
+
+#### Step 1: Pull the image
+
+```bash
+docker pull hysnsec/safety
+```
+
+#### Step 2: Clone test source code
+
+```bash
+git clone https://gitlab.practical-devsecops.training/pdso/django.nv.git
+cd django.nv
+```
+
+#### Step 3: Run scan
+
+```bash
+docker run --rm -v $(pwd):/src hysnsec/safety check
+```
+
+* `--rm` → removes container after execution
+* `-v $(pwd):/src` → mounts source code into `/src`
+* `check` → runs the default safety check
+
+---
+
+### ❓ Why does it work without specifying a directory?
+
+* By design, **hysnsec/safety defaults to scanning `/src`**.
+* Since we mounted the project folder to `/src`, no extra parameters are needed.
+
+---
+
+### 📑 Saving Output for Reporting
+
+To save results in JSON format:
+
+```bash
+docker run --rm -v $(pwd):/src hysnsec/safety check --json > testreport.json
+```
+
+* `--json` → machine-readable output.
+* `> testreport.json` → redirects output to a local file.
+* Because of the volume mount, `testreport.json` persists **on host machine** even after container exits.
+
+---
+
+### 🔗 Integrating Safety into CI/CD
+
+If testing works locally, you can embed **hysnsec/safety** into your pipeline:
+
+1. **Confirm volume mount requirements** (`/src`).
+2. **Mount project directory** inside the pipeline job.
+3. **Use artifacts** in `.gitlab-ci.yml` to save JSON output for review.
+4. **Optionally set `allow_failure: true`** if you don’t want pipeline to break on findings.
+
+---
+
+👉 In the upcoming **SCA (Software Composition Analysis) chapter**, you will extend this to full CI/CD integration and validate that safety scans run properly in pipelines.
+
+```
+```
+````markdown
+Understanding Docker Run Commands and Output Redirects
+---
+
+### 🐳 Two Ways to Redirect Output in `docker run`
+
+#### 1. **Saving the Output *within* the Container**
+```bash
+docker run --rm -v $(pwd):/project image_name sh -c "command --json > output.json"
+````
+
+👉 Example:
+
+```bash
+docker run --user $(id -u):$(id -g) \
+    -v $(pwd):/zap/wrk/:rw \
+    -t --name zap-scan \
+    ghcr.io/zaproxy/zaproxy:stable \
+    sh -c "zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -r testreport.html > output1.html"
+```
+
+* **Effect**:
+
+  * The redirection (`> output1.html`) happens **inside the container**.
+  * File is created inside the container’s filesystem.
+  * Unless saved to a mounted volume, the file is **lost after the container exits**.
+
+✅ How to verify?
+You can run an interactive container with the same mount and check:
+
+```bash
+docker run -it --rm ghcr.io/zaproxy/zaproxy:stable sh
+ls -l
+```
+
+---
+
+#### 2. **Saving the Output *on the Local Machine***
+
+```bash
+docker run --rm -v $(pwd):/project image_name sh -c "command --json" > output.json
+```
+
+👉 Example:
+
+```bash
+docker run --user $(id -u):$(id -g) \
+    -v $(pwd):/zap/wrk/:rw \
+    -t ghcr.io/zaproxy/zaproxy:stable \
+    sh -c "zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -r testreport.html" > output2.html
+```
+
+* **Effect**:
+
+  * The redirection (`> output2.html`) happens **on the host machine**, not inside the container.
+  * The container prints to STDOUT.
+  * Host shell captures it and saves it as `output2.html`.
+
+---
+
+### 🧾 Key Differences
+
+| Method                              | Where file is saved?                       | Survives after container stops? | Needs volume mount?          |
+| ----------------------------------- | ------------------------------------------ | ------------------------------- | ---------------------------- |
+| Inside container (`> output1.html`) | Inside container FS (or volume if mounted) | ❌ Lost unless saved to volume   | ✅ Needed if you want to keep |
+| On host (`> output2.html`)          | Directly on host machine                   | ✅ Always                        | ❌ Not required               |
+
+---
+
+### ⚡ Best Practices
+
+1. **Use volume mounts** (`-v $(pwd):/dir`) if you want files written inside container to persist.
+2. **Use host-side redirection** if you just want STDOUT logs captured directly.
+3. Pay attention to:
+
+   * Order of arguments (`docker run ... image command`)
+   * Volume mappings (`-v host:container`)
+   * Working directories (`-w`)
+   * Output redirects (`> file`)
+
+---
+
+### ✅ Conclusion
+
+* **Inside-container redirects** → file saved *inside* container or mounted volume.
+* **Host-side redirects** → file saved directly on host.
+* Correct approach depends on whether the tool expects to write files itself or just outputs to STDOUT.
+
+By mastering these differences, you can:
+
+* Avoid “missing reports” in Docker workflows.
+* Confidently integrate tools like **ZAP** and **hysnsec/safety** into your CI/CD pipelines.
+
+```
+```
+```markdown
+## 🏁 Conclusion
+
+Through research and hands-on testing, you’ve learned how to:
+
+- ✅ Configure **volumes** for Docker containers to persist results  
+- ✅ Manage **output redirection** between containers and the host machine  
+- ✅ Customize `docker run` commands to fit specific tool requirements  
+
+---
+
+### 🔑 Key Takeaways
+1. **Always read the documentation** of the tool you are using.  
+2. **Test Docker run commands locally** before integrating into CI/CD pipelines.  
+   - Local testing = easier debugging and better understanding of behavior.  
+
+---
+
+🎯 With these skills, you’re well-prepared to integrate **ZAP**, **safety**, and other security tools into your DevSecOps pipeline with confidence.  
+
+Good luck with embedding more security tools and making your CI/CD pipelines truly **secure by design**! 🚀
+```

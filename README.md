@@ -25569,3 +25569,7970 @@ The skills you learned today are very useful in the real world. You can now chec
 
 Remember, security is an ongoing process. Regular testing and updates are essential to maintaining a secure environment.
 ```
+
+```markdown
+Hardening Using Ansible
+Install Ansible and Ansible Lint
+Ansible uses simple English like language to automate configurations, settings, and deployments in traditional and cloud environments. It’s easy to learn and can be understood by even non-technical folks.
+
+Source: Ansible official website.
+
+This exercise uses two machines, the DevSecOps Box with hostname as devsecops-box-kr6k1mdm, and a production machine, prod-kr6k1mdm.
+
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the activity.
+
+First, we need to install the ansible and ansible-lint programs.
+
+
+pip3 install ansible==8.7.0 ansible-lint==6.8.1
+
+Command Output
+Requirement already satisfied: ansible==8.7.0in /usr/local/lib/python3.8/dist-packages (8.7.0)
+Collecting ansible-lint==6.8.1
+  Downloading ansible_lint-6.8.1-py3-none-any.whl (227 kB)
+     |████████████████████████████████| 227 kB 22.1 MB/s 
+Requirement already satisfied: ansible-core~=2.13.4 in /usr/local/lib/python3.8/dist-packages (from ansible==8.7.0) (2.13.5)
+Collecting rich>=9.5.1
+  Downloading rich-12.6.0-py3-none-any.whl (237 kB)
+     |████████████████████████████████| 237 kB 68.0 MB/s 
+Collecting wcmatch>=7.0
+  Downloading wcmatch-8.4.1-py3-none-any.whl (39 kB)
+Requirement already satisfied: pyyaml in /usr/local/lib/python3.8/dist-packages (from ansible-lint==6.8.1) (6.0)
+
+...[SNIP]...
+
+Installing collected packages: commonmark, typing-extensions, pygments, rich, bracex, wcmatch, ruamel.yaml.clib, ruamel.yaml, zipp, importlib-resources, attrs, pyrsistent, pkgutil-resolve-name, jsonschema, subprocess-tee, ansible-compat, click, mypy-extensions, pathspec, platformdirs, tomli, black, yamllint, filelock, ansible-lint
+Successfully installed ansible-compat-2.2.1 ansible-lint-6.8.1 attrs-22.1.0 black-22.10.0 bracex-2.3.post1 click-8.1.3 commonmark-0.9.1 filelock-3.8.0 importlib-resources-5.10.0 jsonschema-4.16.0 mypy-extensions-0.4.3 pathspec-0.10.1 pkgutil-resolve-name-1.3.10 platformdirs-2.5.2 pygments-2.13.0 pyrsistent-0.18.1 rich-12.6.0 ruamel.yaml-0.17.21 ruamel.yaml.clib-0.2.6 subprocess-tee-0.3.5 tomli-2.0.1 typing-extensions-4.4.0 wcmatch-8.4.1 yamllint-1.28.0 zipp-3.9.0
+Let’s move to the next step.
+```
+```markdown
+Create the inventory file
+Let’s create the inventory or CMDB file for Ansible using the following command.
+
+
+cat > inventory.ini <<EOL
+
+# DevSecOps Studio Inventory
+[devsecops]
+devsecops-box-kr6k1mdm
+
+[prod]
+prod-kr6k1mdm
+
+EOL
+
+Next, we will have to ensure the SSH’s yes/no prompt is not shown while running the ansible commands, so we will be using ssh-keyscan to capture the key signatures beforehand.
+
+
+ssh-keyscan -H prod-kr6k1mdm >> ~/.ssh/known_hosts
+
+Command Output
+# prod-kr6k1mdm:22 SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+Let’s do this for the rest of the systems in the lab as well.
+
+
+ssh-keyscan -H devsecops-box-kr6k1mdm >> ~/.ssh/known_hosts
+
+Command Output
+# devsecops-box-kr6k1mdm:22 SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+ProTip
+
+Instead of running the ssh-keyscan command twice, we can achieve the same using the below command.
+
+
+ssh-keyscan -H prod-kr6k1mdm devsecops-box-kr6k1mdm >> ~/.ssh/known_hosts
+
+Let’s move to the next step.
+``````markdown
+Run the ansible commands
+Let’s run the ansible ad-hoc command to install the ntp service, and check the bash version of all systems.
+
+We can use apt ansible module to install the ntp service on the production machine.
+
+
+ansible -i inventory.ini  prod -m apt -a "name=ntp state=present"
+
+Command Output
+prod-kr6k1mdm | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "cache_update_time": 1599221362,
+    "cache_updated": false,
+    "changed": true,
+    "stderr": "debconf: delaying package configuration, since apt-utils is not installed\n",
+    "stderr_lines": [
+        "debconf: delaying package configuration, since apt-utils is not installed"
+    ],
+    "stdout": "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following additional packages will be installed:\n  libopts25 netbase sntp tzdata\nSuggested packages:\n  ntp-doc\nThe following NEW packages will be installed:\n  libopts25 netbase ntp sntp tzdata\n0 upgraded, 5 newly installed, 0 to remove and 5 not upgraded.\nNeed to get 987 kB of archives.\nAfter this operation, 5547 kB of additional disk space will be used.\nGet:1 http://archive.ubuntu.com/ubuntu bionic/main amd64 netbase all 5.4 [12.7 kB]\nGet:2 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 tzdata all 2020a-0ubuntu0.18.04 [190 kB]\nGet:3 http://archive.ubuntu.com/ubuntu bionic/universe amd64 libopts25 amd64 1:5.18.12-4 [58.2 kB]\nGet:4 http://archive.ubuntu.com/ubuntu bionic-updates/universe amd64 ntp amd64 1:4.2.8p10+dfsg-5ubuntu7.2 [640 kB]\nGet:5 http://archive.ubuntu.com/ubuntu bionic-updates/universe amd64 sntp amd64 1:4.2.8p10+dfsg-5ubuntu7.2 [86.5 kB]\nFetched 987 kB in 1s (1735 kB/s)\nSelecting previously unselected package netbase.\r\n(Reading database ... \r(Reading database ... 5%\r(Reading database ... 10%\r(Reading database ... 15%\r(Reading database ... 20%\r(Reading database ... 25%\r(Reading database ... 30%\r(Reading database ... 35%\r(Reading database ... 40%\r(Reading database ... 45%\r(Reading database ... 50%\r(Reading database ... 55%\r(Reading database ... 60%\r(Reading database ... 65%\r(Reading database ... 70%\r(Reading database ... 75%\r(Reading database ... 80%\r(Reading database ... 85%\r(Reading database ... 90%\r(Reading database ... 95%\r(Reading database ... 100%\r(Reading database ... 10881 files and directories currently installed.)\r\nPreparing to unpack .../archives/netbase_5.4_all.deb ...\r\nUnpacking netbase (5.4) ...\r\nSelecting previously unselected package tzdata.\r\nPreparing to unpack .../tzdata_2020a-0ubuntu0.18.04_all.deb ...\r\nUnpacking tzdata (2020a-0ubuntu0.18.04) ...\r\nSelecting previously unselected package libopts25:amd64.\r\nPreparing to unpack .../libopts25_1%3a5.18.12-4_amd64.deb ...\r\nUnpacking libopts25:amd64 (1:5.18.12-4) ...\r\nSelecting previously unselected package ntp.\r\nPreparing to unpack .../ntp_1%3a4.2.8p10+dfsg-5ubuntu7.2_amd64.deb ...\r\nUnpacking ntp (1:4.2.8p10+dfsg-5ubuntu7.2) ...\r\nSelecting previously unselected package sntp.\r\nPreparing to unpack .../sntp_1%3a4.2.8p10+dfsg-5ubuntu7.2_amd64.deb ...\r\nUnpacking sntp (1:4.2.8p10+dfsg-5ubuntu7.2) ...\r\nSetting up tzdata (2020a-0ubuntu0.18.04) ...\r\n\r\nCurrent default time zone: 'Etc/UTC'\r\nLocal time is now:      Fri Sep  4 12:09:31 UTC 2020.\r\nUniversal Time is now:  Fri Sep  4 12:09:31 UTC 2020.\r\nRun 'dpkg-reconfigure tzdata' if you wish to change it.\r\n\r\nSetting up libopts25:amd64 (1:5.18.12-4) ...\r\nSetting up netbase (5.4) ...\r\nSetting up sntp (1:4.2.8p10+dfsg-5ubuntu7.2) ...\r\nSetting up ntp (1:4.2.8p10+dfsg-5ubuntu7.2) ...\r\ninvoke-rc.d: could not determine current runlevel\r\ninvoke-rc.d: policy-rc.d denied execution of start.\r\nProcessing triggers for libc-bin (2.27-3ubuntu1.2) ...\r\n",
+
+    ...[SNIP]...
+
+        "Setting up libopts25:amd64 (1:5.18.12-4) ...",
+        "Setting up netbase (5.4) ...",
+        "Setting up sntp (1:4.2.8p10+dfsg-5ubuntu7.2) ...",
+        "Setting up ntp (1:4.2.8p10+dfsg-5ubuntu7.2) ...",
+        "invoke-rc.d: could not determine current runlevel",
+        "invoke-rc.d: policy-rc.d denied execution of start.",
+        "Processing triggers for libc-bin (2.27-3ubuntu1.2) ..."
+    ]
+}
+Instead of restricting the commands to the prod machine, let’s find the bash version installed on all the machines in the inventory file.
+
+
+ansible -i inventory.ini all -m command -a "bash --version"
+
+Command Output
+prod-kr6k1mdm | CHANGED | rc=0 >>
+GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)
+Copyright (C) 2019 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+
+This is free software; you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+devsecops-box-kr6k1mdm | CHANGED | rc=0 >>
+GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)
+Copyright (C) 2019 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+
+This is free software; you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Nice, we can see the bash version of the prod and devsecops-box represented by GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu) along the lines.
+
+Please note that the version may vary based on the latest updates.
+
+Challenges: Ansible Ad-hoc commands
+In this exercise, we will use Ansible ad-hoc command to find the uptime of our lab machines.
+
+Note
+
+How is this helpful in real-world situations? We can find uptime of all of your production machine fleet of 500 machines within 5 minutes.
+
+Let’s move to the next step.
+
+Tasks
+# 1
+List all available Ansible modules using ansible-doc command to find shell module.
+
+
+Answer
+
+
+ansible-doc -l | grep shell
+
+# 2
+Use inventory file (-i inventory.ini) and run the uptime command on the production machine using shell module
+
+ansible -i inventory.ini prod -m shell -a "uptime"
+```
+```markdown
+Run the Ansible playbook
+Let’s create a playbook to run against the production environment.
+
+
+cat > playbook.yml <<EOL
+---
+- name: Example playbook to install firewalld
+  hosts: prod
+  remote_user: root
+  become: yes
+  gather_facts: no
+  vars:
+    state: present
+
+  tasks:
+  - name: ensure firewalld is at the latest version
+    apt:
+      name: firewalld
+      update_cache: yes
+EOL
+
+update_cache: yes will ensure package handler updates its repository cache prior to attempting the package installation.
+Let’s run this playbook against the prod machine.
+
+
+ansible-playbook -i inventory.ini playbook.yml
+
+Command Output
+PLAY [Example playbook to install firewalld] ******************************************
+
+TASK [ensure firewalld is installed] ***********************************************************************************
+ok: [prod-kr6k1mdm]
+
+PLAY RECAP ************************************************************************
+prod-kr6k1mdm             : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+Try running the above ansible command once again.
+
+
+ansible-playbook -i inventory.ini playbook.yml
+
+Command Output
+PLAY [Example playbook to install firewalld] ******************************************
+
+TASK [ensure firewalld is installed] ***********************************************************************************
+ok: [prod-kr6k1mdm]
+
+PLAY RECAP ************************************************************************
+prod-kr6k1mdm             : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+Did you notice the changed=0? What is its importance from a security perspective?
+
+Challenges: Create playbook with roles from ansible-galaxy
+In this task, we are going to develop a playbook employing roles present on Ansible Galaxy, and it will be executed on the inventory group designated for the Production host.
+
+Please try to do this exercise without looking at the solution on the next page.
+
+Tasks
+# 1
+Create a new directory /challenge and create a playbook.yml file inside the /challenge directory. You can use the above playbook.yml syntax as a starter for this task, but the /challenge/playbook.yml needs to use the secfigo.terraform role to install the Terraform utility.
+
+
+Answer
+
+Create the /challenge directory and copy an existing inventory.ini file.
+
+
+mkdir /challenge && cd /challenge
+cp ../inventory.ini .
+
+Create the playbook.yml file with secfigo.terraform role.
+
+
+cat > /challenge/playbook.yml <<EOL
+---
+- name: Example playbook to install Terraform using ansible role.
+  hosts: prod
+  remote_user: root
+  become: yes
+
+  roles:
+    - secfigo.terraform
+EOL
+
+# 2
+Install secfigo.terraform role using ansible-galaxy.
+
+Answer
+
+ansible-galaxy install secfigo.terraform
+
+# 3
+Execute the /challenge/playbook.yml against the prod machine to install the Terraform utility. Optionally put this hardening job in the CI pipeline.
+
+Answer
+
+ansible-playbook -i /challenge/inventory.ini /challenge/playbook.yml
+```
+
+```markdown
+Download roles from Ansible Galaxy
+Ansible galaxy helps you in storing open source Ansible roles.
+
+Let’s explore the options it provides us.
+
+
+ansible-galaxy role --help
+
+Command Output
+usage: ansible-galaxy role [-h] ROLE_ACTION ...
+
+positional arguments:
+  ROLE_ACTION
+    init       Initialize new role with the base structure of a role.
+    remove     Delete roles from roles_path.
+    delete     Removes the role from Galaxy. It does not remove or alter the
+               actual GitHub repository.
+    list       Show the name and version of each role installed in the
+               roles_path.
+    search     Search the Galaxy database by tags, platforms, author and
+               multiple keywords.
+    import     Import a role
+    setup      Manage the integration between Galaxy and the given source.
+    login      Login to api.github.com server in order to use ansible-galaxy
+               role sub command such as 'import', 'delete', 'publish', and
+               'setup'
+    info       View more details about a specific role.
+    install    Install role(s) from file(s), URL(s) or Ansible Galaxy
+
+optional arguments:
+  -h, --help   show this help message and exit
+We can search for desired roles using the search option.
+
+
+ansible-galaxy search terraform
+
+Please press q to get out of the editor.
+
+It’s a long list, but previously we have installed secfigo.terraform role from the search results.
+
+
+ansible-galaxy install secfigo.terraform
+
+Command Output
+- [WARNING]: - 'secfigo.terraform' (1.0.1) is already installed - use --force to change version to unspecified
+Did you notice? on previous step, the role was installed under /root/.ansible/roles/secfigo.terraform directory?
+
+Let’s create a directory and playbook to install the terraform on the production machine.
+
+
+mkdir /challenge && cd /challenge
+
+
+cp ../inventory.ini .
+
+
+cat > /challenge/playbook.yml <<EOL
+---
+- name: Example playbook to install Terraform using ansible role.
+  hosts: prod
+  remote_user: root
+  become: yes
+
+  roles:
+    - secfigo.terraform
+EOL
+
+Let’s run this playbook again against the prod machine to verify the Terraform utility is installed.
+
+
+ansible-playbook -i /challenge/inventory.ini /challenge/playbook.yml
+
+Command Output
+PLAY [Example playbook to install Terraform using ansible role.] *************
+
+TASK [Gathering Facts] *******************************************************
+ok: [prod-kr6k1mdm]
+
+TASK [secfigo.terraform : Make sure unzip is installed] **********************
+ok: [prod-kr6k1mdm]
+
+TASK [secfigo.terraform : Download and Install Terraform] ********************
+skipping: [prod-kr6k1mdm]
+
+PLAY RECAP *******************************************************************
+prod-kr6k1mdm              : ok=2    changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+Let’s move to the next step.
+```
+```markdown
+Harden the production environment
+Dev-Sec Project has lots of good examples on how to create Ansible roles and uses lots of best practices which we can use as a baseline in our roles.
+
+For example, https://github.com/dev-sec/ansible-os-hardening.
+
+Challenges: Using Ansible to Harden prod server
+In this exercise, we will create a new playbook that uses dev-sec.os-hardening role available from Ansible galaxy to harden the prod environment.
+
+Trivia: Which stage should this job run in? and against which machines?
+
+If you are struggling with the exercises, please refer the hints in the lab portal, and the learning resources in the course portal.
+
+Tasks
+# 1
+Create a new directory /hardening and create an ansible-hardening.yml file inside the /hardening directory. The /hardening/ansible-hardening.yml needs to use the dev-sec.os-hardening role to harden a target server.
+
+
+Answer
+
+mkdir /hardening && cd /hardening
+cp ../inventory.ini .
+
+cat > /hardening/ansible-hardening.yml <<EOL
+---
+- name: Harden production server with dev-sec.os-hardening
+  hosts: prod
+  remote_user: root
+  become: yes
+
+  roles:
+    - dev-sec.os-hardening
+EOL
+
+# 2
+Install dev-sec.os-hardening role from ansible-galaxy
+
+
+Answer
+
+ansible-galaxy install dev-sec.os-hardening
+
+# 3
+Execute the /hardening/ansible-hardening.yml to harden the Ubuntu production machine. Optionally put this hardening job in the CI pipeline.
+
+
+Answer
+
+ansible-playbook -i /hardening/inventory.ini /hardening/ansible-hardening.yml
+```
+```markdown
+Ansible Ad Hoc Commands
+Install Ansible
+Ansible uses simple English like language to automate configurations, settings, and deployments in traditional and cloud environments. It’s easy to learn and can be understood by even non-technical folks.
+
+Source: Ansible official website
+
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to install the Ansible program.
+
+
+pip3 install ansible==8.7.0
+
+Let’s move to the next step.
+```
+```markdown
+Inventory file
+Inventory is a file to define a list of hosts that can be sorted as groups, it provides ability to store and manage some variables. The inventory can be created as INI or YAML, but the most common format is INI and might look like this:
+
+Command Output
+[devsecops]
+devsecops-box-kr6k1mdm
+
+[sandbox]
+sandbox-kr6k1mdm
+
+[prod]
+prod-kr6k1mdm
+The headings in the bracket are a group name that used to define our hosts. So let’s create the inventory file for Ansible using the following command.
+
+
+cat > inventory.ini <<EOL
+
+[devsecops]
+devsecops-box-kr6k1mdm
+
+[sandbox]
+sandbox-kr6k1mdm
+
+[prod]
+prod-kr6k1mdm
+
+EOL
+
+To see which hosts in our inventory matches a supplied group name, let’s try the following command.
+
+
+ansible -i inventory.ini prod --list-hosts
+
+Command Output
+  hosts (1):
+    prod-kr6k1mdm
+You can change the prod value to another group name like sandbox or devsecops to see if there is a host match. In case there is no host match, the output looks like below for a group named gitlab that does not exist in our inventory file.
+
+
+ansible -i inventory.ini gitlab --list-hosts
+
+Command Output
+[WARNING]: Could not match supplied host pattern, ignoring: gitlab
+[WARNING]: No hosts matched, nothing to do
+  hosts (0):
+Let’s move to the next step.
+```
+```markdown
+Ansible Configuration file
+Ansible can also be customized by modifying the Ansible configuration called ansible.cfg. You can see if there is any default configuration through the following command:
+
+
+ansible --version
+
+Command Output
+ansible [core 2.13.5]
+  config file = None
+  configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/local/lib/python3.8/dist-packages/ansible
+  ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
+  executable location = /usr/local/bin/ansible
+  python version = 3.8.10 (default, Jun 22 2022, 20:18:18) [GCC 9.4.0]
+  jinja version = 3.1.2
+  libyaml = True
+config file is None; if you’re using CentOS, you will find out there is a config file at /etc/ansible/ansible.cfg by default.
+
+Because we don’t have an ansible.cfg in our machine, we can create it manually by doing:
+
+
+mkdir /etc/ansible/
+
+
+cat > /etc/ansible/ansible.cfg <<EOF
+[defaults]
+stdout_callback = yaml
+deprecation_warnings = False
+host_key_checking = False
+retry_files_enabled = False
+inventory = /inventory.ini
+EOF
+
+Then, type ansible --version command once again, you will see the value now reflects the config file that we created before.
+
+Command Output
+ansible [core 2.13.5]
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/local/lib/python3.8/dist-packages/ansible
+  ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
+  executable location = /usr/local/bin/ansible
+  python version = 3.8.10 (default, Jun 22 2022, 20:18:18) [GCC 9.4.0]
+  jinja version = 3.1.2
+  libyaml = True
+With the config file, you can define any settings like inventory default location or output formats when Ansible finishes a certain command or a playbook. If you want to see further details about the config, you can check out this link.
+
+The version number may vary due to updates.
+
+ProTip
+
+Instead of using the /etc/ansible/ansible.cfg file, you can create an ansible.cfg file in the directory where you have created the playbook or from the directory where you are running Ansible commands.
+
+Let’s move to the next step.
+```
+```markdown
+Ad-hoc commands
+Ansible uses ad-hoc command to execute a single task on one or more remote hosts, and this way of executing a command is easy and fast, but it’s not reusable like the playbook.
+
+For example, we want to use ping module through ad-hoc command. But before we do that, we will have to ensure the SSH’s yes/no prompt is not shown while running the ansible commands, so let’s use the ssh-keyscan to capture the key signatures beforehand.
+
+
+ssh-keyscan -H devsecops-box-kr6k1mdm sandbox-kr6k1mdm prod-kr6k1mdm >> ~/.ssh/known_hosts
+
+Command Output
+# prod-kr6k1mdm:22 SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+# devsecops-box-kr6k1mdm:22 SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+# sandbox-kr6k1mdm:22 SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.5
+Then execute the ansible command.
+
+
+ansible -i inventory.ini all -m ping
+
+Command Output
+devsecops-box-kr6k1mdm | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+sandbox-kr6k1mdm | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+prod-kr6k1mdm | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+As you can see the command output above, all our hosts (line number 1, 8 and 15) are connected to Ansible. Next, use the shell module of Ansible to run the hostname command on all machines.
+
+
+ansible -i inventory.ini all -m shell -a "hostname"
+
+Command Output
+devsecops-box-kr6k1mdm | CHANGED | rc=0 >>
+devsecops-box-kr6k1mdm
+sandbox-kr6k1mdm | CHANGED | rc=0 >>
+sandbox-kr6k1mdm
+prod-kr6k1mdm | CHANGED | rc=0 >>
+prod-kr6k1mdm
+We can use another module to install a package inside the remote host.
+
+
+ansible -i inventory.ini all -m apt -a "name=ntp"
+
+Command Output
+sandbox-kr6k1mdm | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "cache_update_time": 1644912480,
+    "cache_updated": false,
+    "changed": true,
+    "stderr": "debconf: delaying package configuration, since apt-utils is not installed\n",
+    "stderr_lines": [
+        "debconf: delaying package configuration, since apt-utils is not installed"
+    ],
+
+...[SNIP]...
+
+        "Setting up libopts25:amd64 (1:5.18.12-4) ...",
+        "Setting up sntp (1:4.2.8p10+dfsg-5ubuntu7.3) ...",
+        "Setting up ntp (1:4.2.8p10+dfsg-5ubuntu7.3) ...",
+        "Created symlink /etc/systemd/system/network-pre.target.wants/ntp-systemd-netif.path → /lib/systemd/system/ntp-systemd-netif.path.",
+        "Created symlink /etc/systemd/system/multi-user.target.wants/ntp.service → /lib/systemd/system/ntp.service.",
+        "/usr/sbin/policy-rc.d returned 101, not running 'start ntp-systemd-netif.path'",
+        "/usr/sbin/policy-rc.d returned 101, not running 'start ntp-systemd-netif.path ntp-systemd-netif.service'",
+        "invoke-rc.d: policy-rc.d denied execution of start.",
+        "Processing triggers for systemd (237-3ubuntu10.53) ...",
+        "Processing triggers for libc-bin (2.27-3ubuntu1.4) ..."
+    ]
+}
+To find the available modules, you can check out this link or use the local help command-line tool.
+
+
+ansible-doc -l | egrep "add_host|amazon.aws.aws"
+
+Command Output
+[WARNING]: dellemc.openmanage.ome_active_directory has a documentation
+formatting error
+add_host                                                                                 Add a host (and alternatively a group) to the ansible-playbook in-me...
+amazon.aws.aws_az_facts                                                                  Gather information about availabilit...
+amazon.aws.aws_az_info                                                                   Gather information about availabilit...
+amazon.aws.aws_caller_info                                                               Get information about the user and account being used to ...
+amazon.aws.aws_s3                                                                        manage...
+Let’s move to the next step.
+```
+```markdown
+Challenges
+Tasks
+# 1
+Use the ansible-doc command to see help examples and find a module that can send a file from DevSecOps-Box to remote machines
+
+
+Answer
+
+ansible-doc -l | grep copy
+
+The module to use is **copy**.
+
+# 2
+Create a file with some content, let the file name be notes at the location /root
+
+
+Answer
+
+echo "This is a test file created for Ansible copy module exercise." > /root/notes
+
+# 3
+Using an ansible ad-hoc command, copy the file /root/notes into all remote machines (sandbox and production) to the destination directory /root
+
+
+Answer
+
+ansible -i inventory.ini all -m copy -a "src=/root/notes dest=/root/notes"
+```
+```markdown
+Harden Machines in CI/CD Pipelines
+Install Ansible
+Ansible uses simple English like language to automate configurations, settings, and deployments in traditional and cloud environments. It’s easy to learn and can be understood by even non-technical folks.
+
+Source: Ansible official website
+
+We will do all the exercises locally first in DevSecOps-Box, so let’s start the exercise.
+
+First, we need to install the Ansible program.
+
+
+pip3 install ansible==8.7.0
+
+Let’s move to the next step.
+
+```
+```markdown
+Create the inventory file
+Let’s create the inventory or CMDB file for Ansible using the following command.
+
+
+cat > inventory.ini <<EOL
+
+# DevSecOps Studio Inventory
+[devsecops]
+devsecops-box-kr6k1mdm
+
+[gitservers]
+gitlab-ce-kr6k1mdm
+
+[prod]
+prod-kr6k1mdm
+EOL
+
+Next, we will have to ensure the SSH’s yes/no prompt is not shown while running the ansible commands, so we will be using ssh-keyscan to capture the key signatures beforehand.
+
+
+ssh-keyscan -H prod-kr6k1mdm >> ~/.ssh/known_hosts
+
+Command Output
+# prod-kr6k1mdm:22 SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.3
+Let’s do this for the rest of the system’s in the lab as well.
+
+
+ssh-keyscan -H gitlab-ce-kr6k1mdm >> ~/.ssh/known_hosts
+
+Command Output
+# gitlab-ce-kr6k1mdm:22 SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.3
+
+ssh-keyscan -H devsecops-box-kr6k1mdm >> ~/.ssh/known_hosts
+
+Command Output
+# devsecops-box-kr6k1mdm:22 SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.3
+ProTip
+
+Instead of running the ssh-keyscan command twice, we can achieve the same using the below command.
+
+
+ssh-keyscan -H prod-kr6k1mdm gitlab-ce-kr6k1mdm devsecops-box-kr6k1mdm >> ~/.ssh/known_hosts
+
+Let’s move to the next step.
+```
+```markdown
+Harden the production environment
+Dev-Sec Project has lots of good examples on how to create Ansible roles and uses lots of best practices which we can use as a baseline in our roles.
+
+For example, https://github.com/dev-sec/ansible-os-hardening.
+
+We will choose the dev-sec.os-hardening role from the dev-sec project to harden our production environment.
+
+
+ansible-galaxy install dev-sec.os-hardening
+
+Let’s create a playbook to use this role against a remote machine.
+
+
+cat > ansible-hardening.yml <<EOL
+---
+- name: Playbook to harden Ubuntu OS.
+  hosts: prod
+  remote_user: root
+  become: yes
+
+  roles:
+    - dev-sec.os-hardening
+
+EOL
+
+Let’s run this playbook against the prod machine to harden it.
+
+
+ansible-playbook -i inventory.ini ansible-hardening.yml
+
+Once the playbook runs, we should see the output as shown below.
+
+Command Output
+PLAY [Playbook to harden ubuntu OS.] *******************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [prod-kr6k1mdm]
+
+TASK [dev-sec.os-hardening : Set OS family dependent variables] ****************
+ok: [prod-kr6k1mdm]
+
+TASK [dev-sec.os-hardening : Set OS dependent variables] ***********************
+
+TASK [dev-sec.os-hardening : install auditd package | package-08] **************
+changed: [prod-kr6k1mdm]
+
+TASK [dev-sec.os-hardening : configure auditd | package-08] ********************
+changed: [prod-kr6k1mdm]
+
+TASK [dev-sec.os-hardening : find files with write-permissions for group] ******
+ok: [prod-kr6k1mdm] => (item=/usr/local/sbin)
+ok: [prod-kr6k1mdm] => (item=/usr/local/bin)
+ok: [prod-kr6k1mdm] => (item=/usr/sbin)
+ok: [prod-kr6k1mdm] => (item=/usr/bin)
+ok: [prod-kr6k1mdm] => (item=/sbin)
+ok: [prod-kr6k1mdm] => (item=/bin)
+
+...[SNIP]...
+
+PLAY RECAP *********************************************************************
+prod-kr6k1mdm              : ok=42   changed=20   unreachable=0    failed=0    skipped=28   rescued=0    ignored=0
+As we can see, there were 20 changes (changed=20) made to the production machine while hardening.
+
+Dynamic Output
+
+The output number of the hardening machines might change since it’s dynamic.
+
+ProTip
+
+Try re-running the above command and see what happens to changed=20.
+
+Can we put it into CI? Yes, why not?
+
+Let’s do it in the next step of the exercise.
+```
+```markdown
+Running ansible role as part of the CI pipeline.
+Let’s login into the GitLab and configure production machine https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd.
+
+We can use the GitLab credentials provided below to login i.e.,
+
+Name    Value
+Username    root
+Password    pdso-training
+Click on the Expand button under the Variables section, then click the Add Variable button.
+
+Add the following key/value pair in the form.
+
+Name    Value
+Key    DEPLOYMENT_SERVER
+Value    prod-kr6k1mdm
+Name    Value
+Key    DEPLOYMENT_SERVER_SSH_PRIVKEY
+Value    Copy the private key from the production machine using SSH. The SSH key is available at /root/.ssh/id_rsa. Please refer to Advanced Linux Exercises for a refresher on SSH Keys
+To view the value of id_rsa. You can use the following command:
+
+
+more /root/.ssh/id_rsa
+
+Note
+
+Please copy the complete value from the beginning (-----BEGIN RSA PRIVATE KEY-----) to the last line (-----END RSA PRIVATE KEY-----) are also copied.
+
+Finally, Click on the button Add Variable.
+
+Security Best Practices
+
+Storing SSH keys in GitLab variables poses significant security risks due to plain text storage and limited access controls. For production environments, it’s recommended to use dedicated key management solutions like HashiCorp Vault for secure key storage, rotation, and access control. Learn more about managing SSH access at scale here.
+
+Next, please visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Note
+
+If you encounter a 404 Page Not Found error, please make sure to log in using the following details:
+
+Name    Value
+URL    https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training
+Username    root
+Password    pdso-training
+Click on the Edit button and append the following code to the .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+ansible-hardening:
+  stage: prod
+  image: willhallonline/ansible:2.16-ubuntu-22.04
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo -e "[prod]\n$DEPLOYMENT_SERVER" >> inventory.ini
+    - ansible-galaxy install dev-sec.os-hardening
+    - ansible-playbook -i inventory.ini ansible-hardening.yml
+
+With the echo command, we are simply copying the contents of the private key variable stored in Gitlab CI into the id_rsa file under ~/.ssh inside the container.
+eval runs the command ssh-agent in the background and sends the key whenever SSH asks for a key in an automated fashion.
+
+Save changes to the file using the Commit changes button.
+
+Don’t forget to set DEPLOYMENT_SERVER variable under Settings (Project Settings > CI/CD > Variables > Expand > Add Variable), otherwise your build will fail
+
+We can see the results by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Oh, it failed? Why? We also got the following helpful message in the CI output.
+
+$ ansible-playbook -i inventory.ini ansible-hardening.yml
+ ERROR! the playbook: ansible-hardening.yml could not be found
+ ERROR: Job failed: exit status 1
+That makes sense. We didn’t upload the ansible-hardening.yml to the git repository yet.
+
+Let’s copy the hardening script.
+
+Click anywhere to copy
+
+---
+- name: Playbook to harden ubuntu OS.
+  hosts: prod
+  remote_user: root
+  become: yes
+
+  roles:
+    - dev-sec.os-hardening
+Visit the add new file URL https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/new/main/
+
+Paste the above ansible script into the space provided. Ensure you name the file as ansible-hardening.yml.
+
+Save changes to the repo using the Commit changes button.
+
+We can see the results by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+There you have it. We ran ansible hardening locally first and then embedded it into a CI/CD pipeline.
+
+If you see Permisison Denied, Enter passphrase for /root/.ssh/id_rsa or any other SSH related issue, then you have to ensure a proper key is copied in the CI/CD variable DEPLOYMENT_SERVER_SSH_PRIVKEY.
+```
+```markdown
+Compliance as Code (CaC) Using CinC Auditor
+Install CinC Auditor
+CinC Auditor is an open-source framework for testing and auditing your applications and infrastructure. CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code. CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation. CINC Auditor is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.
+
+Source: CINC Project website
+
+Let’s install the CinC Auditor on the system to learn Compliance as Code (CaC).
+
+Download the CinC Auditor Debian package from the CINC website.
+
+
+wget https://omnitruck.cinc.sh/install.sh
+
+Run the installation script to install CinC Auditor.
+
+
+bash install.sh -P cinc-auditor -v 6
+
+We have successfully installed the CinC Auditor tool, let’s explore the functionality it provides us.
+
+
+cinc-auditor --help
+
+Command Output
+Commands:
+  cinc-auditor archive PATH                                  # Archive a profile to a tar file (default) or zip file.
+  cinc-auditor automate SUBCOMMAND or compliance SUBCOMMAND  # Cinc Dashboard commands
+  cinc-auditor check PATH                                    # Verify the metadata in the `inspec.yml` file, verify that control blocks have the correct fields ...
+  cinc-auditor clear_cache                                   # clears the InSpec cache. Useful for debugging.
+  cinc-auditor detect                                        # detects the target OS.
+  cinc-auditor env                                           # Outputs shell-appropriate completion configuration.
+  cinc-auditor exec LOCATIONS                                # Run all test files at the specified locations.
+  cinc-auditor export PATH                                   # read the profile in PATH and generate a summary in the given format.
+  cinc-auditor habitat SUBCOMMAND                            # Manage Habitat with Cinc Auditor
+  cinc-auditor help [COMMAND]                                # Describe available commands or one specific command
+  cinc-auditor init SUBCOMMAND                               # Generate InSpec code
+  cinc-auditor json PATH                                     # read all tests in the PATH and generate a JSON summary.
+  cinc-auditor parallel SUBCOMMAND [options]                 # Runs Cinc Auditor operations parallely
+  cinc-auditor plugin SUBCOMMAND                             # Manage Cinc Auditor and Train plugins
+  cinc-auditor shell                                         # open an interactive debugging shell.
+  cinc-auditor sign SUBCOMMAND                               # Manage Cinc Auditor profile signing.
+  cinc-auditor supermarket SUBCOMMAND ...                    # Supermarket commands
+  cinc-auditor vendor PATH                                   # Download all dependencies and generate a lockfile in a `vendor` directory
+  cinc-auditor version                                       # prints the version of this tool.
+
+Options:
+  l, [--log-level=LOG_LEVEL]                        # Set the log level: info (default), debug, warn, error
+     [--log-location=LOG_LOCATION]                  # Location to send diagnostic log messages to. (default: $stdout or Inspec::Log.error)
+     [--diagnose], [--no-diagnose]                  # Show diagnostics (versions, configurations)
+     [--color], [--no-color]                        # Use colors in output.
+     [--interactive], [--no-interactive]            # Allow or disable user interaction
+     [--disable-user-plugins]                       # Disable loading all plugins that the user installed.
+     [--enable-telemetry], [--no-enable-telemetry]  # Allow or disable telemetry
+                                                    # Default: true
+     [--chef-license=CHEF_LICENSE]                  # Accept the license for this product and any contained products: accept, accept-no-persist, accept-silent
+
+
+About Cinc Auditor:
+  Patents: chef.io/patents
+Let’s move to the next step.
+```
+```markdown
+Run the CinC Auditor profile
+Let’s try to check whether our servers follow the linux-baseline best practices. We will be using the Dev-Sec’s linux-baseline CinC Auditor profile.
+
+Before executing the profile, we need to run the below command:
+
+
+echo "StrictHostKeyChecking accept-new" >> ~/.ssh/config
+
+This command prevents the ssh agent from prompting YES or NO question.
+
+Let’s run the CinC Auditor against the production server.
+
+
+cinc-auditor exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@prod-kr6k1mdm -i ~/.ssh/id_rsa --chef-license accept
+
+The first parameter tells the CinC Auditor profile that we need to run against the server  
+-t tells the target machine  
+-i flag used to specify the ssh-key since we are using login in via ssh  
+--chef-license accept tells that we are accepting license this commands prevent the cinc-auditor from prompting YES or NO question  
+
+Command Output
+Profile:   DevSec Linux Security Baseline (linux-baseline)
+Version:   2.9.0
+Target:    ssh://root@prod-kr6k1mdm:22
+Target ID: d4ed4341-356c-5d00-bb51-e884057b9868
+
+  ✔  os-01: Trusted hosts login
+     ✔  File /etc/hosts.equiv is expected not to exist
+  ✔  os-02: Check owner and permissions for /etc/shadow
+     ✔  File /etc/shadow is expected to exist
+     ✔  File /etc/shadow is expected to be file
+     ✔  File /etc/shadow is expected to be owned by "root"
+     ✔  File /etc/shadow is expected not to be executable
+     ✔  File /etc/shadow is expected not to be readable by other
+     ✔  File /etc/shadow group is expected to eq "shadow"
+     ✔  File /etc/shadow is expected to be writable by owner
+     ✔  File /etc/shadow is expected to be readable by owner
+     ✔  File /etc/shadow is expected to be readable by group
+
+  ...[SNIP]...
+
+  ↺  sysctl-32: kernel.randomize_va_space
+     ↺  Skipped control due to only_if condition.
+  ↺  sysctl-33: CPU No execution Flag or Kernel ExecShield
+     ↺  Skipped control due to only_if condition.
+  ↺  sysctl-34: Ensure links are protected
+     ↺  Skipped control due to only_if condition.
+
+
+Profile Summary: 17 successful controls, 3 control failures, 38 controls skipped
+Test Summary: 65 successful, 8 failures, 38 skipped
+
+You can see, that the output does inform us about 17 successful controls and 3 control failures.
+
+Let’s move to the next step.
+```
+````markdown
+Challenge: Embed CinC Auditor in the CI/CD pipeline
+This exercise is to do continuous compliance scanning for the production server (prod-kr6k1mdm). We will be embedding a dedicated Compliance as Code tool called CinC Auditor in the CI/CD pipeline.
+
+Doing so will provide immediate feedback to the DevOps teams of any deviation from standard policies.
+
+You can use the following URL and credentials to log into GitLab CI/CD.
+
+Name        Value
+GitLab URL  https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username    root
+Password    pdso-training
+Let’s login into the GitLab and configure the production machine https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd.
+
+Note
+
+If you encounter a 404 Page Not Found error, please make sure to log in using the following details:
+
+Name    Value
+URL     https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training
+Username root
+Password pdso-training
+Click the Expand button under the Variables section, then click on the Add Variable button.
+
+Add the following key/value pair in the form.
+
+Name    Value
+Key     DEPLOYMENT_SERVER
+Value   prod-kr6k1mdm
+Name    Value
+Key     DEPLOYMENT_SERVER_SSH_PRIVKEY
+Value   Copy the private key from the prod machine using SSH. The SSH key is available at /root/.ssh/id_rsa
+Finally, Click on the button Add Variable.
+
+Security Best Practices
+
+Storing SSH keys in GitLab variables poses significant security risks due to plain text storage and limited access controls. For production environments, it’s recommended to use dedicated key management solutions like HashiCorp Vault for secure key storage, rotation, and access control. Learn more about managing SSH access at scale here.
+
+---
+
+Tasks
+# 1
+Use cinc/auditor docker image to perform continuous compliance scanning with https://github.com/dev-sec/linux-baseline profile and embed it as part of the prod stage with job name as cinc-auditor
+
+
+Answer
+
+```yaml
+cinc-auditor:
+  stage: prod
+  image: cinc/auditor:6
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo -e "[prod]\n$DEPLOYMENT_SERVER" >> inventory.ini
+    - cinc-auditor exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@$DEPLOYMENT_SERVER -i ~/.ssh/id_rsa --chef-license accept --reporter json:/share/cinc-auditor-output.json
+  artifacts:
+    paths:
+      - /share/cinc-auditor-output.json
+````
+
+# 2
+
+The job should only be triggered when changes are pushed to the main branch (don’t use rules attribute)
+
+Answer
+
+cinc-auditor:
+  stage: prod
+  only:
+    - main
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - docker run --rm -v ~/.ssh:/root/.ssh -v $(pwd):/share cincproject/auditor exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@$DEPLOYMENT_SERVER -i ~/.ssh/id_rsa --chef-license accept
+
+```yaml
+only:
+  - main
+```
+
+# 3
+
+Save the output as JSON file at /share/cinc-auditor-output.json and upload it using artifacts attribute
+
+Answer
+
+cinc-auditor:
+  stage: prod
+  only:
+    - main
+  environment: production
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - docker run --rm -v ~/.ssh:/root/.ssh -v $(pwd):/share cincproject/auditor exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@$DEPLOYMENT_SERVER -i ~/.ssh/id_rsa --chef-license accept --reporter json:/share/cinc-auditor-output.json
+  artifacts:
+    paths: [cinc-auditor-output.json]
+    when: always
+
+Already included in the job definition above (`--reporter json:/share/cinc-auditor-output.json` + `artifacts` section).
+
+```
+```
+
+```markdown
+Embed CinC Auditor in CI/CD pipeline
+Can we put it into CI? Yes, why not?
+
+Next, please visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Click on the Edit button and append the following code to the .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+cinc-auditor:
+  stage: prod
+  only:
+    - main
+  environment: production
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - docker run --rm -v ~/.ssh:/root/.ssh -v $(pwd):/share cincproject/auditor exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@$DEPLOYMENT_SERVER -i ~/.ssh/id_rsa --chef-license accept --reporter json:/share/cinc-auditor-output.json
+  artifacts:
+    paths: [cinc-auditor-output.json]
+    when: always
+
+Note
+
+/share directory should be used when using cinc/auditor image. Because it’s a custom image adding another directory would not work when you are saving the CinC Auditor output.
+
+Reference: https://docs.chef.io/inspec/reporters.
+
+Save changes to the file using the Commit changes button.
+
+Don’t forget to set DEPLOYMENT_SERVER variable under Settings (Project Settings > CI/CD > Variables > Expand > Add Variable), otherwise your build will fail.
+
+We can see the results by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Remember!
+
+Did you notice the job failed because of exit code 100? Why did the job fail?
+
+The CinC Auditor tool found several control failures and you need to fix them or add allow_failure: true to pass the job and move to the next job.
+
+If you have trouble understanding the exit code, please go through the exercise titled Working with Exit Code.
+
+There you have it. We have run the CinC Auditor locally and then embedded it into a CI/CD pipeline.
+```
+```markdown
+How To Create Custom CinC Auditor Profile
+Install CinC Auditor Tool
+CinC Auditor is an open-source framework for testing and auditing your applications and infrastructure. CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code. CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation. CINC Auditor is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.
+
+Source: CINC Project website
+
+Let’s install the CinC Auditor on the system to learn Compliance as code.
+
+Install the CinC Auditor package via script.
+
+
+curl https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -P cinc-auditor -v 6
+
+We have successfully installed CinC Auditor tool, let’s explore the functionality it provides us.
+
+
+cinc-auditor --help
+
+Command Output
+Commands:
+  cinc-auditor archive PATH                                  # Archive a profile to a tar file (default) or zip file.
+  cinc-auditor automate SUBCOMMAND or compliance SUBCOMMAND  # Cinc Dashboard commands
+  cinc-auditor check PATH                                    # Verify the metadata in the `inspec.yml` file, verify that control bl...
+  cinc-auditor clear_cache                                   # clears the InSpec cache. Useful for debugging.
+  cinc-auditor detect                                        # detects the target OS.
+  cinc-auditor env                                           # Outputs shell-appropriate completion configuration.
+  cinc-auditor exec LOCATIONS                                # Run all test files at the specified locations.
+  cinc-auditor export PATH                                   # read the profile in PATH and generate a summary in the given format.
+  cinc-auditor habitat SUBCOMMAND                            # Manage Habitat with Cinc Auditor
+  cinc-auditor help [COMMAND]                                # Describe available commands or one specific command
+  cinc-auditor init SUBCOMMAND                               # Generate InSpec code
+  cinc-auditor json PATH                                     # read all tests in the PATH and generate a JSON summary.
+  cinc-auditor parallel SUBCOMMAND [options]                 # Runs Cinc Auditor operations parallely
+  cinc-auditor plugin SUBCOMMAND                             # Manage Cinc Auditor and Train plugins
+  cinc-auditor shell                                         # open an interactive debugging shell.
+  cinc-auditor sign SUBCOMMAND                               # Manage Cinc Auditor profile signing.
+  cinc-auditor supermarket SUBCOMMAND ...                    # Supermarket commands
+  cinc-auditor vendor PATH                                   # Download all dependencies and generate a lockfile in a `vendor` dire...
+  cinc-auditor version                                       # prints the version of this tool.
+
+Options:
+  l, [--log-level=LOG_LEVEL]                        # Set the log level: info (default), debug, warn, error
+     [--log-location=LOG_LOCATION]                  # Location to send diagnostic log messages to. (default: $stdout or Inspec::Log.error)
+     [--diagnose], [--no-diagnose]                  # Show diagnostics (versions, configurations)
+     [--color], [--no-color]                        # Use colors in output.
+     [--interactive], [--no-interactive]            # Allow or disable user interaction
+     [--disable-user-plugins]                       # Disable loading all plugins that the user installed.
+     [--enable-telemetry], [--no-enable-telemetry]  # Allow or disable telemetry
+                                                    # Default: true
+     [--chef-license=CHEF_LICENSE]                  # Accept the license for this product and any contained products: accept, accept-no-persist, accept-silent
+
+
+About Cinc Auditor:
+  Patents: chef.io/patents
+Let’s move to the next step.
+```
+```markdown
+Create the custom profile
+Create a new folder and cd into that folder.
+
+
+mkdir cinc-profiles && cd cinc-profiles
+
+Create the Ubuntu profile.
+
+
+cinc-auditor init profile ubuntu --chef-license accept
+
+Command Output
+ ─────────────────────────── InSpec Code Generator ───────────────────────────
+
+Creating new profile at /cinc-profiles/ubuntu
+ • Creating file README.md
+ • Creating directory /cinc-profiles/ubuntu/controls
+ • Creating file controls/example.rb
+ • Creating file inspec.yml
+Run the following command to append the cinc-auditor task to the file at ubuntu/controls/example.rb. If you wish, you can edit the file using nano or any text editor.
+
+
+cat > ubuntu/controls/example.rb <<EOL
+control 'shadow-1' do
+  title 'Ensure /etc/shadow file is properly secured'
+  desc 'The /etc/shadow file contains password hashes and should be protected'
+
+  describe file('/etc/shadow') do
+    it { should exist }
+    it { should be_file }
+    it { should be_owned_by 'root' }
+  end
+end
+EOL
+
+This code basically checks whether the shadow file is owned by root or not.
+
+To learn more about CinC Auditor, please visit the official website at CINC Project.
+
+Let’s validate the profile to make sure there are no syntax errors.
+
+
+cinc-auditor check ubuntu
+
+Command Output
+Location :   ubuntu
+Profile :    ubuntu
+Controls :   1
+Timestamp :  2025-03-24T06:48:24+00:00
+Valid :      true
+
+No errors, warnings, or offenses
+Now run the profile on the local machine before executing on the server.
+
+
+cinc-auditor exec ubuntu
+
+Command Output
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+  ✔  shadow-1: Ensure /etc/shadow file is properly secured
+     ✔  File /etc/shadow is expected to exist
+     ✔  File /etc/shadow is expected to be file
+     ✔  File /etc/shadow is expected to be owned by "root"
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 3 successful, 0 failures, 0 skipped
+Let’s move to the next step.
+```
+````markdown
+Run the CinC Auditor tool to test for compliance against a server  
+Let’s try to run the custom profile created by us against the server. Before executing the profile we need to execute the below command to avoid being prompted with Yes or No when connecting to a server via ssh.
+
+```bash
+echo "StrictHostKeyChecking accept-new" >> ~/.ssh/config
+````
+
+This commands prevent the ssh agent from prompting YES or NO question
+
+Let’s run cinc-auditor with the following options.
+
+```bash
+cinc-auditor exec ubuntu -t ssh://root@prod-kr6k1mdm -i ~/.ssh/id_rsa --chef-license accept
+```
+
+Woah! There’s lots going on here. Let’s explore these options one by one.
+
+The flags/options used in the above commands are:
+
+**Note**
+
+* `-t` specifies the target machine to run the CinC Auditor profile against. Here we are using SSH as a remote login mechanism, but we can also use winrm(windows), container(docker), etc.,
+* `-i` provides the path where the remote/local machine’s SSH key is stored.
+* `--chef-license` option ensures that we are accepting license agreements automatically.
+
+**Command Output**
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    ssh://root@prod-kr6k1mdm:22
+Target ID: d4ed4341-356c-5d00-bb51-e884057b9868
+
+  ✔  shadow-1: Ensure /etc/shadow file is properly secured
+     ✔  File /etc/shadow is expected to exist
+     ✔  File /etc/shadow is expected to be file
+     ✔  File /etc/shadow is expected to be owned by "root"
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 3 successful, 0 failures, 0 skipped
+```
+
+You can see, that we have about 3 successful control checks and 0 control failures.
+
+Let’s move to the next step.
+
+```
+```
+````markdown
+Challenges: Create a CinC Auditor profile for PCI/DSS  
+
+You can access your GitLab machine by visiting  
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training  
+and use the credentials provided below to login i.e:
+
+| Name     | Value         |
+|----------|---------------|
+| Username | root          |
+| Password | pdso-training |
+
+---
+
+### Tasks
+
+#### # 1  
+Create new cinc-auditor profile named `challenge` in `/cinc-profiles` directory using `cinc-auditor init`  
+
+**Answer**  
+```bash
+cd /cinc-profiles
+cinc-auditor init profile challenge --chef-license accept
+````
+
+---
+
+#### # 2
+
+Edit the newly created CinC Auditor skeleton to include four basic checks: **system**, **password**, **ssh**, and **useradd**, based on PCI/DSS requirements. You can find details in the PCI/DSS requirements document
+
+**Answer**
+Example controls (inside `challenge/controls/challenge.rb`):
+
+```ruby
+control 'system-1' do
+  impact 1.0
+  title 'Check system information'
+  desc 'Ensure OS is supported and patched'
+  describe os do
+    its('family') { should eq 'debian' }
+  end
+end
+
+control 'password-1' do
+  impact 1.0
+  title 'Ensure password policy is set'
+  desc 'PCI/DSS requires strong password policy'
+  describe file('/etc/login.defs') do
+    its('content') { should match /^PASS_MAX_DAYS\s+90/ }
+  end
+end
+
+control 'ssh-1' do
+  impact 1.0
+  title 'Ensure SSH root login is disabled'
+  desc 'PCI/DSS requires SSH root login to be disabled'
+  describe sshd_config do
+    its('PermitRootLogin') { should cmp 'no' }
+  end
+end
+
+control 'useradd-1' do
+  impact 1.0
+  title 'Ensure default umask for useradd is secure'
+  desc 'PCI/DSS requires secure useradd configurations'
+  describe file('/etc/login.defs') do
+    its('content') { should match /^UMASK\s+077/ }
+  end
+end
+```
+
+---
+
+#### # 3
+
+Test the `challenge` CinC Auditor profile locally before integrating it into the CI pipeline
+
+**Answer**
+
+```bash
+cinc-auditor exec challenge --chef-license accept
+```
+
+---
+
+#### # 4
+
+Commit the `challenge` CinC Auditor profile to your project’s repository using GitLab UI or Git commands.
+
+**Answer**
+
+```bash
+git add challenge
+git commit -m "Added PCI/DSS challenge cinc-auditor profile"
+git push origin main
+```
+
+---
+
+#### # 5
+
+In the `.gitlab-ci.yml` file, add a new job named `compliance` in the `test` stage to execute the profile using the CinC Auditor command. Use the `cincproject/auditor` Docker image to run the command.
+
+**Answer**
+
+```yaml
+stages:
+  - test
+
+compliance:
+  stage: test
+  image: cincproject/auditor
+  script:
+    - cinc-auditor exec challenge --chef-license accept
+  artifacts:
+    when: always
+    paths:
+      - compliance-report.json
+```
+
+```
+```
+````markdown
+# Security Compliance Scanning Using Lynis
+
+## Installing Lynis  
+Lynis is an open source security tool. It helps with auditing systems running UNIX-alike systems (Linux, macOS, BSD), and providing guidance for system hardening and compliance testing.  
+
+**Source:** Lynis official website  
+
+Lynis’s auditing capabilities is a good option to enhance security posture through regular, thorough system audits.  
+
+Let’s install the Lynis tool via a package manager.  
+
+```bash
+apt-get install lynis -y
+````
+
+### Command Output
+
+```
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following additional packages will be installed:
+  menu
+Suggested packages:
+  apt-listbugs debsecan debsums tripwire samhain aide fail2ban menu-l10n gksu
+  | kde-runtime | ktsuss
+The following NEW packages will be installed:
+  lynis menu
+0 upgraded, 2 newly installed, 0 to remove and 5 not upgraded.
+Need to get 537 kB of archives.
+
+.....[SNIP].....
+
+Preparing to unpack .../archives/lynis_2.6.2-1_all.deb ...
+Unpacking lynis (2.6.2-1) ...
+Selecting previously unselected package menu.
+Preparing to unpack .../menu_2.1.47ubuntu4_amd64.deb ...
+Unpacking menu (2.1.47ubuntu4) ...
+Setting up lynis (2.6.2-1) ...
+Setting up menu (2.1.47ubuntu4) ...
+Processing triggers for mime-support (3.64ubuntu1) ...
+Processing triggers for menu (2.1.47ubuntu4) ...
+```
+
+We have installed the Lynis tool.
+
+---
+
+## Explore Lynis functionality using show help option
+
+```bash
+lynis show help
+```
+
+### Command Output
+
+```
+Lynis 2.6.2 - Help
+==========================
+
+Commands:
+audit
+configure
+show
+update
+upload-only
+
+Use 'lynis show help <command>' to see details
+
+
+Options:
+--auditor
+--check-all (-c)
+--cronjob (--cron)
+--debug
+--developer
+--help (-h)
+--license-key
+--log-file
+--manpage (--man)
+--no-colors --no-log
+--pentest
+--profile
+--plugins-dir
+--quiet (-q)
+--quick (-Q)
+--report-file
+--reverse-colors
+--tests
+--tests-from-category
+--tests-from-group
+--upload
+--verbose
+--version (-V)
+--wait
+```
+
+Now that we have downloaded the Lynis tool, let’s move to the next step for compliance scanning.
+
+```
+```
+````markdown
+# Running Lynis Tool
+
+With Lynis, we are going to audit the local system, that is the devsecops-box.  
+Let’s use `audit system` as a command option.  
+
+`audit system` is a command from Lynis to scan the local host, which in this case is the DevSecOps box.  
+
+---
+
+## Check help for audit system command
+
+```bash
+lynis audit system --help
+````
+
+### Command Output
+
+```
+.....[SNIP].....
+Usage: lynis command [options]
+
+
+  Command:
+
+    audit
+        audit system                  : Perform local security scan
+        audit system remote <host>    : Remote security scan
+        audit dockerfile <file>       : Analyze Dockerfile
+
+    show
+        show                          : Show all commands
+        show version                  : Show Lynis version
+        show help                     : Show help
+
+    update
+        update info                   : Show update details
+
+
+  Options:
+
+    --no-log                          : Don't create a log file
+    --pentest                         : Non-privileged scan (useful for pentest)
+    --profile <profile>               : Scan the system with the given profile file
+    --quick (-Q)                      : Quick mode, don't wait for user input
+
+    Layout options
+    --no-colors                       : Don't use colors in output
+    --quiet (-q)                      : No output
+    --reverse-colors                  : Optimize color display for light backgrounds
+
+    Misc options
+    --debug                           : Debug logging to screen
+    --view-manpage (--man)            : View man page
+    --verbose                         : Show more details on screen
+    --version (-V)                    : Display version number and quit
+
+    Enterprise options
+    --plugin-dir "<path>"             : Define path of available plugins
+    --upload                          : Upload data to central node
+
+    More options available. Run '/usr/sbin/lynis show options', or use the man page.
+```
+
+---
+
+## Run compliance audit on the local system
+
+```bash
+lynis audit system
+```
+
+### Command Output
+
+```
+[ Lynis 2.6.2 ]
+
+################################################################################
+  Lynis comes with ABSOLUTELY NO WARRANTY. This is free software, and you are
+  welcome to redistribute it under the terms of the GNU General Public License.
+  See the LICENSE file for details about using this software.
+
+  2007-2018, CISOfy - https://cisofy.com/lynis/
+  Enterprise support available (compliance, plugins, interface and tools)
+################################################################################
+
+
+[+] Initializing program
+------------------------------------
+  - Detecting OS...                                           [ DONE ]
+  - Checking profiles...                                      [ DONE ]
+
+  ---------------------------------------------------
+  Program version:           2.6.2
+  Operating system:          Linux
+  Operating system name:     Ubuntu Linux
+  Operating system version:  20.04
+  Kernel version:            5.15.0
+  Hardware platform:         x86_64
+  Hostname:                  devsecops-box-1ccvnjbv
+  ---------------------------------------------------
+  Profiles:                  /etc/lynis/default.prf
+  Log file:                  /var/log/lynis.log
+  Report file:               /var/log/lynis-report.dat
+  Report version:            1.0
+  Plugin directory:          /etc/lynis/plugins
+  ---------------------------------------------------
+
+.....[SNIP].....
+
+================================================================================
+
+  Lynis security scan details:
+
+  Hardening index : 59 [###########         ]
+  Tests performed : 216
+  Plugins enabled : 1
+
+  Components:
+  - Firewall               [V]
+  - Malware scanner        [X]
+
+  Lynis Modules:
+  - Compliance Status      [?]
+  - Security Audit         [V]
+  - Vulnerability Scan     [V]
+
+  Files:
+  - Test and debug information      : /var/log/lynis.log
+  - Report data                     : /var/log/lynis-report.dat
+
+================================================================================
+  Notice: Lynis update available
+  Current version : 262    Latest version : 311
+================================================================================
+
+  Lynis 2.6.2
+
+  Auditing, system hardening, and compliance for UNIX-based systems
+  (Linux, macOS, BSD, and others)
+
+  2007-2018, CISOfy - https://cisofy.com/lynis/
+  Enterprise support available (compliance, plugins, interface and tools)
+
+================================================================================
+
+  [TIP]: Enhance Lynis audits by adding your settings to custom.prf (see /etc/lynis/default.prf for all settings)
+```
+
+---
+
+## Breakdown of Report Summary
+
+* **Hardening index : 59 \[########### ]**
+  A score out of 100 indicating the system’s security hardening level based on Lynis’ checks. A score of 59 suggests a moderate level of hardening.
+
+* **Tests performed : 216**
+  Lynis conducted 216 tests during the scan, covering various aspects of system security, from basic checks to detailed inspections.
+
+* **Plugins enabled : 1**
+  Lynis supports plugins for extended functionality. One plugin was enabled during the scan, potentially adding extra checks or integration with other tools.
+
+* **Firewall \[V]**
+  The system has a firewall configured and active, indicated by the `[V]`.
+
+* **Malware scanner \[X]**
+  No malware scanner is installed, properly configured, or running, as indicated by the `[X]`.
+
+* **Compliance Status \[?]**
+  Lynis could not definitively determine compliance with certain standards or checks, suggested by the `[?]`. Further investigation or configuration may be required.
+
+* **Security Audit \[V]**
+  The security audit module of Lynis completed successfully, indicated by the `[V]`.
+
+* **Vulnerability Scan \[V]**
+  The vulnerability scanning module also ran successfully, providing insights into potential vulnerabilities, indicated by the `[V]`.
+
+* **Test and debug information : /var/log/lynis.log**
+  The `lynis.log` file contains detailed logs from the Lynis scan, including test outputs and any debug information for deeper analysis or troubleshooting.
+
+* **Report data : /var/log/lynis-report.dat**
+  This `lynis-report.dat` stores the report data from the Lynis scan, which can be used for further analysis, reporting, or integration with other tools.
+
+---
+
+There you have it. We have performed compliance scanning using Lynis.
+
+```
+```
+```markdown
+# CinC Auditor Shell
+
+In this scenario, you will learn how **CinC Auditor shell** works and how it helps you in checking the compliance requirements.
+
+---
+
+## List of Machines Used
+
+| System Name     | Description                                                                 |
+|-----------------|-----------------------------------------------------------------------------|
+| DevSecOps Box   | This machine acts as a developer/security engineer machine and contains many DevSecOps tools in it |
+| Prod            | This machine acts as the production machine                                |
+
+---
+
+## Note
+
+- We have already set up the necessary tools including **Docker** on the **DevSecOps-Box** machine, you just have to use them for the exercise.  
+- Always remember that the **DevSecOps Box is an immutable machine**, and thus it does not save the previous state after you close or reload the browser.
+```
+````markdown
+# Install CinC Auditor
+
+**CinC Auditor** is an open-source framework for testing and auditing your applications and infrastructure.  
+CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code.  
+CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation.  
+
+**CinC Auditor** is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.  
+
+**Source:** CINC Project website  
+
+---
+
+## Install CinC Auditor
+
+Let’s install the CinC Auditor on the system to learn **Compliance as Code (CaC)**.  
+
+Install the CinC Auditor package via script:
+
+```bash
+curl https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -P cinc-auditor -v 6
+````
+
+---
+
+## Verify Installation
+
+We have successfully installed the CinC Auditor tool, let’s explore the functionality it provides us.
+
+```bash
+cinc-auditor --help
+```
+
+### Command Output
+
+```
+Commands:
+  cinc-auditor archive PATH                                  # Archive a pr...
+  cinc-auditor automate SUBCOMMAND or compliance SUBCOMMAND  # Cinc Dashboa...
+  cinc-auditor check PATH                                    # Verify the m...
+  cinc-auditor clear_cache                                   # clears the I...
+  cinc-auditor detect                                        # detects the ...
+  cinc-auditor env                                           # Outputs shel...
+  cinc-auditor exec LOCATIONS                                # Run all test...
+  cinc-auditor export PATH                                   # read the pro...
+  cinc-auditor habitat SUBCOMMAND                            # Manage Habit...
+  cinc-auditor help [COMMAND]                                # Describe ava...
+  cinc-auditor init SUBCOMMAND                               # Generate InS...
+  cinc-auditor json PATH                                     # read all tes...
+  cinc-auditor parallel SUBCOMMAND [options]                 # Runs Cinc Au...
+  cinc-auditor plugin SUBCOMMAND                             # Manage Cinc ...
+  cinc-auditor shell                                         # open an inte...
+  cinc-auditor sign SUBCOMMAND                               # Manage Cinc ...
+  cinc-auditor supermarket SUBCOMMAND ...                    # Supermarket ...
+  cinc-auditor vendor PATH                                   # Download all...
+  cinc-auditor version                                       # prints the v...
+
+Options:
+  l, [--log-level=LOG_LEVEL]                        # Set the log level: info (default), debug, warn, error
+     [--log-location=LOG_LOCATION]                  # Location to send diagnostic log messages to. (default: $stdout or Inspec::Log.error)
+     [--diagnose], [--no-diagnose]                  # Show diagnostics (versions, configurations)
+     [--color], [--no-color]                        # Use colors in output.
+     [--interactive], [--no-interactive]            # Allow or disable user interaction
+     [--disable-user-plugins]                       # Disable loading all plugins that the user installed.
+     [--enable-telemetry], [--no-enable-telemetry]  # Allow or disable telemetry
+                                                    # Default: true
+     [--chef-license=CHEF_LICENSE]                  # Accept the license for this product and any contained products: accept, accept-no-persist, accept-silent
+
+
+About Cinc Auditor:
+  Patents: chef.io/patents
+```
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````markdown
+# CinC Auditor Shell
+
+**CinC Auditor shell** is an interactive way to explore CinC Auditor to discover resources you can use to test your configurations.
+
+---
+
+## Preparing the Shell
+
+Before executing the shell, we need to run the below command:
+
+```bash
+echo "StrictHostKeyChecking accept-new" >> ~/.ssh/config
+````
+
+Then start the shell:
+
+```bash
+cinc-auditor shell -t ssh://root@prod-kr6k1mdm -i ~/.ssh/id_rsa --chef-license accept
+```
+
+---
+
+## Using the Shell
+
+CinC Auditor shell allows us to quickly run CinC Auditor controls and tests without having to write it to a file.
+This allows us to explore what is available as well as debug profiles.
+
+### Help Commands
+
+```bash
+help
+```
+
+We can run the help resources command to see which resources are available:
+
+```bash
+help resources
+```
+
+---
+
+## Ruby Syntax in CinC Auditor
+
+Since CinC Auditor is built using Ruby, we can use Ruby syntax to retrieve methods available to the file resource:
+
+```ruby
+file('/tmp').class.superclass.instance_methods(false).sort
+```
+
+You can use the arrow or Page Up and Page Down keys to scroll through the list. When you’re done, press `Q`.
+
+---
+
+## Predicate Methods
+
+We can also tap on Ruby feature (predicate method) that ends in `?`.
+This returns a Boolean value of True/False.
+
+```ruby
+file('/tmp').directory?
+file('/tmp').exist?
+file('/tmp').content
+```
+
+---
+
+## Running Tests
+
+We are also able to run tests to check if we should include this in subsequent profiles.
+For example, to check if `/tmp` is a directory created, we can use the following:
+
+```ruby
+describe file('/tmp') do
+  it { should be_directory }
+end
+```
+
+---
+
+## Testing Environment Variables
+
+We can also use `os_env` to test the environment variables for the platform on which the system is running.
+
+```ruby
+os_env('PATH')
+os_env('PATH').content
+os_env('PATH').split
+```
+
+---
+
+## Exit the Shell
+
+To exit the CinC Auditor shell session, type:
+
+```bash
+exit
+```
+
+```
+```
+````markdown
+# CinC Auditor Command Resources
+
+## Setup CinC Auditor
+
+**CinC Auditor** is an open-source framework for testing and auditing your applications and infrastructure.  
+CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code.  
+CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation.  
+
+**CinC Auditor** is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.  
+
+**Source:** CINC Project website  
+
+---
+
+## Install CinC Auditor
+
+Install the CinC Auditor package via script:
+
+```bash
+curl https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -P cinc-auditor -v 6
+````
+
+### Command Output
+
+```
+Selecting previously unselected package cinc-auditor.
+(Reading database ... 23362 files and directories currently installed.)
+Preparing to unpack .../cinc-auditor_6.8.24-1_amd64.deb ...
+You're about to install Cinc Auditor!
+Unpacking cinc-auditor (6.8.24-1) ...
+Setting up cinc-auditor (6.8.24-1) ...
+Symlinking inspec command to cinc-auditor for compatibility...
+Thank you for installing Cinc Auditor!
+```
+
+---
+
+## Create the Profile
+
+Create a new folder and move into it:
+
+```bash
+mkdir cis-ubuntu
+cd cis-ubuntu
+```
+
+---
+
+## Test the Barebone Profile
+
+```bash
+cinc-auditor init profile ubuntu --chef-license accept
+```
+
+### Command Output
+
+```
+ ─────────────────────────── InSpec Code Generator ─────────────────────────── 
+
+Creating new profile at /cis-ubuntu/ubuntu
+ • Creating file README.md
+ • Creating directory /cis-ubuntu/ubuntu/controls
+ • Creating file controls/example.rb
+ • Creating file inspec.yml
+```
+
+---
+
+Let’s move to the next step to learn about **command resources**.
+
+```
+```
+````markdown
+# Understand the audit command
+
+We will create a custom profile based on **CIS Ubuntu 22.04 Benchmark**.  
+You can download the benchmark PDF and refer to **page 559** “Ensure sudo commands use pty”.
+
+---
+
+## What is PTY and why is it important?
+
+- **PTY (pseudo-terminal)**, commonly referred to as a virtual terminal, is a **security boundary between processes**.  
+- Without the `use_pty` setting, attackers can run a malicious program using `sudo` which would fork a background process that remains even after the main program has finished executing.  
+- Enforcing `use_pty` ensures that sudo commands are executed within a pseudo-terminal, preventing background processes from bypassing logging and monitoring.
+
+---
+
+## Execute the audit command
+
+Let’s verify if the PTY security setting is enabled in our system using the following command:
+
+```bash
+grep -rPi -- '^\h*Defaults\h+([^#\n\r]+,)?use_pty(,\h*\h+\h*)*\h*(#.*)?$' /etc/sudoers*
+````
+
+### Expected Output
+
+```
+/etc/sudoers:Defaults   use_pty
+```
+
+---
+
+## Note
+
+* **If you can’t see this output** → The CIS Ubuntu 22.04 guide specifies that the `use_pty` setting must be enabled to keep your system safe.
+* Without it, your system is vulnerable because sudo commands may execute without a pseudo-terminal.
+
+---
+
+## Remediation
+
+If `use_pty` is missing, apply the fix by adding the configuration into `/etc/sudoers`:
+
+```bash
+cat > /etc/sudoers <<EOL
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults        use_pty
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# Members of the admin group may gain root privileges
+%admin ALL=(ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+
+# See sudoers(5) for more information on "#include" directives:
+
+#includedir /etc/sudoers.d
+EOL
+```
+
+---
+
+## Verify Again
+
+After applying the fix, verify the configuration with the audit command:
+
+```bash
+grep -rPi -- '^\h*Defaults\h+([^#\n\r]+,)?use_pty(,\h*\h+\h*)*\h*(#.*)?$' /etc/sudoers*
+```
+
+### Expected Output
+
+```
+/etc/sudoers:Defaults   use_pty
+```
+
+---
+
+## Conclusion
+
+This confirms that the `use_pty` setting is properly configured.
+
+* **Absence of this string = control failure**
+* **Presence of this string = compliance success**
+
+Next, let’s move to the step of **adding this control into our Ubuntu profile**.
+
+```
+```
+````markdown
+# Add the command to the profile
+
+Basically, we need to run a **command against a system** to check for compliance.  
+
+To do this, **CinC Auditor** provides us with a **command resource/method**.  
+
+---
+
+## Using the Command Resource
+
+As mentioned in the InSpec documentation, the command resource allows us to execute commands like the `grep` we ran in the last step.  
+
+Once a command returns its output, we can use **stdout (output)** to compare it against the desired/expected value in our profile.
+
+---
+
+## Add Control to the Profile
+
+We will use the following command to replace the CinC Auditor task in the file `ubuntu/controls/example.rb`.  
+(You can also edit the file manually using `nano` or any text editor.)
+
+```bash
+cat > ubuntu/controls/example.rb <<EOL
+control 'ubuntu-1.3.2' do
+   title 'Ensure sudo commands use pty'
+   desc 'Attackers can run a malicious program using sudo, which would again fork a background process that remains even when the main program has finished executing.'
+   describe command('grep -Ei "^\s*Defaults\s+([^#]+,\s*)?use_pty(,\s+\S+\s*)*(\s+#.*)?$" /etc/sudoers /etc/sudoers.d/*') do
+      its('stdout') { should match /Defaults\s+use_pty/ }
+   end
+end
+EOL
+````
+
+---
+
+## Why Regex?
+
+We are using **regex** to ensure that we capture the exact match irrespective of whether a **space** or a **tab** is used as a separator between `Defaults` and `use_pty`.
+
+### Example Command Outputs
+
+```
+/etc/sudoers:Defaults                use_pty
+```
+
+or
+
+```
+/etc/sudoers:Defaults   use_pty
+```
+
+Both are valid, and regex ensures compatibility.
+
+👉 If you’re curious about regex, try [Rubular](https://rubular.com/) to experiment.
+
+---
+
+## Validate the Profile
+
+Let’s check the profile for syntax errors:
+
+```bash
+cinc-auditor check ubuntu
+```
+
+### Command Output
+
+```
+Location :   ubuntu
+Profile :    ubuntu
+Controls :   1
+Timestamp :  2025-03-24T07:42:50+00:00
+Valid :      true
+
+No errors, warnings, or offenses
+```
+
+---
+
+## Run the Profile on Local Machine
+
+```bash
+cinc-auditor exec ubuntu
+```
+
+### Command Output
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+  ✔  ubuntu-1.3.2: Ensure sudo commands use pty
+     ✔  Command: `grep -Ei "^\s*Defaults\s+([^#]+,\s*)?use_pty(,\s+\S+\s*)*(\s+#.*)?$" /etc/sudoers /etc/sudoers.d/*` stdout is expected to match /Defaults\s+use_pty/
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 1 successful, 0 failures, 0 skipped
+```
+
+You can see, we have **1 successful control check** since the `use_pty` setting is enabled.
+
+---
+
+## What if the Check Fails?
+
+* If you see a **control failure** instead of success, it means the `use_pty` setting is **not configured** in your system.
+* The **DevOps/Security team** can then run **Ansible hardening scripts** (or similar automation) to enforce hardening and continuously scan for compliance.
+
+```
+```
+````markdown
+# Run the CinC Auditor Profile to Test for Compliance Against a Server
+
+Let’s try to run the custom profile created by us against the server.
+
+---
+
+## Step 1: Prevent SSH Prompt
+
+Before executing the profile, run the following command:
+
+```bash
+echo "StrictHostKeyChecking accept-new" >> ~/.ssh/config
+````
+
+This prevents the SSH agent from prompting **YES/NO** questions.
+
+---
+
+## Step 2: Run CinC Auditor
+
+```bash
+cinc-auditor exec ubuntu -t ssh://root@prod-kr6k1mdm -i ~/.ssh/id_rsa --chef-license accept
+```
+
+---
+
+### Command Output
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    ssh://root@prod-kr6k1mdm:22
+Target ID: d4ed4341-356c-5d00-bb51-e884057b9868
+
+  ✔  ubuntu-1.3.2: Ensure sudo commands use pty
+     ✔  Command: `grep -Ei "^\s*Defaults\s+([^#]+,\s*)?use_pty(,\s+\S+\s*)*(\s+#.*)?$" /etc/sudoers /etc/sudoers.d/*` stdout is expected to match /Defaults\s+use_pty/
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 1 successful, 0 failures, 0 skipped
+```
+
+---
+
+## Step 3: Understanding the Options
+
+* **`-t`** → tells the target machine to run the profile against.
+* **`-i`** → provides the path where the remote machine’s SSH key is stored.
+* **`--chef-license accept`** → ensures that we are accepting the license agreement, thereby preventing CinC Auditor from prompting YES/NO questions.
+
+---
+
+## Results
+
+✅ We got **1 successful control check**, which means the **production machine follows the CIS best practice for PTY usage**.
+The DevOps/Security team can continue to run these compliance checks regularly to ensure the security configurations remain in place.
+
+---
+
+## What if the Check Fails?
+
+* If you see a **control failure** instead of success, it means the **use\_pty** setting is **not configured** in your production server.
+* The **DevOps/Security team** can run **Ansible hardening scripts** (or similar automation) to ensure the production machine is hardened and continuously scanned for compliance.
+
+```
+```
+````markdown
+# CinC Auditor File Resource
+
+## Setup CinC Auditor
+
+**CinC Auditor** is an open-source framework for testing and auditing your applications and infrastructure.  
+It works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code.  
+CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation.  
+
+**CinC Auditor** is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.  
+
+**Source:** CINC Project website  
+
+---
+
+## Install CinC Auditor
+
+Install the CinC Auditor package via script:
+
+```bash
+curl https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -P cinc-auditor -v 6
+````
+
+---
+
+## Create the Profile
+
+Create a new folder and move into it:
+
+```bash
+mkdir cis-ubuntu
+cd cis-ubuntu
+```
+
+---
+
+## Test the Barebone Profile
+
+```bash
+cinc-auditor init profile ubuntu --chef-license accept
+```
+
+### Command Output
+
+```
+ ─────────────────────────── InSpec Code Generator ─────────────────────────── 
+
+Creating new profile at /cis-ubuntu/ubuntu
+ • Creating file README.md
+ • Creating directory /cis-ubuntu/ubuntu/controls
+ • Creating file controls/example.rb
+ • Creating file inspec.yml
+```
+
+---
+
+Let’s move to the next step to learn about **file resources**.
+
+```
+```
+````markdown
+# Run the Audit Command
+
+Let’s take the same example we covered in the **command resource exercise** i.e.,  
+**“Ensure sudo commands use pty”** and try to automate it using **file resource** instead of the command resource.
+
+---
+
+## Previous Command Resource Approach
+
+We used the following command in the **command resource exercise** to audit the machine:
+
+```bash
+grep -rPi -- '^\h*Defaults\h+([^#\n\r]+,)?use_pty(,\h*\h+\h*)*\h*(#.*)?$' /etc/sudoers*
+````
+
+### Expected Output
+
+```
+/etc/sudoers:Defaults   use_pty
+```
+
+---
+
+## Note
+
+* If you **don’t see this output**, the **CIS Ubuntu 22.04 guide** specifies that the `use_pty` setting must be enabled to keep your system safe.
+* Without it, there is a **security risk** because attackers can bypass sudo logging.
+
+---
+
+## Remediation
+
+If the setting is missing, add it to `/etc/sudoers` using the following:
+
+```bash
+cat > /etc/sudoers <<EOL
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults        use_pty
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# Members of the admin group may gain root privileges
+%admin ALL=(ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+
+# See sudoers(5) for more information on "#include" directives:
+
+#includedir /etc/sudoers.d
+EOL
+```
+
+---
+
+## Verify Again
+
+After applying the fix, verify the configuration with the audit command:
+
+```bash
+grep -rPi -- '^\h*Defaults\h+([^#\n\r]+,)?use_pty(,\h*\h+\h*)*\h*(#.*)?$' /etc/sudoers*
+```
+
+### Expected Output
+
+```
+/etc/sudoers:Defaults   use_pty
+```
+
+✅ Great! We got our **desired/expected value**.
+
+---
+
+Let’s move to the next step to **automate this check using file resource**.
+
+```
+```
+````markdown
+# Understand the File Resource
+
+The **file resource** in CinC Auditor is used to test all system file types, including:
+
+- Files  
+- Directories  
+- Symbolic links  
+- Named pipes  
+- Sockets  
+- Character devices  
+- Block devices  
+- Doors  
+
+---
+
+## Why File Resource?
+
+Besides using the **command resource**, we can also use the **file resource** to test the desired/expected state of the system.  
+
+As they say, *“more than one way to do it.”*
+
+---
+
+## Update the Profile
+
+Run the following command to replace the CinC Auditor task at `ubuntu/controls/example.rb`.  
+(Or edit it manually using `nano` or any text editor.)
+
+```bash
+cat > ubuntu/controls/example.rb <<EOL
+control 'ubuntu-1.3.2' do
+   title 'Ensure sudo commands use pty'
+   desc 'Attackers can run a malicious program using sudo, which would again fork a background process that remains even when the main program has finished executing.'
+   describe file('/etc/sudoers') do
+      its('content') { should match /Defaults(\s*)use_pty/ }
+   end
+end
+EOL
+````
+
+---
+
+## Validate the Profile
+
+```bash
+cinc-auditor check ubuntu
+```
+
+### Command Output
+
+```
+Location :   ubuntu
+Profile :    ubuntu
+Controls :   1
+Timestamp :  2025-03-24T08:14:07+00:00
+Valid :      true
+
+No errors, warnings, or offenses
+```
+
+---
+
+## Run the Profile on Local Machine
+
+```bash
+cinc-auditor exec ubuntu
+```
+
+### Command Output
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+  ✔  ubuntu-1.3.2: Ensure sudo commands use pty
+     ✔  File /etc/sudoers content is expected to match /Defaults(\s*)use_pty/
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 1 successful, 0 failures, 0 skipped
+```
+
+✅ You can see, we have **1 successful control check** as the `use_pty` setting is enabled.
+
+---
+
+## What if the Check Fails?
+
+* If you see a **control failure** instead of success, it means the `use_pty` setting is **not configured** in your system.
+* The **DevOps/Security team** can run **Ansible hardening scripts** to ensure the system is hardened and continuously scanned for compliance.
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````markdown
+# Run the CinC Auditor Tool to Test for Compliance Against a Server
+
+Let’s try to run the custom profile created by us against the server.
+
+---
+
+## Step 1: Prevent SSH Prompt
+
+```bash
+echo "StrictHostKeyChecking accept-new" >> ~/.ssh/config
+````
+
+This prevents the SSH agent from prompting **YES/NO** questions.
+
+---
+
+## Step 2: Run CinC Auditor
+
+```bash
+cinc-auditor exec ubuntu -t ssh://root@prod-kr6k1mdm -i ~/.ssh/id_rsa --chef-license accept
+```
+
+---
+
+### Command Output
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    ssh://root@prod-7ia7j8ah:22
+Target ID: d4ed4341-356c-5d00-bb51-e884057b9868
+
+  ✔  ubuntu-1.3.2: Ensure sudo commands use pty
+     ✔  File /etc/sudoers content is expected to match /Defaults(\s*)use_pty/
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 1 successful, 0 failures, 0 skipped
+```
+
+---
+
+## Step 3: Understanding the Options
+
+* **`-t`** → tells the target machine to run the profile against.
+* **`-i`** → provides the path where the remote machine’s SSH key is stored.
+* **`--chef-license accept`** → ensures that we are accepting the license agreement, thereby preventing CinC Auditor from prompting YES/NO questions.
+
+---
+
+## Results
+
+✅ We got **1 successful control check**, which means the **production machine follows the CIS best practice for PTY usage**.
+The **DevOps/Security team** can continue to run these compliance checks regularly to ensure the security configurations remain in place.
+
+---
+
+## What if the Check Fails?
+
+* If you see a **control failure** instead of success, it means the **use\_pty** setting is **not configured** in your production server.
+* The **DevOps/Security team** can run **Ansible hardening scripts** to ensure the production machine is hardened and continuously scanned for compliance.
+
+```
+```
+````markdown
+# CinC Auditor Custom Matchers
+
+## Setup CinC Auditor
+
+**CinC Auditor** is an open-source framework for testing and auditing your applications and infrastructure.  
+It compares the actual state of your system with the desired state that you express in code.  
+Violations are detected and displayed in the form of a report, while remediation is left in your control.  
+
+**CinC Auditor** is a free alternative to **Chef InSpec**, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.  
+
+**Source:** CINC Project website  
+
+---
+
+## Install CinC Auditor
+
+Install the CinC Auditor package via script:
+
+```bash
+curl https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -P cinc-auditor -v 6
+````
+
+### Command Output
+
+```
+Selecting previously unselected package cinc-auditor.
+(Reading database ... 23362 files and directories currently installed.)
+Preparing to unpack .../cinc-auditor_6.8.24-1_amd64.deb ...
+You're about to install Cinc Auditor!
+Unpacking cinc-auditor (6.8.24-1) ...
+Setting up cinc-auditor (6.8.24-1) ...
+Symlinking inspec command to cinc-auditor for compatibility...
+Thank you for installing Cinc Auditor!
+```
+
+---
+
+## Create the Profile
+
+Create a new folder and move into it:
+
+```bash
+mkdir cis-ubuntu
+cd cis-ubuntu
+```
+
+---
+
+## Test the Barebone Profile
+
+```bash
+cinc-auditor init profile ubuntu --chef-license accept
+```
+
+### Command Output
+
+```
+ ─────────────────────────── InSpec Code Generator ─────────────────────────── 
+
+Creating new profile at /cis-ubuntu/ubuntu
+ • Creating file README.md
+ • Creating directory /cis-ubuntu/ubuntu/controls
+ • Creating file controls/example.rb
+ • Creating file inspec.yml
+```
+
+---
+
+Let’s move to the next step to learn about **custom matchers**.
+
+```
+```
+````markdown
+# Run the Audit Command
+
+We will now learn about **custom matchers** in CinC Auditor, and how we can use the correct resources for our control.
+
+---
+
+## Chosen Control
+
+From the **CIS Ubuntu 18.04 Benchmark** → Page 384:  
+**“Ensure permissions on /etc/ssh/sshd_config are configured.”**
+
+---
+
+## Step 1: Check File Permissions
+
+We can use the `stat` command to check permissions:
+
+```bash
+stat /etc/ssh/sshd_config
+````
+
+### Command Output
+
+```
+  File: /etc/ssh/sshd_config
+  Size: 285             Blocks: 8          IO Block: 4096   regular file
+Device: 4bh/75d Inode: 642738      Links: 1
+Access: (0666/-rw-rw-rw-)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2025-04-05 15:52:21.000000000 +0000
+Modify: 2025-04-05 15:52:21.000000000 +0000
+Change: 2025-06-22 08:34:33.198848656 +0000
+ Birth: 2025-06-22 08:34:33.198848656 +0000
+```
+
+Here, we see **0666** (world-writable) as the permission bits.
+⚠️ This is insecure.
+
+---
+
+## Step 2: Secure the File
+
+To ensure **only root** has access (loose permissions on this file can lead to serious security attacks), run:
+
+```bash
+chown root:root /etc/ssh/sshd_config
+chmod og-rwx /etc/ssh/sshd_config
+```
+
+---
+
+## Step 3: Which Resource to Use?
+
+We’ve already learned about **command resource** and **file resource**.
+
+* Using **command resource** would make this task complicated.
+* Using **file resource** is much more straightforward.
+
+The **file resource** provides useful properties such as:
+
+* `uid` → user ID of file owner
+* `gid` → group ID of file owner
+* `mode` → file permissions
+
+---
+
+## Next Step
+
+We will now put these properties (`uid`, `gid`, `mode`) to use in our **CinC Auditor profile** with **custom matchers**.
+
+```
+```
+````markdown
+# Edit the Profile
+
+We will now add a control to ensure permissions on `/etc/ssh/sshd_config` are configured correctly.
+
+---
+
+## Step 1: Update the Profile
+
+Run the following command to replace the CinC Auditor task at `ubuntu/controls/example.rb`:
+
+```bash
+cat > ubuntu/controls/example.rb <<EOL
+control 'ubuntu-5.2.1' do
+   title 'Ensure permissions on /etc/ssh/sshd_config are configured'
+   desc 'The /etc/ssh/sshd_configfile contains configuration specifications for sshd. The command below checks whether the owner and group of the file is root.'
+   describe file('/etc/ssh/sshd_config') do
+     its('owner') { should eq 'root'}
+     its('group') { should eq 'root'}
+     its('mode') { should cmp '0600' }
+   end
+end
+EOL
+````
+
+---
+
+## Step 2: What We’re Checking
+
+1. Ensure the **owner** of the file is `root`.
+2. Ensure the file belongs to the **root group**.
+3. Ensure the **mode/permissions** are `0600` → read/write for root only.
+
+---
+
+## Step 3: Validate the Profile
+
+```bash
+cinc-auditor check ubuntu
+```
+
+### Command Output
+
+```
+Location :   ubuntu
+Profile :    ubuntu
+Controls :   1
+Timestamp :  2025-03-24T07:51:41+00:00
+Valid :      true
+
+No errors, warnings, or offenses
+```
+
+---
+
+## Step 4: Run the Profile Locally
+
+```bash
+cinc-auditor exec ubuntu
+```
+
+### Command Output
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+  ✔  ubuntu-5.2.1: Ensure permissions on /etc/ssh/sshd_config are configured
+     ✔  File /etc/ssh/sshd_config owner is expected to eq "root"
+     ✔  File /etc/ssh/sshd_config group is expected to eq "root"
+     ✔  File /etc/ssh/sshd_config mode is expected to cmp == "0600"
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 3 successful, 0 failures, 0 skipped
+```
+
+---
+
+✅ Perfect! We got **1 successful control** with **3 successful checks**, meaning our DevSecOps Box is following compliance requirements.
+
+---
+
+Let’s move to the next step.
+
+```
+```
+````markdown
+# Run the CinC Auditor Profile Against a Remote Server
+
+Let’s try to run the custom profile created by us against the remote server.
+
+---
+
+## Step 1: Prevent SSH Prompt
+
+```bash
+echo "StrictHostKeyChecking accept-new" >> ~/.ssh/config
+````
+
+---
+
+## Step 2: Run CinC Auditor
+
+```bash
+cinc-auditor exec ubuntu -t ssh://root@prod-kr6k1mdm -i ~/.ssh/id_rsa --chef-license accept
+```
+
+---
+
+### Command Output
+
+```
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    ssh://root@prod-kr6k1mdm:22
+Target ID: d4ed4341-356c-5d00-bb51-e884057b9868
+
+  ×  ubuntu-5.2.1: Ensure permissions on /etc/ssh/sshd_config are configured (1 failed)
+     ✔  File /etc/ssh/sshd_config owner is expected to eq "root"
+     ✔  File /etc/ssh/sshd_config group is expected to eq "root"
+     ×  File /etc/ssh/sshd_config mode is expected to cmp == "0600"
+
+     expected: 0600
+          got: 0666
+
+     (compared using `cmp` matcher)
+
+
+
+Profile Summary: 0 successful controls, 1 control failure, 0 controls skipped
+Test Summary: 2 successful, 1 failure, 0 skipped
+```
+
+---
+
+## Step 3: Understanding the Options
+
+* **`-t`** → tells the target machine to run the profile against.
+* **`-i`** → provides the path where the remote machine’s SSH key is stored.
+* **`--chef-license accept`** → ensures that we are accepting the license agreement, preventing prompts.
+
+---
+
+## Step 4: Results
+
+❌ As expected, our production machine is **not hardened yet**, so we have **1 control failure**.
+
+* Owner = ✅ root
+* Group = ✅ root
+* Permissions = ❌ `0666` instead of `0600`
+
+---
+
+## Step 5: How to Fix?
+
+To harden the production environment, apply the following:
+
+```bash
+chown root:root /etc/ssh/sshd_config
+chmod 600 /etc/ssh/sshd_config
+```
+
+After applying the fix, rerun the **CinC Auditor profile** to confirm compliance.
+
+```
+```
+```markdown
+CinC Auditor Dependencies
+Setup CinC Auditor
+CinC Auditor is an open-source framework for testing and auditing your applications and infrastructure. CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code. CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation. CINC Auditor is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.
+
+Source: CINC Project website
+
+Let’s install the CinC Auditor on the system to learn Compliance as Code (CaC).
+
+Install the CinC Auditor package via script.
+
+```
+
+curl [https://omnitruck.cinc.sh/install.sh](https://omnitruck.cinc.sh/install.sh) | sudo bash -s -- -P cinc-auditor -v 6
+
+```
+
+Command Output
+```
+
+Selecting previously unselected package cinc-auditor.
+(Reading database ... 23362 files and directories currently installed.)
+Preparing to unpack .../cinc-auditor\_6.8.24-1\_amd64.deb ...
+You're about to install Cinc Auditor!
+Unpacking cinc-auditor (6.8.24-1) ...
+Setting up cinc-auditor (6.8.24-1) ...
+Symlinking inspec command to cinc-auditor for compatibility...
+Thank you for installing Cinc Auditor!
+
+```
+
+Create the profile  
+Create a new folder and cd into that folder.
+
+```
+
+mkdir cis-ubuntu
+
+```
+```
+
+cd cis-ubuntu
+
+```
+
+Test the barebone profile
+
+```
+
+cinc-auditor init profile ubuntu --chef-license accept
+
+```
+
+Command Output
+```
+
+─────────────────────────── InSpec Code Generator ───────────────────────────
+
+Creating new profile at /cis-ubuntu/ubuntu
+• Creating file README.md
+• Creating directory /cis-ubuntu/ubuntu/controls
+• Creating file controls/example.rb
+• Creating file inspec.yml
+
+```
+
+Let’s move to the next step to learn about CinC Auditor dependencies.
+```
+```markdown
+CinC Auditor Dependencies
+In addition to its own controls, a CinC Auditor profile can bring in the controls from another CinC Auditor profile.
+
+Additionally, when inheriting the controls of another profile, a profile can skip or even modify those included controls.
+
+Defining the dependency  
+To do so, we need to specify the included profiles into the including profile’s inspec.yml file in the depends section.
+
+For each profile to be included, a location for the profile from where to be fetched and a name for the profile should be included.
+
+We can include different sources of the profiles such as a path, URL, GitHub, supermarkets or compliance. In this exercise, we fetch 2 profiles, the SSH baseline from GitHub via the URL and Linux Baseline from the Supermarket.
+
+For example:
+
+```
+
+rm ubuntu/inspec.yml
+
+```
+```
+
+cat >> ubuntu/inspec.yml <\<EOL
+name: profile-dependency
+title: Profile with Dependencies
+maintainer: CinC Auditor Authors
+copyright: CinC Auditor Authors
+copyright\_email: [support@chef.io](mailto:support@chef.io)
+license: Apache-2.0
+summary: CinC Auditor Profile that is only consuming dependencies
+version: 0.2.0
+depends:
+
+* name: SSH baseline
+  url: [https://github.com/dev-sec/ssh-baseline/archive/master.tar.gz](https://github.com/dev-sec/ssh-baseline/archive/master.tar.gz)
+* name: Linux Baseline
+  url: [https://github.com/dev-sec/linux-baseline/archive/master.tar.gz](https://github.com/dev-sec/linux-baseline/archive/master.tar.gz)
+  EOL
+
+```
+
+The inspec.yml file will be read in order to source any profile dependencies when you execute a local profile. Thereafter, it will cache the dependencies locally and generate an inspec.lock file.
+
+```
+
+cd ubuntu
+
+```
+```
+
+cinc-auditor vendor
+
+```
+
+Command Output
+```
+
+Dependencies for profile /cis-ubuntu/ubuntu successfully vendored to /cis-ubuntu/ubuntu/vendor
+
+```
+```
+
+cd ..
+
+```
+
+Run the CinC Auditor tool to test for compliance against a server  
+Let’s try to run the custom profile created by us against the server. Before executing the profile we need to execute the below command to avoid being prompted with Yes or No when connecting to a server via ssh.
+
+```
+
+echo "StrictHostKeyChecking accept-new" >> \~/.ssh/config
+
+```
+
+This commands prevent the ssh agent from prompting YES or NO question
+
+Let’s add include_controls inside ubuntu/controls/example.rb file to make CinC Auditor able to include the dependencies in scanning.
+
+```
+
+cat >> ubuntu/controls/example.rb << EOL
+
+# copyright: 2018, The Authors
+
+title "sample section"
+
+# you can also use plain tests
+
+describe file("/tmp") do
+it { should be\_directory }
+end
+
+# you add controls here
+
+control "tmp-1.0" do                        # A unique ID for this control
+impact 0.7                                # The criticality, if this control fails.
+title "Create /tmp directory"             # A human-readable title
+desc "An optional description..."
+describe file("/tmp") do                  # The actual test
+it { should be\_directory }
+end
+end
+
+include\_controls 'SSH baseline'
+include\_controls 'Linux Baseline'
+EOL
+
+```
+
+Let’s run CinC Auditor with the following options.
+
+```
+
+cinc-auditor exec ubuntu -t ssh://root\@prod-kr6k1mdm -i \~/.ssh/id\_rsa --chef-license accept
+
+```
+
+Woah! there’s lots going on here. Lets explore these options one by one.
+
+The flags/options used in the above commands are:
+
+- `-t` : tells the target machine to run the profile against.  
+- `-i` : provides the path where the remote machine’s ssh key is stored.  
+- `--chef-license : accept` ensures that we are accepting license agreement there by preventing the cinc-auditor from prompting YES or NO question.
+```
+```markdown
+CinC Auditor Dependencies  
+Additional Resources  
+https://docs.chef.io/inspec/profiles  
+https://supermarket.chef.io/tools?q=baseline&platforms%5B%5D=
+```
+
+Let me know if you'd like to expand each bullet with descriptions or embed the actual links in Markdown format—I'm ready to follow your instructions exactly, every time!
+```markdown
+Create CinC Auditor Profile for CIS Benchmark
+Install CinC Auditor Tool
+CinC Auditor is an open-source framework for testing and auditing your applications and infrastructure. CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code. CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation. CINC Auditor is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.
+
+Source CINC Project website.
+
+Let’s install the CinC Auditor on the system.
+
+Install the CinC Auditor package via script.
+
+```
+
+curl [https://omnitruck.cinc.sh/install.sh](https://omnitruck.cinc.sh/install.sh) | sudo bash -s -- -P cinc-auditor -v 6
+
+```
+
+Command Output
+```
+
+Selecting previously unselected package cinc-auditor.
+(Reading database ... 23362 files and directories currently installed.)
+Preparing to unpack .../cinc-auditor\_6.8.24-1\_amd64.deb ...
+You're about to install Cinc Auditor!
+Unpacking cinc-auditor (6.8.24-1) ...
+Setting up cinc-auditor (6.8.24-1) ...
+Symlinking inspec command to cinc-auditor for compatibility...
+Thank you for installing Cinc Auditor!
+
+```
+
+We have successfully installed the CinC Auditor tool, let’s explore the functionality it provides us.
+
+```
+
+cinc-auditor --help
+
+```
+
+Command Output
+```
+
+Commands:
+cinc-auditor archive PATH                                  # Archive a profile to a tar file (default) or zip file.
+cinc-auditor automate SUBCOMMAND or compliance SUBCOMMAND  # Cinc Dashboard commands
+cinc-auditor check PATH                                    # Verify the metadata in the `inspec.yml` file, verify that control blocks have the corre...
+cinc-auditor clear\_cache                                   # clears the InSpec cache. Useful for debugging.
+cinc-auditor detect                                        # detects the target OS.
+cinc-auditor env                                           # Outputs shell-appropriate completion configuration.
+cinc-auditor exec LOCATIONS                                # Run all test files at the specified locations.
+cinc-auditor export PATH                                   # read the profile in PATH and generate a summary in the given format.
+cinc-auditor habitat SUBCOMMAND                            # Manage Habitat with Cinc Auditor
+cinc-auditor help \[COMMAND]                                # Describe available commands or one specific command
+cinc-auditor init SUBCOMMAND                               # Generate InSpec code
+cinc-auditor json PATH                                     # read all tests in the PATH and generate a JSON summary.
+cinc-auditor parallel SUBCOMMAND \[options]                 # Runs Cinc Auditor operations parallely
+cinc-auditor plugin SUBCOMMAND                             # Manage Cinc Auditor and Train plugins
+cinc-auditor shell                                         # open an interactive debugging shell.
+cinc-auditor sign SUBCOMMAND                               # Manage Cinc Auditor profile signing.
+cinc-auditor supermarket SUBCOMMAND ...                    # Supermarket commands
+cinc-auditor vendor PATH                                   # Download all dependencies and generate a lockfile in a `vendor` directory
+cinc-auditor version                                       # prints the version of this tool.
+
+Options:
+l, \[--log-level=LOG\_LEVEL]                        # Set the log level: info (default), debug, warn, error
+\[--log-location=LOG\_LOCATION]                  # Location to send diagnostic log messages to. (default: \$stdout or Inspec::Log.error)
+\[--diagnose], \[--no-diagnose]                  # Show diagnostics (versions, configurations)
+\[--color], \[--no-color]                        # Use colors in output.
+\[--interactive], \[--no-interactive]            # Allow or disable user interaction
+\[--disable-user-plugins]                       # Disable loading all plugins that the user installed.
+\[--enable-telemetry], \[--no-enable-telemetry]  # Allow or disable telemetry
+\# Default: true
+\[--chef-license=CHEF\_LICENSE]                  # Accept the license for this product and any contained products: accept, accept-no-persist, accept-silent
+
+About Cinc Auditor:
+Patents: chef.io/patents
+
+```
+
+Let’s move to the next step.
+```
+```markdown
+Create the profile with CIS Benchmark
+We will create a custom profile for CinC Auditor using the commands and best practices mentioned in CIS Ubuntu 18.04 Benchmark; you can download the CIS Ubuntu 18.04 Benchmark PDF from here.
+
+Please refer the page no. 370, “Configure Sudo” for more information. Let’s convert the audit steps mentioned in the CIS Benchmark into a custom CinC Auditor profile.
+
+In short, we need to do two things to create a profile.  
+1. Figure out the command/tool that needs to be run to ascertain the state of the system.  
+2. Add the above command to the CinC Auditor profile.  
+
+Let’s go ahead and create the CinC Auditor profile.
+
+To store our CinC Auditor profile, we will create a new folder and cd into the newly created folder.
+
+```
+
+mkdir cis-ubuntu && cd cis-ubuntu
+
+```
+
+Use the cinc-auditor init command to create an Ubuntu CinC Auditor profile.
+
+```
+
+cinc-auditor init profile ubuntu --chef-license accept
+
+```
+
+Run the following command to append the CinC Auditor task to the ubuntu/controls/configure_sudo.rb file. If you wish, you can edit the file using nano or any text editor.
+
+```
+
+cat >> ubuntu/controls/configure\_sudo.rb <\<EOL
+control 'ubuntu-1.3.1' do
+title 'Ensure sudo is installed'
+desc 'sudo allows a permitted user to execute a command as the superuser or another user, as specified by the security policy.'
+describe package('sudo') do
+it { should be\_installed }
+end
+end
+
+control 'ubuntu-1.3.2' do
+title 'Ensure sudo commands use pty'
+desc 'Attackers can run a malicious program using sudo, which would again fork a background process that remains even when the main program has finished executing.'
+describe command('grep -Ei "^\s*Defaults\s+(\[^#]+,\s*)?use\_pty(,\s+\S+\s\*)*(\s+#.*)?\$" /etc/sudoers').stdout do
+it { should include 'Defaults use\_pty' }
+end
+end
+
+control 'ubuntu-1.3.3' do
+title 'Ensure sudo log file exists'
+desc 'Attackers can run a malicious program using sudo, which would again fork a background process that remains even when the main program has finished executing.'
+describe command('grep -Ei "^\s\*Defaults\s+logfile=\S+" /etc/sudoers').stdout do
+it { should include 'Defaults logfile=' }
+end
+end
+EOL
+
+```
+
+Remove the ubuntu/controls/example.rb file, as we will not use it in this profile.
+
+```
+
+rm ubuntu/controls/example.rb
+
+```
+
+Can you use the command resource to check if the package is installed or not in the system?
+
+If you notice in the above CinC Auditor profile script, you will see a couple of new terms like package and command. These terms are called resources; think of them as modules or plugins that help you achieve something in the system.
+
+- command resource  
+- package resource  
+
+For now, let’s move forward. If you wish to explore these resources further, you can use the above links.
+
+The above code checks if the sudo package is installed. We are also checking if the file /etc/sudoers contain some sane security defaults. The CIS benchmark PDF provides us the needed commands to audit the system’s state, and we are using these commands to convert them into CinC Auditor checks.
+
+We tried to keep everything simple in this exercise for the sake of simplicity, but you do need to implement most of these checks in your organization. If we have a few hundred ubuntu servers to patch, maintain or ensure compliance, do you think we can/should do these manually? No, we should create a CinC Auditor profile to automate our compliance checks. This process is what most people call Compliance as Code.
+
+Let’s validate the profile to ensure there are no syntax errors.
+
+```
+
+cinc-auditor check ubuntu
+
+```
+
+Command Output
+```
+
+Location :   ubuntu
+Profile :    ubuntu
+Controls :   3
+Timestamp :  2025-03-21T10:02:45+00:00
+Valid :      true
+
+No errors, warnings, or offenses
+
+```
+
+Now run the profile on the local machine before executing it against a server. If we do not provide any server details, it runs on the local machine by default.
+
+```
+
+cinc-auditor exec ubuntu
+
+```
+
+Command Output
+```
+
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+✔  ubuntu-1.3.1: Ensure sudo is installed
+✔  System Package sudo is expected to be installed
+×  ubuntu-1.3.2: Ensure sudo commands use pty
+×  Defaults        use\_pty
+is expected to include "Defaults use\_pty"
+expected "Defaults\tuse\_pty\n" to include "Defaults use\_pty"
+Diff:
+@@ -1 +1 @@
+-Defaults use\_pty
++Defaults  use\_pty
+
+×  ubuntu-1.3.3: Ensure sudo log file exists
+×  is expected to include "Defaults logfile="
+expected "" to include "Defaults logfile="
+
+```
+
+Profile Summary: 1 successful control, 2 control failures, 0 controls skipped  
+Test Summary: 1 successful, 2 failures, 0 skipped  
+
+Let’s move to the next step.
+```
+```markdown
+Run the CinC Auditor against a remote server
+Let’s try to run the custom profile we just created against a remote server.
+
+Before executing the profile, we need to implement the password-less SSH login mechanism between the local machine and the remote machine.
+
+To configure passwordless SSH login, we need to implement the following two steps.  
+1. Get rid of the SSH key verification checks.  
+2. Copy your local SSH public key into the remote machine.  
+
+We have already taken care of step 2 for you, so you only need to deal with step 1. Obviously, we can achieve the objectives of step 1 in multiple ways. Here, we are disabling host key checks, but it’s a bad idea to do this in production. Please research why this is a bad idea!
+
+```
+
+echo "StrictHostKeyChecking accept-new" >> \~/.ssh/config
+
+```
+
+As mentioned before, the above command prevents the ssh agent from prompting YES or NO question.
+
+Let’s run our newly created ubuntu CinC Auditor profile against our production server (prod-kr6k1mdm)
+
+```
+
+cinc-auditor exec ubuntu -t ssh://root\@prod-kr6k1mdm -i \~/.ssh/id\_rsa --chef-license accept
+
+```
+
+Command Output
+```
+
+Profile:   InSpec Profile (ubuntu)
+Version:   0.1.0
+Target:    ssh://root\@prod-kr6k1mdm:22
+Target ID: d4ed4341-356c-5d00-bb51-e884057b9868
+
+✔  ubuntu-1.3.1: Ensure sudo is installed
+✔  System Package sudo is expected to be installed
+×  ubuntu-1.3.2: Ensure sudo commands use pty
+×  Defaults        use\_pty
+is expected to include "Defaults use\_pty"
+expected "Defaults\tuse\_pty\n" to include "Defaults use\_pty"
+Diff:
+@@ -1 +1 @@
+-Defaults use\_pty
++Defaults  use\_pty
+
+×  ubuntu-1.3.3: Ensure sudo log file exists
+×  is expected to include "Defaults logfile="
+expected "" to include "Defaults logfile="
+
+```
+
+Profile Summary: 1 successful control, 2 control failures, 0 controls skipped  
+Test Summary: 1 successful, 2 failures, 0 skipped  
+
+Woah! Lot is going on here. Let’s explore these options one by one.
+
+The flags/options used in the above commands are:
+- `-t` specifies the target machine to run the CinC Auditor profile against. Here, we are using SSH as a remote login mechanism, but we can also use winrm (windows), container (docker), etc.
+- `-i` provides the path where the remote/local machine’s ssh key is stored.
+- `--chef-license` option ensures that we are accepting the license agreement automatically.
+
+We can see that we have about 1 successful control check and 2 control failures.
+
+Let’s move to the next step.
+```
+```markdown
+Challenges
+Read the documentation about OS Resources  
+Understand the difference between command and service resource  
+Please do whatever it takes on the production machine to achieve the following CinC Auditor output
+
+Command Output
+```
+
+```
+Profile: InSpec Profile (ubuntu)
+Version: 0.1.0
+Target:  ssh://root@prod-kr6k1mdm:22
+
+✔  ubuntu-1.3.1: Ensure sudo is installed
+   ✔  System Package sudo is expected to be installed
+✔  ubuntu-1.3.2: Ensure sudo commands use pty
+   ✔  Defaults use_pty
+      is expected to include "Defaults use_pty"
+✔  ubuntu-1.3.3: Ensure sudo log file exists
+   ✔  Defaults logfile="/var/log/sudo.log"
+      is expected to include "Defaults logfile="
+
+Profile Summary: 3 successful controls, 0 control failures, 0 controls skipped
+Test Summary: 3 successful, 0 failures, 0 skipped
+```
+
+```
+
+Hint  
+Once you edit the `/etc/sudoers` file, it should look like the following output
+
+Command Output
+```
+
+\~# cat /etc/sudoers
+
+#
+
+# This file MUST be edited with the 'visudo' command as root.
+
+#
+
+# Please consider adding local content in /etc/sudoers.d/ instead of
+
+# directly modifying this file.
+
+#
+
+# See the man page for details on how to write a sudoers file.
+
+#
+
+Defaults        env\_reset
+Defaults        mail\_badpass
+Defaults        secure\_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults use\_pty
+Defaults logfile="/var/log/sudo.log"
+
+```
+```
+```markdown
+CinC Auditor With ASVS Controls
+Setup CinC Auditor
+CinC Auditor is an open-source framework for testing and auditing your applications and infrastructure. CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code. CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation. CINC Auditor is a free alternative to Chef InSpec, built from the same codebase, allowing users to perform compliance scanning without needing a paid license.
+
+Source: CINC Project website
+
+Let’s install CinC Auditor on the system to learn Compliance as Code (CaC).
+
+Install the CinC Auditor package via script.
+
+```
+
+curl [https://omnitruck.cinc.sh/install.sh](https://omnitruck.cinc.sh/install.sh) | sudo bash -s -- -P cinc-auditor -v 6
+
+```
+
+Create a new folder and cd into that folder.
+
+```
+
+mkdir cinc-asvs
+
+```
+```
+
+cd cinc-asvs
+
+```
+
+Create a new CinC Auditor profile  
+Let’s create a new CinC Auditor profile named asvs with the cinc-auditor init command.
+
+```
+
+cinc-auditor init profile asvs --chef-license accept
+
+```
+
+Command Output
+```
+
+─────────────────────────── InSpec Code Generator ───────────────────────────
+
+Creating new profile at /cinc-asvs/asvs
+• Creating file README.md
+• Creating directory /cinc-asvs/asvs/controls
+• Creating file controls/example.rb
+• Creating file inspec.yml
+
+```
+
+Let’s move to the next step and learn how to modify the new CinC Auditor profile to satisfy a few ASVS requirements.
+```
+```markdown
+Add ASVS controls to the custom CinC Auditor profile
+We need to add the newly created controls into the profile and run them against a system to check for compliance.
+
+To do this, CinC Auditor provides us with a command resource/method.
+
+Let’s have a look at InSpec documentation for the command resource.
+
+As mentioned above, we can use this resource to execute commands like the grep we ran in the last step. Once a command returns its output, we can use stdout(aka output) to compare it against the desired/expected value in our profile.
+
+We will use the following command to replace the CinC Auditor task in the file asvs/controls/example.rb. If you wish, you can edit the file manually, using nano or any text editor.
+
+```
+
+cat > asvs/controls/example.rb <\<EOL
+control 'ASVS-14.4.1' do
+impact 0.7
+title 'Safe character set'
+desc 'HTTP response contains content type header with safe character set'
+describe http('[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)') do
+its ('headers.Content-type') { should cmp 'text/html; charset=utf-8'}
+end
+end
+
+control 'ASVS-14.4.2' do
+impact 0.7
+title 'Contain Content Disposition header attachment'
+desc "Add Content-Disposition header to the server's configuration, Add 'attachment' directive to the header."
+describe http('[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)') do
+its ('headers.content-disposition') { should cmp 'attachment' }
+end
+end
+
+control 'ASVS-14.4.3' do
+impact 0.7
+title 'Content Security Policy Options != none / contain unsafe-inline;unsafe-eval;\* '
+desc "Ensure that CSP is not configured with the directives: 'unsafe-inline', 'unsafe-eval' and wildcards."
+describe http('[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)') do
+its ('headers.content-security-policy') { should\_not cmp 'none' }
+its ('headers.content-security-policy') { should\_not include 'unsafe-inline;unsafe-eval;\*'}
+end
+end
+
+control 'ASVS-14.4.4' do
+impact 0.7
+title 'Content type Options = no sniff'
+desc 'All responses should contain X-Content-Type-Options=nosniff'
+describe http('[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)') do
+its ('headers.x-content-type-options') { should cmp 'nosniff'}
+end
+end
+
+control 'ASVS-14.4.5' do
+impact 0.7
+title 'HSTS is using directives max-age=15724800'
+desc 'Verify that HTTP Strict Transport Security headers are included on all responses and for all subdomains, such as Strict-Transport-Security: max-age=15724800; includeSubDomains.'
+describe http('[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)') do
+its ('headers.Strict-Transport-Security') { should match /\d/ }
+end
+end
+
+control 'ASVS-14.4.6' do
+impact 0.7
+title "'Referrer-Policy' header is included"
+desc "HTTP requests may include Referrer header, which may expose sensitive information. Referrer-Policy restiricts how much information is sent in the Referer header."
+describe http('[https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)') do
+its ('headers.referrer-policy') { should cmp 'no-referrer; same-origin' }
+end
+end
+EOL
+
+```
+
+Jokes aside, let’s validate the profile to ensure there are no syntax errors.
+
+```
+
+cinc-auditor check asvs
+
+```
+
+Command Output
+```
+
+Location :   asvs
+Profile :    asvs
+Controls :   6
+Timestamp :  2025-03-24T07:21:21+00:00
+Valid :      true
+
+No errors, warnings, or offenses
+
+```
+
+Now, run the profile on the local-machine before executing it on the remote server.
+
+```
+
+cinc-auditor exec asvs
+
+```
+
+Command Output
+```
+
+Profile:   InSpec Profile (asvs)
+Version:   0.1.0
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+✔  ASVS-14.4.1: Safe character set
+✔  HTTP GET on [https://prod-hqhxltuf.lab.practical-devsecops.training](https://prod-hqhxltuf.lab.practical-devsecops.training) headers.Content-type is expected to cmp == "text/html; charset=utf-8"
+×  ASVS-14.4.2: Contain Content Disposition header attachment
+×  HTTP GET on [https://prod-hqhxltuf.lab.practical-devsecops.training](https://prod-hqhxltuf.lab.practical-devsecops.training) headers.content-disposition is expected to cmp == "attachment"
+
+```
+ expected: attachment
+      got: 
+
+ (compared using `cmp` matcher)
+```
+
+×  ASVS-14.4.3: Content Security Policy Options != none / contain unsafe-inline;unsafe-eval;\*  (1 failed)
+✔  HTTP GET on [https://prod-hqhxltuf.lab.practical-devsecops.training](https://prod-hqhxltuf.lab.practical-devsecops.training) headers.content-security-policy is expected not to cmp == "none"
+×  HTTP GET on [https://prod-hqhxltuf.lab.practical-devsecops.training](https://prod-hqhxltuf.lab.practical-devsecops.training) headers.content-security-policy is expected not to include "unsafe-inline;unsafe-eval;\\*"
+expected nil not to include "unsafe-inline;unsafe-eval;\\*", but it does not respond to `include?`
+×  ASVS-14.4.4: Content type Options = no sniff
+×  HTTP GET on [https://prod-hqhxltuf.lab.practical-devsecops.training](https://prod-hqhxltuf.lab.practical-devsecops.training) headers.x-content-type-options is expected to cmp == "nosniff"
+
+```
+ expected: nosniff
+      got: 
+
+ (compared using `cmp` matcher)
+```
+
+×  ASVS-14.4.5: HSTS is using directives max-age=15724800
+×  HTTP GET on [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) headers.Strict-Transport-Security is expected to match /\d/
+expected nil to match /\d/
+×  ASVS-14.4.6: 'Referrer-Policy' header is included
+×  HTTP GET on [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training) headers.referrer-policy is expected to cmp == "no-referrer; same-origin"
+
+```
+ expected: no-referrer; same-origin
+      got: 
+
+ (compared using `cmp` matcher)
+```
+
+```
+
+Profile Summary: 1 successful control, 5 control failures, 0 controls skipped  
+Test Summary: 2 successful, 5 failures, 0 skipped  
+
+You can review from the output above, that there are two passed controls, and five failed controls when we ran the CinC Auditor ASVS profile on the application running at the URL https://prod-kr6k1mdm.lab.practical-devsecops.training.
+
+Try pointing the CinC Auditor ASVS tests to another URL of your choice, and then explore the CinC Auditor test results.
+
+CinC Auditor tests to test web URLs can also be integrated in to CI/CD pipelines.
+```
+```markdown
+Docker Compliance Using CinC Auditor
+Install CinC Auditor Tool
+CinC Auditor is an open-source framework for testing and auditing your applications and infrastructure. CinC Auditor works by comparing the actual state of your system with the desired state that you express in easy-to-read and easy-to-write code. CinC Auditor detects violations and displays findings in the form of a report, but puts you in control of remediation.
+
+Source: CINC Project website.
+
+Let’s install the CinC Auditor on the system to learn Compliance as code.
+
+Install the CinC Auditor package via script.
+
+```
+
+curl [https://omnitruck.cinc.sh/install.sh](https://omnitruck.cinc.sh/install.sh) | sudo bash -s -- -P cinc-auditor -v 6
+
+```
+
+Command Output
+```
+
+Selecting previously unselected package cinc-auditor.
+(Reading database ... 23362 files and directories currently installed.)
+Preparing to unpack .../cinc-auditor\_6.8.24-1\_amd64.deb ...
+You're about to install Cinc Auditor!
+Unpacking cinc-auditor (6.8.24-1) ...
+Setting up cinc-auditor (6.8.24-1) ...
+Symlinking inspec command to cinc-auditor for compatibility...
+Thank you for installing Cinc Auditor!
+
+```
+
+We have successfully installed the CinC Auditor tool, let’s explore the functionality it provides us.
+
+```
+
+cinc-auditor --help
+
+```
+
+Command Output
+```
+
+Commands:
+cinc-auditor archive PATH                                  # Archive a pr...
+cinc-auditor automate SUBCOMMAND or compliance SUBCOMMAND  # Cinc Dashboa...
+cinc-auditor check PATH                                    # Verify the m...
+cinc-auditor clear\_cache                                   # clears the I...
+cinc-auditor detect                                        # detects the ...
+cinc-auditor env                                           # Outputs shel...
+cinc-auditor exec LOCATIONS                                # Run all test...
+cinc-auditor export PATH                                   # read the pro...
+cinc-auditor habitat SUBCOMMAND                            # Manage Habit...
+cinc-auditor help \[COMMAND]                                # Describe ava...
+cinc-auditor init SUBCOMMAND                               # Generate InS...
+cinc-auditor json PATH                                     # read all tes...
+cinc-auditor parallel SUBCOMMAND \[options]                 # Runs Cinc Au...
+cinc-auditor plugin SUBCOMMAND                             # Manage Cinc ...
+cinc-auditor shell                                         # open an inte...
+cinc-auditor sign SUBCOMMAND                               # Manage Cinc ...
+cinc-auditor supermarket SUBCOMMAND ...                    # Supermarket ...
+cinc-auditor vendor PATH                                   # Download all...
+cinc-auditor version                                       # prints the v...
+
+Options:
+l, \[--log-level=LOG\_LEVEL]                        # Set the log level: info (default), debug, warn, error
+\[--log-location=LOG\_LOCATION]                  # Location to send diagnostic log messages to. (default: \$stdout or Inspec::Log.error)
+\[--diagnose], \[--no-diagnose]                  # Show diagnostics (versions, configurations)
+\[--color], \[--no-color]                        # Use colors in output.
+\[--interactive], \[--no-interactive]            # Allow or disable user interaction
+\[--disable-user-plugins]                       # Disable loading all plugins that the user installed.
+\[--enable-telemetry], \[--no-enable-telemetry]  # Allow or disable telemetry
+\# Default: true
+\[--chef-license=CHEF\_LICENSE]                  # Accept the license for this product and any contained products: accept, accept-no-persist, accept-silent
+
+About Cinc Auditor:
+Patents: chef.io/patents
+
+```
+
+Let’s move to the next step.
+```
+```markdown
+Run the CinC Auditor profile
+In addition to scanning a host, we can also use CinC Auditor to inspect a running container or the Docker Daemon itself. We can define compliance controls in our organization and avoid running containers that do not satisfy the organization’s compliance baselines.
+
+Lets try to check whether our servers follow the CIS Docker Benchmark best practices using the Dev-Sec’s cis-docker-benchmark CinC Auditor profile.
+
+Before that, the execution along with git URL required .git suffix directory inside of empty git directory named cinc-profiles.
+
+Initializing an empty git repository in a new directory allows CinC Auditor to run the profile directly from the remote GitHub repository URL without the ‘.git’ suffix.
+
+```
+
+mkdir cinc-profiles && cd cinc-profiles
+
+```
+
+Let’s run the profile against the DevSecOps Box(local machine).
+
+```
+
+cinc-auditor exec [https://github.com/dev-sec/cis-docker-benchmark.git](https://github.com/dev-sec/cis-docker-benchmark.git) --chef-license accept
+
+```
+
+Command Output
+```
+
+Profile:   CIS Docker Benchmark Profile (cis-docker-benchmark)
+Version:   2.1.4
+Target:    local://
+Target ID: cc9c60c8-8752-5ce2-8d3a-74cde32ceecd
+
+×  docker-4.2: Use trusted base images for containers
+×  Environment variable DOCKER\_CONTENT\_TRUST content is expected to eq "1"
+
+```
+ expected: "1"
+      got: nil
+
+ (compared using ==)
+```
+
+↺  docker-4.3: Do not install unnecessary packages in the container
+↺  Do not install unnecessary packages in the container
+↺  docker-4.4: Rebuild the images to include security patches
+↺  Rebuild the images to include security patches
+×  docker-4.5: Enable Content trust for Docker
+×  Environment variable DOCKER\_CONTENT\_TRUST content is expected to eq "1"
+
+```
+ expected: "1"
+      got: nil
+
+ (compared using ==)
+```
+
+...\[SNIP]...
+
+×  host-1.12: Audit Docker files and directories - /etc/default/docker
+×  Auditd Rules
+Command `/sbin/auditctl` does not exist
+×  host-1.13: Audit Docker files and directories - /etc/docker/daemon.json
+×  Auditd Rules
+Command `/sbin/auditctl` does not exist
+×  host-1.14: Audit Docker files and directories - /usr/bin/docker-containerd
+×  Auditd Rules
+Command `/sbin/auditctl` does not exist
+×  host-1.15: Audit Docker files and directories - /usr/bin/docker-runc
+×  Auditd Rules
+Command `/sbin/auditctl` does not exist
+
+Profile Summary: 21 successful controls, 36 control failures, 18 controls skipped
+Test Summary: 108 successful, 78 failures, 18 skipped
+
+```
+
+You can see, the output does inform us about 21 successful controls and 36 control failures.
+
+The above profile not only helps us in scanning for daemon related misconfigurations but also running containers. Let’s try to run a docker container and see this functionality in action!
+
+```
+
+docker run -d --name alpine -it alpine /bin/sh
+
+```
+
+We can see all the running containers on a machine using the docker ps command.
+
+```
+
+docker ps
+
+```
+
+Command Output
+```
+
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+871af75c081a        alpine              "/bin/sh"           1 minute ago      Up 1 minute                           alpine
+
+```
+
+We will now run the linux-baseline profile against this container.
+
+```
+
+cinc-auditor exec [https://github.com/dev-sec/linux-baseline.git](https://github.com/dev-sec/linux-baseline.git) --chef-license accept -t docker://alpine
+
+```
+
+You can also use container name or container id as URI target
+
+Command Output
+```
+
+Profile:   DevSec Linux Security Baseline (linux-baseline)
+Version:   2.9.0
+Target:    docker://d8b343b4557b594b3e7f1f708baec433562a4fc980d82f9b0c894cff7e5f56ce
+Target ID: da39a3ee-5e6b-5b0d-b255-bfef95601890
+
+✔  os-01: Trusted hosts login
+✔  File /etc/hosts.equiv is expected not to exist
+×  os-02: Check owner and permissions for /etc/shadow (1 failed)
+✔  File /etc/shadow is expected to exist
+✔  File /etc/shadow is expected to be file
+✔  File /etc/shadow is expected to be owned by "root"
+✔  File /etc/shadow is expected not to be executable
+✔  File /etc/shadow is expected not to be readable by other
+✔  File /etc/shadow group is expected to eq "shadow"
+✔  File /etc/shadow is expected to be writable by owner
+✔  File /etc/shadow is expected to be readable by owner
+×  File /etc/shadow is expected not to be readable by group
+expected File /etc/shadow not to be readable by group
+
+...\[SNIP]...
+
+↺  sysctl-31b: Secure Core Dumps - dump path
+↺  Skipped control due to only\_if condition.
+↺  sysctl-32: kernel.randomize\_va\_space
+↺  Skipped control due to only\_if condition.
+↺  sysctl-33: CPU No execution Flag or Kernel ExecShield
+↺  Skipped control due to only\_if condition.
+↺  sysctl-34: Ensure links are protected
+↺  Skipped control due to only\_if condition.
+
+Profile Summary: 16 successful controls, 3 control failures, 38 controls skipped
+Test Summary: 42 successful, 9 failures, 39 skipped
+
+```
+
+Now that we have a container running, what would happen if we run the cis-docker-benchmark profile again on this machine?
+
+```
+
+cinc-auditor exec [https://github.com/dev-sec/cis-docker-benchmark.git](https://github.com/dev-sec/cis-docker-benchmark.git) --chef-license accept
+
+```
+
+Command Output
+```
+
+...\[SNIP]...
+
+Profile Summary: 35 successful controls, 47 control failures, 18 controls skipped
+Test Summary: 127 successful, 92 failures, 18 skipped
+
+```
+
+The output changes from 21 successful controls to 35 and 36 control failures to 47.
+
+This change is because of skipped container runtime checks as no containers were running when we first used this cinc-auditor profile. After we started a container, CinC Auditor also included runtime checks as part of the scan.
+
+We can verify this behaviour by visiting https://github.com/dev-sec/cis-docker-benchmark and selecting the container_runtime.rb under the controls directory.
+```
+```markdown
+Working With DefectDojo
+DefectDojo Model
+DefectDojo is a security tool that automates application security vulnerability management. It streamlines the application security testing process by offering features such as importing third-party security findings, merging and de-duping, integration with Jira, templating, report generation, and security metrics.
+
+Source: https://defectdojo.github.io/django-DefectDojo
+
+After logging into the DefectDojo system, you’ll see a default dashboard showing 1 Engagement, 0 Findings, and empty metrics.
+
+Machine Details  
+URL: dojo-kr6k1mdm.lab.practical-devsecops.training/  
+Username: root  
+Password: pdso-training  
+
+Product Type  
+Product Type is the top-level model in DefectDojo. It’s associated with other components like Product, Engagement, Finding, Endpoint, and Benchmark. You can use this model to categorize your products based on division, department, function, portfolio, application type, etc.
+
+In the DefectDojo machine, you’ll find the **All Product Types** option in the sidebar. You’ll see two types: **Research and Development** and **Web Application**.
+
+You can decide on product types with your team based on how your organization, teams, and products are structured.
+
+The general guideline is that product types should help manage and visualize vulnerabilities effectively, so necessary vulnerability metrics are shared with various teams accordingly.
+
+Product  
+This is the name of your project, program, or product whose vulnerabilities need to be managed. For example, Django API, Django Web, or a specific name like Django - Payment Service.
+
+Engagement  
+Your testing activity, associated with a name, timeline, how many tests are run, findings.
+
+Test  
+Tests are groups of activities conducted by engineers to discover vulnerabilities in a product. DefectDojo supports importing and managing vulnerabilities from a wide range of security tools including, but not limited to, Bandit, ZAP, BurpSuite, Checkmarx, Acunetix, Nessus, etc.
+
+Learn more about integrations, here
+
+Finding  
+Findings represent vulnerabilities discovered during testing. They are categorized by severity: Critical, High, Medium, Low, and Informational.
+
+Endpoint  
+An Endpoint represents the domain name or IP address of systems under test.
+
+Let’s move to the next step.
+```
+```markdown
+Run the Scanner
+Download the Source Code
+Let’s start by downloading the source code for our sample Rails project. We’ll perform all exercises locally on the DevSecOps-Box.
+
+First, let’s download the source code of our sample Rails project from the git repository.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/rails.git](https://gitlab.practical-devsecops.training/pdso/rails.git) webapp
+
+```
+
+Now, let’s change to the application directory so we can scan it.
+
+```
+
+cd webapp
+
+```
+
+Great! We have successfully navigated to the webapp directory. This is where we’ll perform our scan.
+
+Install SAST Tool  
+**Note**
+
+Installing the tool directly on your system can be time-consuming. Instead, we’ll use Docker to run the scanner, which is faster and doesn’t require installing additional libraries.
+
+We will use Docker to run the Brakeman scanner on our system to perform static analysis.
+
+```
+
+docker run --rm -v \$(pwd):/src hysnsec/brakeman -f json /src
+
+```
+
+As we learned in the DevSecOps Gospel, it’s important to store scan results in a JSON file. To achieve this, we’ll use the tee command. This command allows us to display the output on the screen and save it to a file at the same time.
+
+```
+
+docker run --rm -v \$(pwd):/src hysnsec/brakeman -f json /src | tee brakeman-result.json
+
+```
+
+As you can see, Brakeman has completed its scan successfully and identified several security issues.
+
+In the next step, we’ll learn how to upload this results file to DefectDojo for further analysis and management.
+```
+```markdown
+Create a New Engagement
+In this step, we’ll create a new engagement for our Ruby application.
+
+First, log into DefectDojo using these credentials:
+
+Machine Details  
+URL: dojo-kr6k1mdm.lab.practical-devsecops.training/  
+Username: root  
+Password: pdso-training  
+
+Let’s start by creating a “Product”. In the sidebar, click on **Add Product** and fill in the form with this information:
+
+| Name              | Value                                        |
+|-------------------|----------------------------------------------|
+| Name              | Rails                                        |
+| Description       | Web Application based on the Rails framework |
+| Product Type      | Web Application                              |
+| Business criticality | Medium                                    |
+| Platform          | Web                                          |
+
+Leave other form fields empty. In real-world scenarios, you’d fill in the Product manager, Technical contact, and Team manager fields. We only have one user named root, so if you want to add more specific users, create them first before assigning them to the new product.
+
+Click the **Submit** button to create your product in DefectDojo.
+
+Now, we can’t upload any scan reports because there’s no engagement. Let’s create one by clicking on **Engagements** in the menu and selecting **Add New Interactive Engagement**.
+
+Fill in the form with this information:
+
+| Name          | Value           |
+|---------------|-----------------|
+| Name          | SAST Scan       |
+| Description   | SAST activities |
+| Target start  | Pick any date as the engagement start date |
+| Target end    | Pick any date as the engagement end date   |
+| Status        | In Progress     |
+| Product       | Rails           |
+
+You can fill in other optional fields if you like, such as Version or Repo, etc. Fields marked with a * symbol are mandatory.
+
+Click the **Done** button.
+
+In the next step, we’ll explore how to programmatically upload the Brakeman result to DefectDojo.
+```
+```markdown
+Upload the Results to DefectDojo
+DefectDojo provides an API to upload scan results, which is an excellent feature for integrating with CI/CD processes.
+
+**Remember**  
+Not all security scanners can be integrated with DefectDojo.  
+
+Please refer to this link to check the available security scanners.
+
+We have created a simple upload script for you. You can download this script using the following command:
+
+```
+
+curl [https://gitlab.practical-devsecops.training/-/snippets/28/raw](https://gitlab.practical-devsecops.training/-/snippets/28/raw) -o upload-results.py
+
+```
+
+After downloading the `upload-results.py` script, we need to install the requests module using pip3. This is because the `upload-results.py` script uses methods from the Python requests module.
+
+```
+
+pip3 install requests
+
+```
+
+Now, let’s take a look at the options available in the `upload-results.py` script.
+
+```
+
+python3 upload-results.py --help
+
+```
+
+Command Output
+```
+
+usage: upload-results.py \[-h] --host HOST --api\_key API\_KEY --engagement\_id
+ENGAGEMENT\_ID --result\_file RESULT\_FILE --scanner
+SCANNER --product\_id PRODUCT\_ID --lead\_id LEAD\_ID
+\[--build\_id BUILD\_ID]
+
+CI/CD integration for DefectDojo
+
+optional arguments:
+-h, --help            show this help message and exit
+\--host HOST           DefectDojo Hostname
+\--api\_key API\_KEY     API v2 Key
+\--engagement\_id ENGAGEMENT\_ID
+Engagement ID
+\--result\_file RESULT\_FILE
+Scanner file
+\--scanner SCANNER     Type of scanner
+\--product\_id PRODUCT\_ID
+DefectDojo Product ID
+\--lead\_id LEAD\_ID     ID of the user conducting the testing
+\--environment ENVIRONMENT
+Environment name
+\--build\_id BUILD\_ID   Reference to external build id
+
+```
+
+To use the `upload-results.py` script effectively, we need to provide the following inputs:
+
+| Name       | Value                                                                 |
+|------------|-----------------------------------------------------------------------|
+| HOST       | https://dojo-kr6k1mdm.lab.practical-devsecops.training                |
+| USERNAME   | root                                                                  |
+| API_KEY    | Find it at https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2 |
+| ENGAGEMENT_ID | ID of the engagement, here it’s 1                                  |
+| PRODUCT_ID | ID of the product, here it’s 1                                        |
+| LEAD_ID    | ID of the user conducting the testing                                 |
+| ENVIRONMENT| Environment name                                                      |
+| SCANNER    | Name of the scanner (case sensitive), e.g., ZAP Scan, Bandit Scan, etc. |
+| RESULT_FILE| The path to the tool’s output file                                    |
+
+**Remember** the first note from this step? That’s where you can find the list of supported scanner names.
+
+To work with DefectDojo programmatically, we need to authenticate using an API key. Let’s get an API key using curl and save it as an environment variable called API_KEY. Use the following command:
+
+```
+
+export API\_KEY=\$(curl -s -XPOST -H 'content-type: application/json' [https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/](https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/) -d '{"username": "root", "password": "pdso-training"}' | jq -r '.token' )
+
+```
+
+Make sure the `API_KEY` displays an output when you run the `echo $API_KEY` command. If you don’t see the API_KEY echoed, please check that you can access the URL `https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2` after entering your DefectDojo credentials.
+
+If you can’t access the provided URL, please wait for 2 minutes to allow DefectDojo to fully provision. If you still can’t access it after waiting, you may need to restart the exercise. This is because the DefectDojo machine might have automatically shut down after its two-hour lifetime.
+
+Now that we have our API key, we can upload the Brakeman scan output (stored in the file `brakeman-result.json`) to DefectDojo.
+
+```
+
+python3 upload-results.py --host dojo-kr6k1mdm.lab.practical-devsecops.training --api\_key \$API\_KEY --engagement\_id 2 --product\_id 3 --lead\_id 1 --environment "Production" --result\_file brakeman-result.json --scanner "Brakeman Scan"
+
+```
+
+**Note**  
+Your engagement ID and product ID may differ from those in the example command. To find the correct IDs, visit DefectDojo and check the URL when viewing an engagement or product. For example, you might see `/engagement/3` in the URL, indicating an engagement ID of 3.
+
+After uploading the results, visit  
+`https://dojo-kr6k1mdm.lab.practical-devsecops.training/engagement/2`  
+to review the uploaded issues.
+
+You should now see the scan results in the engagement we created earlier.
+
+**Remember**  
+If you encounter a 500 error code, please verify that your **Engagements > Environments** has been configured correctly. Also, ensure that the report file format is supported, as specified in the DefectDojo documentation.
+
+Select the **Brakeman Scan**, and you will see many issues with Medium severity.
+
+You can also mark issues as **False Positives**. To do this, follow these steps:
+
+1. Click on the checkbox of one of the issues.  
+2. Look for the **Bulk Edit** option.  
+3. Choose **Medium** for the Severity type.  
+4. Check the **False Positive** button.  
+5. Click the **Submit** button.  
+
+For details, please refer to the following screenshots:
+
+- False Positive  
+- False Positive  
+
+After completing these steps, the status of the vulnerability will change to **Inactive, False Positive**.
+```
+```markdown
+Vulnerability Management With DefectDojo
+Download the source code
+We will begin by performing all exercises locally on the DevSecOps-Box. Let’s start with the first exercise.
+
+First, let’s download the project’s source code from our Git repository.
+
+```
+
+git clone [https://gitlab.practical-devsecops.training/pdso/django.nv](https://gitlab.practical-devsecops.training/pdso/django.nv) webapp
+
+```
+
+Now, let’s change to the application directory, so we can scan it.
+
+```
+
+cd webapp
+
+```
+
+We are now in the webapp directory.
+
+Let’s move to the next step.
+```
+```markdown
+Install Bandit
+The Bandit is a tool designed to find common security issues in Python code.
+
+It processes each file, builds an Abstract Syntax Tree (AST), and runs appropriate plugins against the AST nodes. After scanning all files, Bandit generates a report.
+
+Bandit was originally developed within the OpenStack Security Project and later rehomed to PyCQA.
+
+You can find more details about the project at https://github.com/PyCQA/bandit.
+
+Let’s install the Bandit scanner on the system to perform static analysis.
+
+```
+
+pip3 install bandit==1.7.1
+
+```
+
+Command Output
+```
+
+Collecting bandit==1.7.1
+Downloading bandit-1.7.1-py3-none-any.whl (113 kB)
+|████████████████████████████████| 113 kB 27.9 MB/s
+Requirement already satisfied: PyYAML>=5.3.1 in /usr/local/lib/python3.6/dist-packages (from bandit==1.7.1) (6.0)
+Collecting GitPython>=1.0.1
+Downloading GitPython-3.1.18-py3-none-any.whl (170 kB)
+|████████████████████████████████| 170 kB 95.4 MB/s
+Collecting stevedore>=1.20.0
+Downloading stevedore-3.5.0-py3-none-any.whl (49 kB)
+|████████████████████████████████| 49 kB 19.1 MB/s
+Requirement already satisfied: typing-extensions>=3.7.4.0 in /usr/local/lib/python3.6/dist-packages (from GitPython>=1.0.1->bandit==1.7.1) (4.1.1)
+Collecting gitdb<5,>=4.0.1
+Downloading gitdb-4.0.9-py3-none-any.whl (63 kB)
+|████████████████████████████████| 63 kB 6.0 MB/s
+Collecting pbr!=2.1.0,>=2.0.0
+Downloading pbr-5.8.1-py2.py3-none-any.whl (113 kB)
+|████████████████████████████████| 113 kB 76.2 MB/s
+Requirement already satisfied: importlib-metadata>=1.7.0 in /usr/local/lib/python3.6/dist-packages (from stevedore>=1.20.0->bandit==1.7.1) (4.8.3)
+Collecting smmap<6,>=3.0.1
+Downloading smmap-5.0.0-py3-none-any.whl (24 kB)
+Requirement already satisfied: zipp>=0.5 in /usr/local/lib/python3.6/dist-packages (from importlib-metadata>=1.7.0->stevedore>=1.20.0->bandit==1.7.1) (3.6.0)
+Installing collected packages: smmap, pbr, gitdb, stevedore, GitPython, bandit
+Successfully installed GitPython-3.1.18 bandit-1.7.1 gitdb-4.0.9 pbr-5.8.1 smmap-5.0.0 stevedore-3.5.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: [https://pip.pypa.io/warnings/venv](https://pip.pypa.io/warnings/venv)
+
+```
+
+We have successfully installed the Bandit scanner.
+
+Let’s move to the next step to run the scanner against a repository.
+```
+```markdown
+Run the scanner
+As we learned in the DevSecOps Gospel, we want to store the tool results in a JSON file. We’ll use the tee command to display the output and save it to a file at the same time.
+
+```
+
+bandit -r . -f json | tee bandit-output.json
+
+```
+
+Bandit ran successfully, and it found seven security issues.  
+1. One high severity issue  
+2. Five medium severity issue  
+3. One low severity issue  
+
+**Variable Scan Results**  
+Your results might slightly vary because of the dynamic landscape of changing vulnerabilities, and security updates.
+
+Let’s upload this file to DefectDojo in the next step.
+
+Let’s move to the next step.
+```
+```markdown
+Upload The Results To DefectDojo
+Now, let’s explore the DefectDojo application.
+
+DefectDojo provides an API to upload scan results, which is an excellent feature for integrating with CI/CD processes.
+
+**Note**  
+Not all security scanners can be integrated and used for uploading results to DefectDojo.  
+
+Please refer to this link to check the available security scanners.
+
+**Scan Option List**
+
+We have created a simple upload script for you. You can download this script using the following command:
+
+```
+
+curl [https://gitlab.practical-devsecops.training/-/snippets/28/raw](https://gitlab.practical-devsecops.training/-/snippets/28/raw) -o upload-results.py
+
+```
+
+Let’s explore the options this script provides.
+
+```
+
+python3 upload-results.py --help
+
+```
+
+Command Output
+```
+
+usage: upload-results.py \[-h] --host HOST --api\_key API\_KEY --engagement\_id
+ENGAGEMENT\_ID --result\_file RESULT\_FILE --scanner
+SCANNER --product\_id PRODUCT\_ID --lead\_id LEAD\_ID
+\[--build\_id BUILD\_ID]
+
+CI/CD integration for DefectDojo
+
+optional arguments:
+-h, --help            show this help message and exit
+\--host HOST           DefectDojo Hostname
+\--api\_key API\_KEY     API v2 Key
+\--engagement\_id ENGAGEMENT\_ID
+Engagement ID
+\--result\_file RESULT\_FILE
+Scanner file
+\--scanner SCANNER     Type of scanner
+\--product\_id PRODUCT\_ID
+DefectDojo Product ID
+\--lead\_id LEAD\_ID     ID of the user conducting the testing
+\--environment ENVIRONMENT
+Environment name
+\--build\_id BUILD\_ID   Reference to external build id
+
+```
+
+To use this script effectively, we need to provide the following inputs:
+
+| Name        | Value                                                                 |
+|-------------|-----------------------------------------------------------------------|
+| HOST        | https://dojo-kr6k1mdm.lab.practical-devsecops.training                |
+| USERNAME    | root                                                                  |
+| API_KEY     | Find it at https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2 |
+| ENGAGEMENT_ID | ID of the engagement, here its 1                                    |
+| PRODUCT_ID  | ID of product, here its 1                                             |
+| LEAD_ID     | ID of the user conducting the testing                                 |
+| ENVIRONMENT | Environment name                                                      |
+| SCANNER     | Name of the scanner, this is case sensitive e.g., ZAP Scan, Bandit Scan, etc |
+| RESULT_FILE | The path to the tool’s output                                         |
+
+You need to first log into the dojo website using the following credentials to fetch the API Key.
+
+**Machine Details**  
+Dojo URL: dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2  
+Username: root  
+Password: pdso-training  
+
+To set up your API key, follow these steps:
+
+1. Copy the API_KEY from the DefectDojo application.  
+2. Replace `INSERT_API_KEY_HERE` with your actual API key in the command below.  
+
+```
+
+export API\_KEY=INSERT\_API\_KEY\_HERE
+
+```
+
+Alternatively, you can use the following command to obtain the API token programmatically:
+
+```
+
+export API\_KEY=\$(curl -s -XPOST -H 'content-type: application/json' [https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/](https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/) -d '{"username": "root", "password": "pdso-training"}' | jq -r '.token' )
+
+```
+
+**Note**  
+Make sure the API_KEY displays an output when you run the `echo $API_KEY` command. If it doesn’t show anything, you may need to wait a bit longer for DefectDojo to finish setting up.
+
+We can now upload the bandit’s scan output (`bandit-output.json`) to DefectDojo.
+
+```
+
+python3 upload-results.py --host dojo-kr6k1mdm.lab.practical-devsecops.training --api\_key \$API\_KEY --engagement\_id 1 --product\_id 1 --lead\_id 1 --environment "Production" --result\_file bandit-output.json --scanner "Bandit Scan"
+
+```
+
+Command Output
+```
+
+...
+Successfully uploaded the results to DefectDojo
+
+```
+
+**Note**  
+If you encounter a 500 error code, please check if your environment is set up correctly.  
+
+You can view the environment settings under **Engagements > Environments**.
+
+Visit the https://dojo-kr6k1mdm.lab.practical-devsecops.training/engagement/1 to see the uploaded issues.
+
+**DefectDojo Dashboard**
+
+Let’s move to the next step.
+```
+```markdown
+Challenge: Upload ZAP results to DefectDojo manually
+In this exercise, you will use the `upload-results.py` script to upload the ZAP Scan results to DefectDojo.
+
+To complete this challenge, please follow these steps:
+
+- Explore the various features DefectDojo offers, paying attention to URL changes in your browser’s address bar.  
+- Make sure to visit at least the product page, engagement page, and test options in the DefectDojo portal.  
+- Note that the **500 error** you may encounter while uploading ZAP’s output is due to incorrect arguments being used.  
+- To resolve this error, please refer to the DefectDojo documentation: https://docs.defectdojo.com/en/connecting_your_tools/parsers/file/.  
+
+---
+
+### Tasks
+
+#### # 1  
+Scan the production machine `https://prod-kr6k1mdm.lab.practical-devsecops.training` with the help of the ZAP docker image `hysnsec/zap`, and save the results to `/webapp/zap-output.xml`.
+
+```
+
+docker run --rm -v \$(pwd):/zap/wrk/\:rw hysnsec/zap&#x20;
+zap-baseline.py -t [https://prod-kr6k1mdm.lab.practical-devsecops.training](https://prod-kr6k1mdm.lab.practical-devsecops.training)&#x20;
+-x zap-output.xml
+
+```
+
+This will create `zap-output.xml` in the `/webapp/` directory.
+
+---
+
+#### # 2  
+Upload the ZAP scan results to DefectDojo.
+
+Make sure you have your `API_KEY` set:
+
+```
+
+export API\_KEY=\$(curl -s -XPOST -H 'content-type: application/json'&#x20;
+[https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/](https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/)&#x20;
+-d '{"username": "root", "password": "pdso-training"}' | jq -r '.token')
+
+```
+
+Now upload the results:
+
+```
+
+python3 upload-results.py&#x20;
+\--host dojo-kr6k1mdm.lab.practical-devsecops.training&#x20;
+\--api\_key \$API\_KEY&#x20;
+\--engagement\_id 1&#x20;
+\--product\_id 1&#x20;
+\--lead\_id 1&#x20;
+\--environment "Production"&#x20;
+\--result\_file zap-output.xml&#x20;
+\--scanner "ZAP Scan"
+
+```
+
+If successful, you’ll see:
+
+```
+
+Successfully uploaded the results to DefectDojo
+
+```
+
+---
+
+✅ After completing these steps, visit:  
+`https://dojo-kr6k1mdm.lab.practical-devsecops.training/engagement/1`  
+to verify the uploaded ZAP issues in DefectDojo.
+```
+```markdown
+Troubleshooting Common Errors in DefectDojo
+Setting Up the Environment
+DefectDojo is a security tool that automates application security vulnerability management. It streamlines the application security testing process by offering features such as importing third-party security findings, merging and de-duping, integration with Jira, templating, report generation, and security metrics.
+
+Source: https://defectdojo.github.io/django-DefectDojo
+
+Before we start troubleshooting the DefectDojo issue, let’s prepare everything we need for the installation and setup.
+
+First, log in to DefectDojo using the credentials below.
+
+Machine Details  
+URL: dojo-kr6k1mdm.lab.practical-devsecops.training/  
+Username: root  
+Password: pdso-training  
+
+You will see a default dashboard displaying 1 Engagement, 0 Findings, and empty metrics.
+
+---
+
+Download the Upload Script
+We have created a simple upload script for you. You can download this script using the following command:
+
+```
+
+curl [https://gitlab.practical-devsecops.training/-/snippets/28/raw](https://gitlab.practical-devsecops.training/-/snippets/28/raw) -o upload-results.py
+
+```
+
+---
+
+Obtaining an API Token
+To interact with the DefectDojo API, we will need an API token. You can obtain the API token using the following command:
+
+```
+
+export API\_KEY=\$(curl -s -XPOST -H 'content-type: application/json' [https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/](https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/v2/api-token-auth/) -d '{"username": "root", "password": "pdso-training"}' | jq -r '.token' )
+
+```
+
+**Note**  
+Make sure the API_KEY shows an output when you execute the `echo $API_KEY` command. If it does not, you need to wait until DefectDojo is ready.
+
+Alternatively, you can log into the DefectDojo website using the following credentials to retrieve the API key.
+
+Machine Details  
+Dojo URL: dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2  
+Username: root  
+Password: pdso-training  
+
+You can copy the API_KEY from the DefectDojo and replace `INSERT_API_KEY_HERE` with the API_KEY in the below command.
+
+```
+
+export API\_KEY=INSERT\_API\_KEY\_HERE
+
+```
+
+---
+
+Running a SSlyze Scan
+In this troubleshooting scenario, we will use SSlyze as an example. To generate a security report using the SSlyze tool, please execute the following command:
+
+```
+
+docker run --rm -v \$(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json\_out /tmp/sslyze-output.json
+
+```
+
+---
+
+Understanding `-v` option in docker command
+Let’s move to the next step.
+```
+```markdown
+Troubleshooting Common Errors
+Let’s start fixing common mistakes you might see in DefectDojo. We’ll use a scan we did before with Sslyze to show you how to sort out these problems easily.
+
+When using DefectDojo, especially when trying to upload scan results with the API, you might run into a few issues. Understanding these problems and knowing how to fix them can make things go much smoother. Below, we’ve listed some typical errors and the steps you can take to resolve them.
+
+---
+
+### Not all security scanners are compatible with DefectDojo
+
+---
+
+### Error 400: Bad Request Due to Incorrect Arguments
+When using DefectDojo, you might encounter a **400 Bad Request** error. This error typically indicates a problem with the arguments you’ve provided to the upload script. Let’s go through how to troubleshoot and fix this error.
+
+**Example Scenario**  
+If you see the following error message:
+
+```
+
+Command Output
+Something went wrong, please debug 400
+
+```
+
+That indicates the need to correct the arguments previously entered. Let’s say your command looks like this:
+
+```
+
+python3 upload-results.py --host dojo-kr6k1mdm.lab.practical-devsecops.training --api\_key \$API\_KEY --engagement\_id 1 --product\_id 1 --lead\_id 1 --environment "Production" --result\_file sslyze-output.json --scanner "Sslyze SCAN"
+
+```
+
+You may receive an error like this:
+
+```
+
+Command Output
+{'Authorization': 'Token 3f62c2aaf2e771c0b56f264789191f80d025b8e7'}
+{'minimum\_severity': 'Low', 'scan\_date': '2024-09-19', 'verified': False, 'active': False, 'engagement': '1', 'lead': '1', 'scan\_type': 'Sslyze SCAN', 'environment': 'Production'}
+Something went wrong, please debug 400
+
+```
+
+**What is the reason?**  
+The scanner name is incorrect. To see the correct scanner name, refer to the DefectDojo parser for Sslyze Scan.  
+
+**How to fix it?**  
+Now, let’s use the correct version of the command to upload the results:
+
+```
+
+python3 upload-results.py --host dojo-kr6k1mdm.lab.practical-devsecops.training --api\_key \$API\_KEY --engagement\_id 1 --product\_id 1 --lead\_id 1 --environment "Production" --result\_file sslyze-output.json --scanner "Sslyze Scan"
+
+```
+
+When we run this command, it should generate the following output:
+
+```
+
+Command Output
+{'Authorization': 'Token 3f62c2aaf2e771c0b56f264789191f80d025b8e7'}
+{'minimum\_severity': 'Low', 'scan\_date': '2024-09-19', 'verified': False, 'active': False, 'engagement': '1', 'lead': '1', 'scan\_type': 'Sslyze Scan', 'environment': 'Production'}
+Successfully uploaded the results to Defect Dojo
+
+```
+
+It shows success, as all requirements for uploading to DefectDojo have been met.
+
+---
+
+### Error 500: Internal Server Error
+Encountering a **500 Internal Server Error** while using DefectDojo can be quite frustrating. Such an error often indicates a server-side problem, frequently related to a failed scan or unsupported file format. The following explanation will guide through understanding and resolving the issue in straightforward steps.
+
+**Example Scenario: Failed Scan Results**  
+If you see the following error message:
+
+```
+
+Command Output
+Something went wrong, please debug 500
+
+```
+
+To recreate the issue, a new report should be created using the Sslyze scan, this time with a scanner that the result is not supported or got error while scanning. Let’s create an example of a failed scan to show what happens. We’ll run Sslyze against a server that we can’t connect to:
+
+```
+
+docker run --rm -v \$(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm --json\_out /tmp/sslyze-unsupported.json
+
+```
+
+The command is wrong because it’s missing part of the URL.
+
+**Why prod-kr6k1mdm is not working?**  
+When we look at the scan results using `cat sslyze-unsupported.json`, we can see the scan failed because it couldn’t connect to the server:
+
+```
+
+cat sslyze-unsupported.json
+
+```
+
+Command Output (truncated for clarity)
+```
+
+{
+"date\_scans\_completed": "2024-09-19T01:38:38.209826",
+...
+"scan\_status": "ERROR\_NO\_CONNECTIVITY",
+"server\_location": {
+"hostname": "prod-kr6k1mdm",
+"ip\_address": "10.1.174.172",
+"port": 443
+},
+"connectivity\_error\_trace": "... ServerRejectedConnection ..."
+}
+
+```
+
+That’s why we get an error when we try to upload the result to DefectDojo.
+
+Next, let’s upload the result we got earlier to DefectDojo and see what happens. We need to see if we get a **500 error** from DefectDojo or not.
+
+```
+
+python3 upload-results.py --host dojo-kr6k1mdm.lab.practical-devsecops.training --api\_key \$API\_KEY --engagement\_id 1 --product\_id 1 --lead\_id 1 --environment "Production" --result\_file sslyze-unsupported.json --scanner "Sslyze Scan"
+
+```
+
+You could see an error message like this:
+
+```
+
+Command Output
+{'Authorization': 'Token 3f62c2aaf2e771c0b56f264789191f80d025b8e7'}
+{'minimum\_severity': 'Low', 'scan\_date': '2024-09-19', 'verified': False, 'active': False, 'engagement': '1', 'lead': '1', 'scan\_type': 'Sslyze Scan', 'environment': 'Production'}
+Something went wrong, please debug 500
+
+```
+
+---
+
+### Why did this happen?
+
+- **Connectivity error**: The scan file contains errors because the target server was unreachable.  
+- **Unsupported file format**: The uploaded result does not match the expected file format in DefectDojo.  
+
+---
+
+### How to fix it?
+
+**Error 500: Internal Server Error Due to Unsupported File Format**  
+Another common cause of 500 errors is when the scan result file format doesn’t match what DefectDojo expects. For example, if DefectDojo requires an XML file but you’re trying to upload a JSON file, it will reject the upload. Here’s how to fix these format-related issues:
+
+1. **Use a Compatible Sslyze Version**  
+   Make sure to use a Sslyze version that outputs JSON in a format DefectDojo can work with.
+
+2. **Verify JSON Format**  
+   Before you upload, check the JSON file to make sure it matches the format DefectDojo expects. For more details, see: *DefectDojo Supported Reports*.
+
+3. **Check Required File Format**  
+   - Some scanners only accept XML files.  
+   - Others only accept JSON.  
+   - A few might require CSV or other special formats.  
+   Always check the DefectDojo documentation for your specific scanner to ensure you’re using the correct file format.
+
+4. **Unsupported Scanner**  
+   If the scanner you’re using isn’t included in the DefectDojo version you have (for example, if SSLyze Scan 3 (JSON) isn’t listed), make sure to use a scanner version that is supported or reach out to the DefectDojo community for help.
+
+---
+
+By following these steps, we should be able to fix the usual problems that come up when uploading scan results to DefectDojo.
+```
+```markdown
+Automated Results Upload in GitLab
+A Simple CI/CD Pipeline
+Let’s consider a simple CI pipeline that your DevOps team has created. It contains the following contents:
+
+```
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+
+* docker\:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: [https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534](https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534)
+
+stages:
+
+* build
+* test
+* release
+* preprod
+* integration
+* prod
+
+build:
+stage: build
+image: python:3.6
+before\_script:
+
+* pip3 install --upgrade virtualenv
+  script:
+* virtualenv env                       # Create a virtual environment for the python application
+* source env/bin/activate              # Activate the virtual environment
+* pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+* python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+stage: test
+image: python:3.6
+before\_script:
+
+* pip3 install --upgrade virtualenv
+  script:
+* virtualenv env
+* source env/bin/activate
+* pip install -r requirements.txt
+* python manage.py test taskManager
+
+integration:
+stage: integration
+script:
+\- echo "This is an integration step"
+
+prod:
+stage: prod
+script:
+\- echo "This is a deploy step."
+
+```
+
+We can see four jobs in this pipeline:
+- **build** job  
+- **test** job  
+- **integration** job  
+- **prod** job  
+
+As a security engineer, you don’t need to worry about the specifics of these jobs. Why? Imagine having to learn every build and testing tool used by your DevOps team. It would be overwhelming! Instead, it’s better to rely on the DevOps team for assistance when needed.
+
+---
+
+### Log into GitLab
+Use the following details and execute this pipeline:
+
+| Name     | Value                                                                 |
+|----------|-----------------------------------------------------------------------|
+| URL      | https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml |
+| Username | root                                                                  |
+| Password | pdso-training                                                         |
+
+---
+
+### Steps to Create the CI/CD Pipeline
+1. Click on the **Edit** button.  
+2. Select all the existing content (`Ctrl+A` or `Command+A` on Mac).  
+3. Paste the new CI script (`Ctrl+V` or `Command+V` on Mac).  
+4. Save the changes to the file by clicking the **Commit changes** button.  
+
+---
+
+### Verify the pipeline run
+As soon as a change is made to the repository, the pipeline automatically starts executing the jobs.
+
+**Note**  
+We’ve discussed different methods of using the tool:
+- **Native Installation**: Directly installing the tool on the system.  
+- **Package Manager or Binary**: Installing via a package manager or using the binary file.  
+- **Docker**: Running the tool within a Docker container.  
+
+**In summary**:
+- All methods are suitable for CI/CD integration.  
+- Docker is recommended for CI/CD as it operates smoothly without dependencies.  
+- Using the binary file is efficient, avoiding additional dependencies.  
+- Ultimately, you can choose either method based on your specific situation.  
+
+We can see the results of this pipeline by visiting:  
+[Pipeline Results](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)  
+
+Click on the appropriate job name to see the output.
+
+---
+
+This exercise uses three machines behind the scenes. You’re already familiar with GitLab CI. Below, you’ll find details about the other two machines used in this exercise.
+```
+```markdown
+Embed Bandit and Upload Script in CI/CD Pipeline
+**Remember!**
+
+- Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise.  
+- After two hours, if you encounter a 404 error, refresh the exercise page and click on **Start the Exercise** button to continue working.  
+
+As we learned in the *Static Analysis using Bandit* exercise, we can integrate the Bandit tool into our CI/CD pipeline. However, before embedding this SAST tool in the pipeline, it’s important to run the command manually to ensure it works correctly.
+
+---
+
+### CI/CD Pipeline Configuration
+
+```
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+
+* docker\:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: [https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534](https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534)
+
+stages:
+
+* build
+* test
+* release
+* preprod
+* integration
+* prod
+
+build:
+stage: build
+image: python:3.6
+before\_script:
+
+* pip3 install --upgrade virtualenv
+  script:
+* virtualenv env                       # Create a virtual environment for the python application
+* source env/bin/activate              # Activate the virtual environment
+* pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+* python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+stage: test
+image: python:3.6
+before\_script:
+
+* pip3 install --upgrade virtualenv
+  script:
+* virtualenv env
+* source env/bin/activate
+* pip install -r requirements.txt
+* python manage.py test taskManager
+
+sast:
+stage: build
+before\_script:
+\- apk add py-pip py-requests
+script:
+\- docker pull hysnsec/bandit  # Download bandit docker container
+\- docker run --user \$(id -u):\$(id -g) -v \$(pwd):/src --rm hysnsec/bandit -r /src -f json -o /src/bandit-output.json
+after\_script:
+\- python3 upload-results.py --host \$DOJO\_HOST --api\_key \$DOJO\_API\_TOKEN --engagement\_id 1 --product\_id 1 --lead\_id 1 --environment "Production" --result\_file bandit-output.json --scanner "Bandit Scan"
+artifacts:
+paths: \[bandit-output.json]
+when: always
+
+integration:
+stage: integration
+script:
+\- echo "This is an integration step"
+
+prod:
+stage: prod
+script:
+\- echo "This is a deploy step."
+
+```
+
+---
+
+### Understanding `-v` option in docker command
+The `-v` option mounts the local directory into the container.  
+- `$(pwd):/src` means the current directory on the host is mounted into `/src` inside the container.  
+- This allows the scan results (`bandit-output.json`) to be written back to the host system.  
+
+---
+
+### Setting GitLab Secret Variables
+Before committing the `.gitlab-ci.yml` file, we need to set up the following secret variables in GitLab:
+
+Visit:  
+[GitLab Variables URL](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd)
+
+| Key          | Value                                                                 |
+|--------------|-----------------------------------------------------------------------|
+| DOJO_HOST    | dojo-kr6k1mdm.lab.practical-devsecops.training                        |
+| DOJO_API_TOKEN | Find it at https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2 |
+
+You also need to log into the DefectDojo website to fetch the API Key.  
+
+**Credentials**  
+- Dojo URL: dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2  
+- Username: root  
+- Password: pdso-training  
+
+---
+
+### Verify the Pipeline
+Once the variables are added, commit the `.gitlab-ci.yml` file and see the results of this pipeline:  
+
+[Pipeline Results](https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines)
+
+Click on the appropriate job name to view its output.
+
+⚠️ **Expected Behavior**  
+The pipeline will fail because the job `sast` didn’t succeed. If you look at the job’s output, you’ll notice that we didn’t upload the `upload-results.py` file to the repository. As a result, the CI system couldn’t find this file and failed the build.
+
+---
+
+Let’s move to the next page to add this script to the repository using the Git command line. We’ll perform these steps from the **DevSecOps-Box**.
+```
+```markdown
+Upload Python Script In CI/CD Pipeline
+Before we push the upload-results.py file to the repo, we need to set up the git command line.
+
+Note
+
+Not all security scanners can be integrated and used for uploading results to DefectDojo.
+
+Please refer to this link to check the available security scanners.
+
+Initial git setup
+To work with git repositories, we first need to set up a username and email. We can use git config commands to set it up.
+
+git config --global user.email "student@practical-devsecops.com"
+
+git config --global user.name "student"
+
+Download/clone/copy the repository
+We can use the git clone command to download the django.nv git repository to our local machine.
+
+git clone git@gitlab-ce-kr6k1mdm:root/django-nv.git
+
+Authentication Confirmation Required
+
+If you encounter the following prompt while trying to clone GitLab, please type yes and press Enter to proceed:
+
+Command Output
+The authenticity of host 'gitlab-ce-kr6k1mdm (10.x.x.x)' can't be established.
+ECDSA key fingerprint is SHA256:U1W8wQm8tgHmuF/T0uf1jNVCzHyhqeJ4MmGG/K4XmcI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+By cloning the repository mentioned above, we have created a local copy of the remote repository on DevSecOps-Box machine.
+
+Let’s change into this repository directory to explore its contents.
+
+cd django-nv
+
+Add a file to the repository
+First, let’s download the upload-results.py script using the following curl command:
+
+curl https://gitlab.practical-devsecops.training/-/snippets/28/raw -o upload-results.py
+
+Now, let’s add the file to the django.nv repository and push the changes:
+
+git add upload-results.py
+
+git commit -m "Add upload-results.py file"
+
+Push the changes to the repository
+Git is a decentralized source code management system, which means all changes remain in your local git repository until you push them to the server. You can think of it this way: git was designed to work even without internet connectivity, whether you’re on flights, ships, or in remote locations like jungles__.
+
+Since we have internet connectivity, let’s push our changes to the remote git repository using the git push command.
+
+git push origin main
+
+Command Output
+Counting objects: 3, done.
+Delta compression using up to 8 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 1.37 KiB | 1.37 MiB/s, done.
+Total 3 (delta 1), reused 0 (delta 0)
+To http://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv.git
+   577b30f..b0324c0  main -> main
+As discussed earlier, any change to the repository triggers the pipeline. You can see the results of this change in the pipeline tab of GitLab CI by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Great! Now, every time a developer makes a change, our Static Application Security Testing (SAST) scanner will automatically run and upload the results to the vulnerability management system. This process ensures continuous security monitoring of our codebase.
+
+Note
+
+If you encounter a 500 error code, please check if your environment is set up correctly.
+
+You can check the specific variable under Engagements > Environments.
+
+You can verify that the issues were uploaded successfully by visiting the dojo website.
+
+Now, let’s move on to the next step.
+```
+```markdown
+Challenge: Upload ZAP Results to DefectDojo Automatically via CI/CD Pipeline
+In this exercise, you will use the upload-results.py script to upload the ZAP scan results to DefectDojo through the CI/CD pipeline.
+
+As usual, you’ll first test your solution locally in the provided terminal before integrating it into the CI/CD pipeline.
+
+Tasks
+
+# 1
+Use the terminal provided on the right to scan the production machine https://prod-kr6k1mdm.lab.practical-devsecops.training in DevSecOps Box with the help of the ZAP docker image hysnsec/zap and save the result at /django-nv/zap-output.xml
+
+Answer
+
+docker run --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -x zap-output.xml
+mv zap-output.xml /django-nv/zap-output.xml
+
+
+# 2
+After you store the ZAP scan results, please upload the result manually to Defect Dojo using the terminal on the right
+
+Answer
+
+python3 upload-results.py --file /django-nv/zap-output.xml \
+  --scanner ZAP \
+  --dojo-url https://dojo.lab.practical-devsecops.training \
+  --api-key <API_KEY> \
+  --engagement <ENGAGEMENT_ID>
+
+
+# 3
+Please update the .gitlab-ci.yml file and add the upload-results.py as part of the ZAP Scan in the CI/CD pipeline inside the after_script attribute
+
+Answer
+
+zap_scan:
+  stage: test
+  image: hysnsec/zap:2.16.1
+  script:
+    - zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -x zap-output.xml
+  artifacts:
+    paths: [zap-output.xml]
+    when: always
+  after_script:
+    - python3 upload-results.py --file zap-output.xml \
+        --scanner ZAP \
+        --dojo-url https://dojo.lab.practical-devsecops.training \
+        --api-key $DOJO_API_KEY \
+        --engagement $DOJO_ENGAGEMENT_ID
+```
+```markdown
+A Full Enterprise Grade DevSecOps Pipelines
+Explore SCA, SAST, DAST, IaC, CaC and VM exercises
+
+Note
+
+By this point, we expect that you have a solid understanding of each tool involved in the pipeline and the necessary settings to ensure the pipeline functions correctly.
+
+You may need to make adjustments to the pipeline as needed to get it fully working
+
+Considering your DevOps team created a simple CI pipeline with the following contents.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+We will explore each chapter in the lab and gather their respective Gitlab CI/CD scripts and embed them in their respective pipeline stages.
+
+Software Component Analysis (SCA)
+
+# Software Component Analysis
+sca-frontend:
+  stage: build
+  image: node:alpine3.10
+  script:
+    - npm install
+    - npm install -g retire@5.0.0 # Install retirejs npm package.
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+  artifacts:
+    paths: [retirejs-report.json]
+    when: always # What is this for?
+    expire_in: one week
+
+sca-backend:
+  stage: build
+  script:
+    - docker pull hysnsec/safety
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r requirements.txt --json > oast-results.json
+  artifacts:
+    paths: [oast-results.json]
+    when: always # What does this do?
+  allow_failure: true #<--- allow the build to fail but don't mark it as such
+
+Static Application Security Testing (SAST)
+
+# Git Secrets Scanning
+secrets-scanning:
+  stage: build
+  script:
+    - apk add git
+    - git checkout main
+    - docker run --rm -v $(pwd):/src hysnsec/trufflehog filesystem /src --json | tee trufflehog-output.json
+  artifacts:
+    paths: [trufflehog-output.json]
+    when: always # What is this for?
+    expire_in: one week
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+# Static Application Security Testing
+sast:
+  stage: build
+  script:
+    - docker pull hysnsec/bandit  # Download bandit docker container
+    # Run docker container, please refer docker security course, if this doesn't make sense to you.
+    - docker run --user $(id -u):$(id -g) --rm -v $(pwd):/src hysnsec/bandit -r /src -f json -o /src/bandit-output.json
+  artifacts:
+    paths: [bandit-output.json]
+    when: always
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+Dynamic Application Security Testing (DAST)
+
+# Dynamic Application Security Testing
+nikto:
+  stage: integration
+  script:
+    - docker pull hysnsec/nikto
+    - docker run --rm -v $(pwd):/tmp hysnsec/nikto -h prod-kr6k1mdm -o /tmp/nikto-output.xml
+  artifacts:
+    paths: [nikto-output.xml]
+    when: always
+
+sslscan:
+  stage: integration
+  script:
+    - docker pull hysnsec/sslyze
+    - docker run --rm -v $(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json_out /tmp/sslyze-output.json
+  artifacts:
+    paths: [sslyze-output.json]
+    when: always
+
+nmap:
+  stage: integration
+  script:
+    - docker pull hysnsec/nmap
+    - docker run --rm -v $(pwd):/tmp hysnsec/nmap prod-kr6k1mdm -oX /tmp/nmap-output.xml
+  artifacts:
+    paths: [nmap-output.xml]
+    when: always
+
+zap-baseline:
+  stage: integration
+  script:
+    - docker pull hysnsec/zap:2.16.1
+    - docker run --user $(id -u):$(id -g) -w /zap -v $(pwd):/zap/wrk:rw --rm hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+  after_script:
+    - docker rmi hysnsec/zap:2.16.1  # clean up the image to save the disk space
+  artifacts:
+    paths: [zap-output.json]
+    when: always # What does this do?
+  allow_failure: true
+
+Infrastructure as Code (IaC)
+
+Note
+
+You would need to set appropriate environment variables under GitLab’s CI/CD variables to get the following tasks to work.
+
+Also, you would need to push ansible-hardening.yml and InSpec profiles etc., to the git repository as discussed under Infrastructure as Coce(IaC) and Compliance as Code(CaC) modules.
+
+# Infrastructure as Code
+# PLEASE ENSURE YOU HAVE SETUP THE ENVIRONMENT VARIABLES APPROPRIATELY
+ansible-hardening:
+  stage: prod
+  image: willhallonline/ansible:2.16-ubuntu-22.04
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo -e "[prod]\n$DEPLOYMENT_SERVER" >> inventory.ini
+    - ansible-galaxy install dev-sec.os-hardening
+    - ansible-playbook -i inventory.ini ansible-hardening.yml
+
+Compliance as Code (CaC)
+
+# Compliance as Code
+# PLEASE ENSURE YOU HAVE SETUP THE ENVIRONMENT VARIABLES APPROPRIATELY
+inspec:
+  stage: prod
+  only:
+    - "main"
+  environment: production
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - docker run --rm -v ~/.ssh:/root/.ssh -v $(pwd):/share hysnsec/inspec exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@$DEPLOYMENT_SERVER -i ~/.ssh/id_rsa --chef-license accept --reporter json:inspec-output.json
+  artifacts:
+    paths: [inspec-output.json]
+    when: always
+
+Vulnerability Management
+
+# Vulnerability Management(VM)
+sast-with-vm:
+  stage: build
+  before_script:
+    - apk add py-pip py-requests curl
+    - curl https://gitlab.practical-devsecops.training/-/snippets/28/raw -o upload-results.py
+  script:
+    - docker pull hysnsec/bandit  # Download bandit docker container
+    - docker run --user $(id -u):$(id -g) -v $(pwd):/src --rm hysnsec/bandit -r /src -f json -o /src/bandit-output.json
+  after_script:
+    - python3 upload-results.py --host $DOJO_HOST --api_key $DOJO_API_TOKEN --engagement_id 1 --product_id 1 --lead_id 1 --environment "Production" --result_file bandit-output.json --scanner "Bandit Scan"
+  artifacts:
+    paths: [bandit-output.json]
+    when: always
+
+Let’s move to the next step where we will combine all the above scans in a one single GitLab CI/CD script.
+```
+```markdown
+Combining various scans together
+Let’s combine the SCA, SAST, DAST, IaC, CaC scans and Vulnerability Management steps into a GitLab CI script.
+
+We will log in into the GitLab using the following details and execute this pipeline.
+
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the below GitLab CI script. Click on the Edit button to start replacing the content (use Control+A and Control+V).
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+# Software Component Analysis
+sca-frontend:
+  stage: build
+  image: node:alpine3.10
+  script:
+    - npm install
+    - npm install -g retire@5.0.0 # Install retirejs npm package.
+    - retire --outputformat json --outputpath retirejs-report.json --severity high
+  artifacts:
+    paths: [retirejs-report.json]
+    when: always # What is this for?
+    expire_in: one week
+
+sca-backend:
+  stage: build
+  script:
+    - docker pull hysnsec/safety
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r requirements.txt --json > oast-results.json
+  artifacts:
+    paths: [oast-results.json]
+    when: always # What does this do?
+  allow_failure: true #<--- allow the build to fail but don't mark it as such
+
+# Git Secrets Scanning
+secrets-scanning:
+  stage: build
+  script:
+    - docker run -v $(pwd):/src --rm hysnsec/trufflehog filesystem /src --json | tee trufflehog-output.json
+  artifacts:
+    paths: [trufflehog-output.json]
+    when: always  # What is this for?
+    expire_in: one week
+  allow_failure: true
+
+# Static Application Security Testing
+sast:
+  stage: build
+  script:
+    - docker pull hysnsec/bandit  # Download bandit docker container
+    # Run docker container, please refer docker security course, if this doesn't make sense to you.
+    - docker run --user $(id -u):$(id -g) -v $(pwd):/src --rm hysnsec/bandit -r /src -f json -o /src/bandit-output.json
+  artifacts:
+    paths: [bandit-output.json]
+    when: always
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+# Dynamic Application Security Testing
+nikto:
+  stage: integration
+  script:
+    - docker pull hysnsec/nikto
+    - docker run --rm -v $(pwd):/tmp hysnsec/nikto -h prod-kr6k1mdm -o /tmp/nikto-output.xml
+  artifacts:
+    paths: [nikto-output.xml]
+    when: always
+
+sslscan:
+  stage: integration
+  script:
+    - docker pull hysnsec/sslyze
+    - docker run --rm -v $(pwd):/tmp hysnsec/sslyze prod-kr6k1mdm.lab.practical-devsecops.training:443 --json_out /tmp/sslyze-output.json
+  artifacts:
+    paths: [sslyze-output.json]
+    when: always
+
+nmap:
+  stage: integration
+  script:
+    - docker pull hysnsec/nmap
+    - docker run --rm -v $(pwd):/tmp hysnsec/nmap prod-kr6k1mdm -oX /tmp/nmap-output.xml
+  artifacts:
+    paths: [nmap-output.xml]
+    when: always
+
+zap-baseline:
+  stage: integration
+  script:
+    - docker pull hysnsec/zap:2.16.1
+    - docker run --user $(id -u):$(id -g) --rm -v $(pwd):/zap/wrk:rw hysnsec/zap:2.16.1 zap-baseline.py -t https://prod-kr6k1mdm.lab.practical-devsecops.training -J zap-output.json
+  after_script:
+    - docker rmi hysnsec/zap:2.16.1  # clean up the image to save the disk space
+  artifacts:
+    paths: [zap-output.json]
+    when: always # What does this do?
+  allow_failure: true
+
+# Infrastructure as Code
+# PLEASE ENSURE YOU HAVE SETUP THE ENVIRONMENT VARIABLES AND NEEDED FILES APPROPRIATELY
+ansible-hardening:
+  stage: prod
+  image: willhallonline/ansible:2.16-ubuntu-22.04
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo -e "[prod]\n$DEPLOYMENT_SERVER" >> inventory.ini
+    - ansible-galaxy install dev-sec.os-hardening
+    - ansible-playbook -i inventory.ini ansible-hardening.yml
+
+# Compliance as Code
+# PLEASE ENSURE YOU HAVE SETUP THE ENVIRONMENT VARIABLES AND NEEDED FILES APPROPRIATELY
+inspec:
+  stage: prod
+  only:
+    - "main"
+  environment: production
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOYMENT_SERVER_SSH_PRIVKEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+  script:
+    - docker run --rm -v ~/.ssh:/root/.ssh -v $(pwd):/share hysnsec/inspec exec https://github.com/dev-sec/linux-baseline.git -t ssh://root@$DEPLOYMENT_SERVER -i ~/.ssh/id_rsa --chef-license accept --reporter json:inspec-output.json
+  artifacts:
+    paths: [inspec-output.json]
+    when: always
+
+# Vulnerability Management(VM)
+sast-with-vm:
+  stage: build
+  before_script:
+    - apk add py-pip py-requests curl
+    - curl https://gitlab.practical-devsecops.training/-/snippets/28/raw -o upload-results.py
+  script:
+    - docker pull hysnsec/bandit  # Download bandit docker container
+    - docker run --user $(id -u):$(id -g) -v $(pwd):/src --rm hysnsec/bandit -r /src -f json -o /src/bandit-output.json
+  after_script:
+    - python3 upload-results.py --host $DOJO_HOST --api_key $DOJO_API_TOKEN --engagement_id 1 --product_id 1 --lead_id 1 --environment "Production" --result_file bandit-output.json --scanner "Bandit Scan"
+  artifacts:
+    paths: [bandit-output.json]
+    when: always
+
+Make sure you have added the necessary variables into your project (Settings > CI/CD) such as $DOJO_HOST, and $DOJO_API_TOKEN. Otherwise, your results are not uploaded to DefectDojo in the sast-with-vm job.
+
+Name	Value
+Key	DEPLOYMENT_SERVER
+Value	prod-kr6k1mdm
+Name	Value
+Key	DEPLOYMENT_SERVER_SSH_PRIVKEY
+Value	Copy the private key from the prod machine using SSH. The SSH key is available at /root/.ssh/id_rsa
+Name	Value
+Key	DOJO_HOST
+Value	dojo-kr6k1mdm.lab.practical-devsecops.training
+Name	Value
+Key	DOJO_API_TOKEN
+Value	Find it at https://dojo-kr6k1mdm.lab.practical-devsecops.training/api/key-v2
+
+Save changes to the file using the Commit changes button.
+
+Security Best Practices
+
+Storing SSH keys in GitLab variables poses significant security risks due to plain text storage and limited access controls. For production environments, it’s recommended to use dedicated key management solutions like HashiCorp Vault for secure key storage, rotation, and access control. Learn more about managing SSH access at scale here.
+
+Verify the pipeline run
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+Note
+
+We’ve discussed different methods of using the tool:
+
+Native Installation:
+Directly installing the tool on the system.
+Package Manager or Binary:
+Installing via a package manager or using the binary file.
+Docker:
+Running the tool within a Docker container.
+
+In summary:
+
+All methods are suitable for CI/CD integration.
+Docker is recommended for CI/CD as it operates smoothly without dependencies.
+Using the binary file is efficient, avoiding additional dependencies.
+Ultimately, you can choose either method based on your specific situation.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+You can click on the appropriate job to see the results.
+
+Let’s move to the next step.
+```
+```markdown
+Conclusion
+Congratulations! You have learned how to create an enterprise ready DevSecOps Pipeline that achieves DevSecOps Maturity Level 1 and 2.
+
+70% of the world’s organizations do not have this kind of maturity, and it takes anywhere between 3-5 years for you to implement the above things across the organization. Just SCA can take six months to roll out in any medium to large organization. We are not even talking about any customizations needed, convincing DevOps teams to use these practices.
+
+Can you start your own DevSecOps Practice after this? Probably not. We covered a small subset of DevSecOps strategies in this course. DevSecOps is an ocean that requires constant efforts to master.
+
+Next Steps
+Please explore the Certified DevSecOps Expert (CDE) Course for learning advanced DevSecOps practices including custom rule sets, authenticated DAST scans, Threat Modelling as Code and much more.
+
+We provide a 10% discount for our students who have completed the CDP. Reach out to us via Mattermost or email for more information.
+```
+```markdown
+Working With GitLab CI/CD
+Understand YAML Syntax
+YAML (a recursive acronym for “YAML Ain’t Markup Language”) is a human-readable data serialization language. It’s commonly used for configuration files and in applications where data is stored or transmitted.
+
+Source: Wikipedia
+
+YAML is easier for humans to read and write compared to more common data formats like XML or JSON. This format is often used to configure various systems such as CI/CD pipelines, Infrastructure as Code tools, Kubernetes, and many others.
+
+YAML files can optionally start with three dashes (---).
+
+e.g.,
+
+---
+# A list of gadgets
+- Sony
+- LG
+- Apple
+- Samsung
+
+ProTip
+
+You will see these dashes in Ansible scripts but not in the GitLab CI script because they are optional in .gitlab-ci.yml. However, some tools do enforce these dashes.
+
+GitLab CI/CD uses this list concept to create stages. Note that there are no dashes (---) in the example below.
+
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+A dictionary (key/value pair) is represented in a simple key: value format. Remember to include a space after the colon.
+
+GitLab CI/CD uses this format to configure individual settings in a job.
+
+  stage: test
+  image: node:alpine3.10
+  script: echo "hello world"
+
+A dictionary can contain other dictionaries or lists within it. This allows for nested structures in YAML.
+
+test:
+  stage: test   # Dictionary item stage with the value test
+  script:       # Dictionary item with a list as the value
+    - echo "This is a test step."
+    - exit 1         # Non zero exit code, fails a job.
+
+Here is the concept to understand that we have stage and job attribute.
+
+stages: # This is how the pipeline can be managed in its flow.
+  - build
+  - test
+  - integration
+  - prod
+
+job1: # This job name is called "Job1". You can modify the name to make it more meaningful.
+  stage: build  # this job belongs to the build stage.
+  script:
+    - echo "This is a build step."
+
+We see job1 as the job name, and we have set its stage to build. We can change the job name to something more descriptive, such as:
+
+builder:
+  stage: build   # this job belongs to the build stage.
+  script:
+    - echo "This is a build step."
+
+Now that we understand these concepts, let’s combine them to create a simple GitLab CI/CD pipeline with four stages and four jobs.
+
+# This is how a comment is added to a YAML file; please read them carefully.
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+job1:
+  stage: build  # this job belongs to the build stage.
+  script:
+    - echo "This is a build step."  # We are running an echo command, but it can be any command.
+
+job2:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1          # Non zero exit code, fails a job.
+
+job3:          # stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+job4:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Now that we understand the basics of the YAML format, let’s move on to the next step.
+```
+```markdown
+Run a simple CI/CD pipeline
+We will use the YAML code from the previous step to create a simple GitLab CI/CD pipeline.
+
+Let’s log into GitLab using the following details:
+
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+
+Next, we need to create a CI/CD pipeline by replacing the existing content in the .gitlab-ci.yml file.
+
+To do this, follow these steps:
+1. Click on the Edit button.
+2. Delete all existing content in the .gitlab-ci.yml file.
+3. Copy and paste the following content into the file:
+
+Click anywhere to copy
+
+# This is how a comment is added to a YAML file; please read them carefully.
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+job1:
+  stage: build  # this job belongs to the build stage.
+  script:
+    - echo "This is a build step."  # We are running an echo command, but it can be any command.
+
+job2:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1          # Non zero exit code, fails a job.
+
+job3:          
+  stage: integration  # integration stage
+  script:
+    - echo "This is an integration step."
+
+job4:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Save the changes to the file by clicking the Commit changes button.
+
+Verify the pipeline run
+Remember!
+
+Except for DevSecOps-Box, all other machines close after two hours, even if you’re in the middle of an exercise. To continue working, you need to refresh the exercise page and click the Start the Exercise button.
+
+Once a change is made to the repository, the pipeline automatically begins executing the jobs.
+
+You can view the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+To see the output of a specific job, click on its name.
+
+Now, let’s proceed to the next step.
+```
+```markdown
+Challenge: Create a Simple CI/CD Pipeline
+In this exercise, you will edit the .gitlab-ci.yml file to create a simple CI/CD pipeline.
+
+If you’re not familiar with the syntax, you can explore the GitLab CI syntax guide at https://docs.gitlab.com/ee/ci/yaml/#stages
+
+Tasks
+
+# 1
+Create five stages: build, test, integration, staging, and prod
+
+Answer
+
+stages:
+  - build
+  - test
+  - integration
+  - staging
+  - prod
+
+
+# 2
+Create jobs with the following names: build, test, integration, staging, and prod. Place each job under its respective stage (e.g., build job under build stage, test job under test stage, and so on). You can use simple echo commands under the script tag
+
+Answer
+
+build:
+  stage: build
+  script:
+    - echo "This is the build stage."
+
+test:
+  stage: test
+  script:
+    - echo "This is the test stage."
+
+integration:
+  stage: integration
+  script:
+    - echo "This is the integration stage."
+
+staging:
+  stage: staging
+  script:
+    - echo "This is the staging stage."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is the production stage."
+```
+```markdown
+Understanding Stages in GitLab CI/CD Pipelines
+Stages in CI/CD Pipeline
+In Continuous Integration/Continuous Deployment (CI/CD), stages are the core components of the pipeline script. They manage the flow of code from development to deployment. Here’s a typical structure for these stages in a CI/CD pipeline, as defined in the .gitlab-ci.yml file:
+
+stages:
+  - build
+  - test
+  - integration
+  - deploy
+
+Each stage in this pipeline serves a specific purpose:
+build: The code is compiled.
+test: The code undergoes rigorous testing.
+integration: The tested code is integrated and checked for compatibility with existing systems.
+deploy: The code is rolled out to production environments.
+
+This sequence ensures that the code progresses smoothly from development to deployment.
+
+Note
+
+The configuration of stages may vary across different CI/CD systems (such as GitLab, GitHub, Jenkins, CircleCI, etc).
+
+Now, let’s log into GitLab and execute this pipeline. Use the following details:
+
+GitLab CI/CD Machine
+Name	Value
+Link	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+
+Let’s move to the next step.
+```
+```markdown
+Build Stage
+The build stage is the first stage of the pipeline. This process creates a runnable instance of the software, often called a build. The stage also ensures that the codebase can be turned into a working application.
+
+Note
+
+The build process checks that the code compiles without errors so it will run smoothly during deployment. Sometimes, this process includes creating a Docker image of your application.
+
+Let’s add a build stage to the existing .gitlab-ci.yml file.
+
+First, open this URL: https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Next, let’s replace the content with the following script.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+
+django_build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py check
+
+Note
+
+We are going to delete the existing content in the GitLab CI file to better understand the purpose of each step.
+
+Please replace all the content in the .gitlab-ci.yml file with the script provided above.
+
+Our initial step in the script is the build process. This phase tests whether the application can be built successfully and meets the expected requirements.
+
+The final command, python manage.py check, verifies the application’s functionality. If any issues are detected during the build process, it could lead to delays or cause the build to fail.
+
+The pipeline automatically starts executing jobs as soon as a change is made to the repository.
+
+To view the results of this pipeline, visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the django_build job name to see the detailed output. You will see a message indicating that the build process was successful and completed without any issues.
+
+Let’s move to the next step.
+```
+```markdown
+Test Stage
+In the test stage, we run automated tests against the build. These tests can include:
+
+- Unit tests (testing individual components or functions)  
+- Integration tests (ensuring different parts of the application work together as expected)  
+- End-to-end tests (testing the application as a whole, simulating user interactions)  
+
+The test stage ensures that new changes don’t break existing functionality and meet required quality standards.
+
+Here is the script for the test stage job named django_test. The following script will be added to the previous script:
+
+Click anywhere to copy
+
+django_test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+Let’s add the above script to the end of the .gitlab-ci.yml file.
+
+Here’s the complete script:
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+
+django_build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py check
+
+django_test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+Based on the above script, we test the application in the test stage to verify if it’s running as expected without any issues.
+
+When a change is made to the repository, the pipeline automatically starts executing the jobs.
+
+To view the results of this pipeline, visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the django_test job name to see the detailed output. You’ll find information indicating that the test process completed successfully without any issues.
+
+Let’s move to the next step.
+```
+```markdown
+Integration Stage
+The integration stage combines and validates the functionality of new code with existing code or services.
+
+After testing, the code is ready to be integrated with the existing codebase or other services. This process involves merging code branches and ensuring that the integrated system functions correctly.
+
+In some contexts, the integration stage could also involve deploying the application to a staging environment where further integration and user acceptance tests can be performed.
+
+Here is the script for the integration stage job named django_integration. The following script will be added to the previous script:
+
+Click anywhere to copy
+
+django_integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+Let’s add the above script to the end of the .gitlab-ci.yml file.
+
+Here’s the complete script after adding the integration stage:
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - integration
+
+django_build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py check
+
+django_test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+django_integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+In the example provided, we use the echo command to demonstrate that we are in the integration stage. You can replace this with any other command appropriate for your integration stage.
+
+To view the results of this pipeline:
+
+- Open the latest pipeline  
+- Select the integration job  
+- Check the output to see if the test process was disrupted  
+
+You can access the pipeline results by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Note
+
+The django_integration process may sometimes result in an exit code. To prevent this from causing an error, you can use the allow_failure: true option in your configuration.
+
+Let’s move to the next step.
+```
+```markdown
+Deploy Stage
+The deploy stage is a crucial part of the Software Development Life Cycle (SDLC). It moves an application from development or testing environments to production, where end-users can access it. The deploy stage is also essential for releasing new features or fixing bugs. It employs various deployment strategies, such as blue-green, canary, or rolling deployments, to minimize disruptions.
+
+The deploy stage often uses different job names for various environments (such as staging and production).
+
+Here’s the script for the deploy stage job named django_deployment. We’ll add this script to the previous one:
+
+Click anywhere to copy
+
+django_deployment:
+  stage: deploy
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+Let’s add the above script to the end of the .gitlab-ci.yml file.
+
+Below is the complete script:
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - integration
+  - deploy
+
+django_build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py check
+
+django_test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+django_integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+django_deployment:
+  stage: deploy
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+In the example provided, we use the echo command for testing. Feel free to use any other command that suits your service production deployment best practices.
+
+In actual deployment, you’ll encounter various real-world scenarios. You’ll also experience a deployment scenario in the upcoming exercises.
+
+Click on the latest pipeline and select the django_deployment job. The output will show that the deploy job is waiting for user input.
+
+You can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Sometimes, to prevent the automatic execution of the deploy job in the pipeline, it needs to be delayed. To ensure the job runs manually, you can use the when: manual attribute.
+
+Why do we use the when: manual attribute?
+The deploy stage is typically the final step in a CI/CD pipeline. It’s responsible for delivering the code to various environments such as development, staging, or production, depending on your choice.
+
+Let’s move to the next step.
+```
+```markdown
+Conclusion
+The CI/CD pipeline is a powerful system that automates software delivery. It guides the process from the first code submission to the final release in production. The pipeline is organized into key stages, each ensuring the software is created, tested, merged, and launched effectively and reliably. These stages are:
+
+- **Build**: The initial code compilation happens here, preparing it for further testing.  
+- **Test**: The software undergoes thorough testing to find and fix any issues, ensuring quality.  
+- **Integration**: The software is combined with other systems to check how well it works within the larger setup.  
+- **Deploy**: In this final stage, the software is released to production and becomes available to users.  
+
+By combining these steps into a smooth, automated process, the CI/CD pipeline improves the development cycle. It increases the speed, reliability, and efficiency of software delivery. This organized approach encourages continuous improvement, allowing development teams to enhance software products quickly and deliver high-quality results faster.
+```
+```markdown
+Additional Resources
+- The Stages Of CI/CD Pipeline Easily Explained: https://www.linkedin.com/pulse/stages-cicd-pipeline-easily-explained-andrea-de-rinaldis#:~:text=The%20stages%20of%20a%20typical%20CI%2FCD%20pipeline%20include%20code,productivity%2C%20and%20ability%20to%20innovate.  
+- GitLab - CI/CD Pipeline: https://docs.gitlab.com/ee/ci/pipelines/  
+- Stages of A CI/CD Pipeline: https://dev.to/pavanbelagatti/stages-of-a-cicd-pipeline-2bmp  
+```
+```markdown
+Working With Artifacts In GitLab CI/CD Pipeline
+Introduction to Artifacts
+Continuous Integration and Continuous Delivery (CI/CD) is a practice that allows developers to integrate their changes into the main codebase as often as possible.
+
+What Is An Artifact?
+An artifact is an output generated during the pipeline process. It could be a result file from the application or any other item necessary for building an application.
+
+Why Are Artifacts Important In CI/CD?
+Artifacts play a significant role in the CI/CD pipeline for several reasons:
+
+- Artifacts represent the state of a project at a specific point in time.  
+- Artifacts can be preserved and shared across different stages of the pipeline.  
+- Artifacts can be used to roll back a release to a previous version if something goes wrong.  
+
+Each step of the CI/CD pipeline produces an artifact that can be used by the next step in the process.
+
+How Do Artifacts Work In A Pipeline?
+The following flowchart illustrates how the pipeline works with artifacts.
+
+artifactcicd-FlowOfPipeline
+
+Let’s understand the process based on the above image:
+
+1. First, the user triggers the pipeline in a CI/CD application using the pipeline file (.gitlab-ci.yml, Jenkinsfile, etc.). After defining some jobs, the pipeline runs each job in sequence based on the established rules. In this case, the user also includes a rule to generate artifacts once the job is completed.  
+2. Next, the job runs in the pipeline process. When the pipeline file includes a rule for storing the output as artifacts, the job generates an artifact once it completes successfully.  
+3. Finally, after all the pipeline processes have finished, the deployment process is triggered.  
+
+In conclusion, artifacts are an essential part of the CI/CD pipeline. How they are managed can significantly impact the speed, safety, and reliability of software delivery.
+
+Let’s move to the next step.
+```
+```markdown
+Running A Simple GitLab CI/CD Pipeline
+Let’s log into GitLab using the following details:
+
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+
+Next, we need to create a CI/CD pipeline by updating the .gitlab-ci.yml file.
+
+Follow these steps:
+1. Click on the Edit button.  
+2. Replace the existing content in the .gitlab-ci.yml file with the content below.  
+
+Click anywhere to copy
+
+# This is how a comment is added to a YAML file; please read them carefully.
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+job1:
+  stage: build  # this job belongs to the build stage.
+  script:
+    - echo "This is a build step."  # We are running an echo command, but it can be any command.
+
+job2:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1          # Non zero exit code, fails a job.
+
+job3:          
+  stage: integration  # integration stage
+  script:
+    - echo "This is an integration step."
+
+job4:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline run
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise. You need to refresh the exercise page and click on Start the Exercise button to continue working on it.
+
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Saving Job Result As Artifact In GitLab
+To manage the output as a file during the pipeline process, we aim to store the scan results in a file and save it on the CI system for further processing.
+
+You can store the tool result(s) in a file using the artifacts tag as shown below.
+
+someScan:
+  script: 
+    - ./security-tool.sh    # <-- this example script may generate a file as an output
+  artifacts:                    # <--- To save results, we use artifacts tag
+    paths:                      # <--- We then give the path/paths of the scan result files we want to store for further processing
+    - vulnerabilities.json                  #<--- The filename
+    when: always
+    expire_in: 1 week       # <--- To save disk space, we want to store only for 1 week
+
+As you can see above, we need to specify the output file’s path on line numbers 4 and 5 then the expiration(line number 6) under the artifacts tag.  
+To keep our pipeline simple for everyone, we will try to echo the JSON string into a file for now instead of running a security tool.
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+    - echo "{\"vulnerability\":\"SQL Injection\"}" > vulnerabilities.json
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file
+    when: always
+    expire_in: 1 week       # <--- To save disk space, we want to store only for 1 week
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1         # Non zero exit code, fails a job.
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Run the pipeline by clicking commit changes button.
+
+Based on the above script you may see the following script in build job.
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+    - echo "{\"vulnerability\":\"SQL Injection\"}" > vulnerabilities.json
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file
+
+Based on above script, we define an artifacts tag to generate an artifact.
+
+We can see the results of the pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.  
+
+While the artifacts tag is defined in a build job, you can click the build job to see until the process is successful.
+
+artifactcicd-PipelinePage
+
+Once the job succeeds, you can see the artifact displayed at the end of the job report.
+
+artifactcicd-ArtifactUploaded
+
+Artifact Location
+
+You will find and download the vulnerabilities.json file under the artifacts section on your right-hand side.
+
+artifactcicd-DownloadArtifact
+
+---
+
+Producing Artifact From Docker Output
+Next, we will try to understand how we can produce the artifact from the docker output.
+
+Now, let’s run the below script.
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - docker run -i alpine sh -c "echo '{\"vulnerability\":\"XSS Injection\"}' > vulnerabilities.json"
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Run the pipeline by clicking commit changes button.
+
+Based on the above script you can see the following script in test job.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - docker run -i alpine sh -c "echo '{\"vulnerability\":\"XSS Injection\"}' > vulnerabilities.json" # docker command produces an output file
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+Based on the above script, you may see that we define an artifact tag to generate an artifact from the script running inside docker.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.  
+
+While the artifacts tag is defined in a test job, you can click the test job to check whether the process succeeded.
+
+artifactcicd-PipelineTestPage
+
+Oooops! We find an error here.
+
+artifactcicd-ArtifactError
+
+The error message informs that the pipeline is unable to locate the output file, so the artifact will not be generated.
+
+Docker has a -v command to bind the local machine path to the Docker container machine path. Please refer to the Manage data in Docker exercise for a detailed explanation.
+
+Let’s modify the command to bind the local CI/CD machine with the docker container machine using -v option in the /app path inside the container.
+
+Note
+
+Docker will not allow us to bind the machines through the root (/) path of the container machine in order to prevent security exposure. If you do this, docker will reject the destination path and send the following error message.
+
+Command Output
+invalid mount config for type "bind": invalid specification: destination can't be '/'.
+reference: https://stackoverflow.com/questions/36053968/mount-volume-to-host
+
+You can add this command:
+
+Command Output
+docker run -i -v $(pwd):/app alpine sh -c "echo '{\"vulnerability\":\"XSS Injection\"}' > /app/vulnerabilities.json"
+
+Here is the implementation of above command in the pipeline script:
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - docker run -i -v $(pwd):/app alpine sh -c "echo '{\"vulnerability\":\"XSS Injection\"}' > /app/vulnerabilities.json" # make an output file created in /app path
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file in the local CI/CD machine
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+We can see the results of the pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Perfect! Now, the results are successful. You can see the generated file after the pipeline script works as expected in generating an artifact.
+
+Let’s move to the next step.
+```
+```markdown
+Conclusion
+In GitLab, we use an artifact tag to store job results. This tag saves script outputs, like files from security scans, for later use. These outputs, or artifacts, are stored in specific paths so we can easily find them later.
+
+We showed an example job called build. In this job, we used an echo command to create a file named “vulnerabilities.json”.
+
+Artifacts are created for each job when we define the ‘artifacts’ tag. These artifacts give us important information about each stage of our process. We can download them to look at them more closely. This helps us fix problems and keep our CI/CD pipeline working well.
+
+Additional Resources
+- GitLab CI/CD Artifact: https://docs.gitlab.com/ee/ci/jobs/job_artifacts.html  
+- Jenkins Artifact: https://www.jenkins.io/doc/pipeline/tour/tests-and-artifacts/  
+- GitHub Action Artifact: https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts  
+- Artifact DevOps: https://medium.com/@balaug3/artifact-devops-69335d054e20  
+```
+```markdown
+Advanced GitLab CI/CD
+A Simple CI/CD Pipeline
+Gitlab CI/CD is a tool for creating deployment pipelines for your projects.
+
+Learning Gitlab CI/CD helps you understand many other CI/CD systems like Travis CI, Circle CI, and Bitbucket CI with minor adjustments.
+
+Other alternatives to Gitlab CI/CD include Jenkins, Travis, Circle CI, Bitbucket Pipelines, and Drone CI.
+
+We saw the following simple CI/CD pipeline in the Create Simple CI Pipeline exercise.
+
+Click anywhere to copy
+
+# This is how a comment is added to a YAML file; please read them carefully.
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same, i.e., build
+  script:
+    - echo "This is a build step."  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1         # Non zero exit code, fails a job.
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Let’s log into GitLab using the following details and execute this pipeline once again.
+
+Name	Value
+URL	https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username	root
+Password	pdso-training
+
+Next, we need to create a CI/CD pipeline by replacing the existing content in the .gitlab-ci.yml file with the content provided above.
+
+To do this, follow these steps:
+
+- Click on the Edit button to begin editing the file.  
+- Replace the existing content with the new content.  
+- Save your changes by clicking the Commit changes button.  
+
+Verifying the pipeline run
+Once you make changes to the repository, the pipeline automatically starts executing the jobs.
+
+To view the results of this pipeline:
+1. Visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.  
+2. Click on the appropriate job name to see its output.  
+
+Let’s move to the next step.
+```
+```markdown
+Fail a build using exit code
+As we learned in the Working with Exit Code exercise, processes communicate their pass/fail status through exit codes. CI/CD systems also use exit codes to determine if a job or stage has passed or failed.
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+    # ************ Non zero exit code, fails a job. ************ #
+    - exit 1
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+You will notice that the test job has exit 1. When you add or edit this job in GitLab, it will fail the pipeline because of the exit 1 command. CI/CD systems use exit codes to determine if a job has passed or failed.
+
+For example, if you run a security tool on your codebase and it finds security issues, the tool might return a non-zero exit code. A non-zero exit code fails a job (shown in red), while a zero exit code (shown in green) indicates that the CI/CD system will mark the job as passed.
+
+Note
+
+By default, most CI/CD systems use the exit code of the last command executed. If you have multiple commands and some fail, but the last one passes, the CI system will mark the job as passed.
+
+As mentioned earlier, any change to the repository triggers the pipeline.
+
+You can view the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+To see the output, click on the appropriate job name.
+
+Let’s move to the next step.
+```
+```markdown
+Allow the job failure
+Remember!
+
+- All machines except DevSecOps-Box close after two hours, even if you’re in the middle of an exercise.  
+- After two hours, if you encounter a 404 error, refresh the exercise page and click Start the Exercise to continue working.  
+
+In DevSecOps Maturity Levels 1 and 2, you may not want to fail builds. If a security tool fails a build due to security findings, you might not want this job to block other jobs and stages, as there could be false positives in the results.
+
+You can use the allow_failure tag to prevent a job from failing the entire build, even if the tool finds issues.
+
+test:
+  stage: test
+  script:
+     - execute_script_that_will_fail
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+The pipeline would look like the following.
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1         # Non zero exit code, fails a job.
+  allow_failure: true   #<--- allow the build to fail, but don't mark it as such
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step"
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+In the GitLab pipeline configuration we provided, there’s a test job that uses the command exit 1. This command intentionally makes the job fail by returning a non-zero exit code. GitLab’s CI/CD system sees this non-zero exit code as a sign that the job has failed. So, if you add this script to your GitLab repository and start the pipeline, the test job will fail because of the exit 1 command.
+
+However, we’ve added allow_failure: true to the test job configuration. This tells GitLab that even if this job fails, it shouldn’t cause the whole build to fail. The CI/CD system will continue with the next jobs and stages, even if the test job fails.
+
+Remember, any change to the repository automatically starts the pipeline.
+
+To see the results of this pipeline, visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the job name to view its output.
+
+You’ll notice that instead of a green or red mark, we now have an exclamation (!) mark.
+
+Let’s move on to the next step.
+```
+```markdown
+Save scan results
+To manage vulnerabilities found during a scan, we want to store the scan results in a file and save it on the CI system for further processing.
+
+You can store tool results in a file using the artifacts tag as shown below.
+
+someScan:
+  script: ./security-tool.sh    # <-- this tool generates vulnerabilities.json as output
+  artifacts:                    # <--- To save results, we use artifacts tag
+    paths:                      # <--- We then give the path/paths of the scan result files we want to store for further processing
+    - vulnerabilities.json                  #<--- The filename
+    expire_in: 1 week       # <--- To save disk space, we want to store only for 1 week
+
+As you can see above, we need to specify the output file’s path on lines 4 and 5, and the expiration on line 6 under the artifacts tag.  
+To keep our pipeline simple for everyone, we will echo a JSON string into a file instead of running a security tool for now.
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+    - echo "{\"vulnerability\":\"SQL Injection\"}" > vulnerabilities.json
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1         # Non zero exit code, fails a job.
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+You will notice that the build job generates the vulnerabilities.json file. If we don’t specify the expire_in tag, this output file will remain on the CI System indefinitely.
+
+As we discussed earlier, any change to the repository triggers the pipeline.
+
+To view the results of this pipeline, visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+To see the pipeline output, click on the appropriate job name.
+
+Artifact Location
+
+You can find and download the vulnerabilities.json file in the artifacts section on the right side of the page.
+
+artifactcicd-DownloadArtifact
+
+Let’s move to the next step.
+```
+```markdown
+Implement Continuous Delivery
+If you want human approval before deployment, you can use GitLab’s continuous delivery feature with the when tag.
+
+As shown below, using a when: manual tag enforces human intervention (clicking the play button in GitLab) to run a job (deployment).
+
+deploy_prod:
+  stage: deploy
+  script:
+    - echo "Deploy to prod server."
+  when: manual   #<-- A human has to click a button (play button in Gitlab) for this task to execute.
+
+To keep our pipeline simple, we’ll add the when tag to the pipeline instead of deploying an actual application:
+
+Click anywhere to copy
+
+stages:   # Dictionary
+ - build   # build stage
+ - test    # test stage
+ - integration # integration stage
+ - prod       # production stage
+
+build:       # job named build (can be any name, e.g., job1, job2)
+  stage: build    # this job belongs to the build stage
+  script:
+    - echo "This is a build step"  # We're using an echo command, but it could be any command.
+    - echo "{\"vulnerability\":\"SQL Injection\"}" > vulnerabilities.json
+  artifacts:      # notice the artifacts tag
+    paths: [vulnerabilities.json]   # path to the vulnerabilities.json file
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1         # Non-zero exit code fails the job.
+  allow_failure: true   #<--- allow the job to fail without marking the entire build as failed
+
+integration:        # integration job under the integration stage
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual   #<-- A human has to click a button (play button in Gitlab) for this task to
+
+Notice that the prod job has the when: manual option. This means it requires human intervention. Someone must manually approve the job before it can run.
+
+Remember, any changes made to the repository will automatically trigger the pipeline.
+
+View the results of this pipeline at https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+To view the pipeline output:
+
+- Click on the job name that you want to inspect.  
+- Review the detailed output for that specific job.  
+
+Now that we’ve completed this step, let’s move on to the next step in our process.
+```
+```markdown
+Challenge: Fail a Job and Allow It to Fail
+In this exercise, you will edit the .gitlab-ci.yml file to learn about advanced CI/CD options.
+
+Note
+
+If you encounter any errors, please use the CI Lint feature in GitLab to check the .gitlab-ci.yml file.  
+To use the CI Lint tool:
+
+1. Go to your project  
+2. Navigate to CI/CD > Pipelines or CI/CD > Jobs  
+3. Click on CI Lint  
+
+---
+
+Tasks
+
+# 1  
+Create four stages: build, test, integration, and deploy  
+
+Answer
+
+stages:
+  - build
+  - test
+  - integration
+  - deploy
+
+
+# 2  
+In the integration stage, create a file named output.txt using the command echo "this is an output" > output.txt. Then, upload this file using the artifacts keyword.  
+
+Answer
+
+integration:
+  stage: integration
+  script:
+    - echo "this is an output" > output.txt
+  artifacts:
+    paths: [output.txt]
+
+
+# 3  
+Include an artifact with when: always for every executed integration job, and trigger a failure in the integration job using exit 1  
+
+Answer
+
+integration:
+  stage: integration
+  script:
+    - echo "this is an output" > output.txt
+    - exit 1
+  artifacts:
+    paths: [output.txt]
+    when: always
+
+
+# 4  
+Configure the integration job to allow failure, but still proceed to the next stage  
+
+Answer
+
+integration:
+  stage: integration
+  script:
+    - echo "this is an output" > output.txt
+    - exit 1
+  artifacts:
+    paths: [output.txt]
+    when: always
+  allow_failure: true
+
+
+# 5  
+In the deploy job, add a condition that requires manual approval (using a button, such as a play button) before executing the job  
+
+Answer
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying to production..."
+  when: manual
+```
+```markdown
+How CI/CD Works
+Introduction to CI/CD System
+A CI/CD system, which stands for Continuous Integration/Continuous Deployment, is a way to automate software development. It helps make building, testing, and deploying apps easier. This allows developers to work more efficiently and release updates faster while keeping the code reliable and high-quality.
+
+In a CI/CD workflow, developers often add their code changes to a shared repository. This starts an automatic process that builds the code, runs tests, and finds any problems. By catching issues early, teams can fix bugs quickly and avoid conflicts between different parts of the code.
+
+When the code passes all tests, the CI/CD system automatically sends the changes to different environments like development, testing, and production. This ensures the app is deployed consistently and reliably, while reducing manual work and human errors in the process.
+
+To set up a CI/CD system, developers use various tools and technologies. These include version control systems like Git, build servers such as Jenkins, automated testing tools, and deployment automation software. All these tools work together to automate different stages of the development and deployment process.
+
+Let’s move to the next step.
+```
+```markdown
+Understanding GitLab CI/CD
+In this exercise, we will use GitLab as our CI/CD system because it is popular and easy to use. By learning the basics of YAML files, you can also apply this knowledge to different CI/CD systems.
+
+Note
+
+YAML (a recursive acronym for “YAML Ain’t Markup Language”) is a human-readable data serialization language. It is commonly used for configuration files and in applications where data is being stored or transmitted.
+
+Source: Wikipedia
+
+Let’s log into GitLab using the following details:
+
+Name    Value
+URL     https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username    root
+Password    pdso-training
+After the initial setup, you can see the pipeline running by visiting this URL.
+
+Pipelines
+
+Click on the appropriate job name to see the output or use this URL.
+
+How it Works
+The first step in running the pipeline is to create the environment inside the GitLab CI/CD pipeline before the jobs start. As soon as the pipeline begins, the job pulls the Docker image to build the environment for the first time while the job is running.
+
+The first step when running the pipeline is to create the environment inside the GitLab CI/CD pipeline before the jobs start running. As soon as the pipeline starts, the job will pull the docker image to build the environment for the first time while the job is running.
+
+Running with gitlab-runner 16.4.0 (4e724e03)
+  on gitlab-runner-77k0huze BxQ1DEzn, system ID: s_93fa9ab39c75
+Preparing the "docker" executor 00:43
+Using Docker executor with image docker:20.10 ...
+Using helper image:  gitlab/gitlab-runner-helper:x86_64-latest  (overridden, default would be  registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-4e724e03 )
+Pulling docker image gitlab/gitlab-runner-helper:x86_64-latest ...
+
+...[SNIP]...
+In the output above, you will see that the runner is using Docker as the executor.
+
+Note
+
+The executor in GitLab CI/CD refers to the environment where the CI/CD pipelines run and execute jobs. It determines where and how the jobs defined in your GitLab CI/CD configuration file are executed.
+
+GitLab provides different executor options to choose from based on your needs. Each executor has its own capabilities, requirements, and usage scenarios.
+
+Next, you will see that the next process is getting the sources from Git repository.
+
+...[SNIP]...
+
+$ rm -f .git/index.lock
+Fetching changes with git depth set to 20...
+Initialized empty Git repository in /builds/BxQ1DEzn/0/root/django-nv/.git/
+Created fresh repository.
+Checking out 8ee7dc23 as detached HEAD (ref is main)...
+Skipping Git submodules setup
+
+...[SNIP]...
+In this case, The environment will get all the sources inside the django-nv repository.
+
+While reading the sources, the next step is to execute the scripts that we have defined in .gitlab-ci.yml file.
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job:
+  stage: build
+  script:
+    - echo "I'm a job"
+Afterwards, the process will be displayed as it appears at the end of the job, as shown below:
+
+...[SNIP]...
+
+Executing "step_script" stage of the job script 00:01
+Using docker image sha256:ed9a10a5bc310dfdad94ab737c61698d5a5bc8074a039804531452fe19200896 for docker:20.10 with digest docker@sha256:2967f0819c84dd589ed0a023b9d25dcfe7a3c123d5bf784ffbb77edf55335f0c ...
+$ echo "I'm a job"
+I'm a job
+Job succeeded
+You can see that the instruction echo “I’m a job” is reflected in the pipeline. This means that anything inside the script attribute will be executed by GitLab Runner.
+
+Let’s attempt to customize the script to execute any command of our choosing.
+
+Edit .gitlab-ci.yml file content inside the project and copy the below code by clicking on the Edit button or visiting this link
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job:
+  stage: build
+  script:
+    - echo "I'm a job"
+    - whoami
+    - hostname
+
+Check the last pipeline and click on the appropriate job name.
+
+You will see that the output is the same as what we have in the repository. Why? By default, GitLab Runner will clone the repository itself as the working directory, so you no longer need to add the git clone command inside the configuration file (.gitlab-ci.yml).
+
+...[SNIP]...
+
+$ echo "I'm a job"
+I'm a job
+$ whoami
+root
+$ hostname
+runner-bxq1dezn-project-2-concurrent-0
+Job succeeded
+If we see the output of the two commands we added, it appears that the instructions are being executed within containers. How did we come to know that it runs on top of a container?
+
+You can add cat /proc/self/mountinfo command after hostname.
+
+Once done, please click on the appropriate job name, and you will see the following output.
+
+Command Output
+...[SNIP]...
+
+$ cat /proc/self/mountinfo
+7975 7553 0:510 / / rw,relatime master:3409 - overlay overlay rw,lowerdir=/var/lib/docker/overlay2/l/N2DAW4RT2JYC6D3QXQZMPQOI5D:/var/lib/docker/overlay2/l/WVUBAR2L2RBICUEXPFEGR2UNGJ:/var/lib/docker/overlay2/l/CYJQ4CSL5AYWCLUIFWJAM752SW:/var/lib/docker/overlay2/l/KTSMLJMG6YGPS74FO5U4GHVB4A:/var/lib/docker/overlay2/l/77EE4NHWL47MD5DBY4YVD3MHMD:/var/lib/docker/overlay2/l/65SV6UCPHFRP22XOF5VHIILF2H:/var/lib/docker/overlay2/l/E7TJ4ZFTNEIQVL23VPJO5TCQBE:/var/lib/docker/overlay2/l/KOVW7V7D4F4QKYDO4OS6GPQPPI:/var/lib/docker/overlay2/l/HNANG2WE43S7HAUSJPAXWJEH3M:/var/lib/docker/overlay2/l/U4GHHJ5XGOF6PJQGWKFUM35WXF,upperdir=/var/lib/docker/overlay2/3ce7ad96882801b5d4bbecddf615e55c25563bf2eaac356be71c38f5c5865a6d/diff,workdir=/var/lib/docker/overlay2/3ce7ad96882801b5d4bbecddf615e55c25563bf2eaac356be71c38f5c5865a6d/work,userxattr
+7977 7975 0:513 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+7978 7977 0:419 /proc/swaps /proc/swaps rw,nosuid,nodev,relatime - fuse sysboxfs rw,user_id=0,group_id=0,default_permissions,allow_other
+7979 7977 0:419 /proc/sys /proc/sys ro,nosuid,nodev,relatime - fuse sysboxfs rw,user_id=0,group_id=0,default_permissions,allow_other
+7980 7977 0:419 /proc/uptime /proc/uptime rw,nosuid,nodev,relatime - fuse sysboxfs rw,user_id=0,group_id=0,default_permissions,allow_other
+7981 7977 0:425 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw
+
+...[SNIP]...
+Job succeeded
+You don’t need to explore this further, but it will provide you with some information on how we identify the commands in the configuration file that are running on the container behind the scenes.
+
+Let’s move to the next step.
+```
+```markdown
+Running Jobs in Docker Containers
+In the Docker exercise, we learned how to use Docker through the command line and its various options. Now, we’ll apply this knowledge to CI/CD. But first, we need to understand how the image attribute is used in different scenarios.
+
+Let’s replace the existing CI/CD pipeline by copying the following content:
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job:
+  stage: build
+  image: python:3.6
+  script:
+    - pip install -r requirements.txt
+
+Click the Commit changes button and go back to the pipeline page. The change will display the output below in the pipeline.
+
+...[SNIP]...
+$ pip install -r requirements.txt
+Collecting Django==3.0
+  Downloading Django-3.0-py3-none-any.whl (7.4 MB)
+Collecting pytz
+  Downloading pytz-2023.3.post1-py2.py3-none-any.whl (502 kB)
+Collecting sqlparse>=0.2.2
+  Downloading sqlparse-0.4.4-py3-none-any.whl (41 kB)
+Collecting asgiref~=3.2
+  Downloading asgiref-3.4.1-py3-none-any.whl (25 kB)
+Collecting typing-extensions
+  Downloading typing_extensions-4.1.1-py3-none-any.whl (26 kB)
+Installing collected packages: typing-extensions, sqlparse, pytz, asgiref, Django
+Successfully installed Django-3.0 asgiref-3.4.1 pytz-2023.3.post1 sqlparse-0.4.4 typing-extensions-4.1.1
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+WARNING: You are using pip version 21.2.4; however, version 21.3.1 is available.
+You should consider upgrading via the '/usr/local/bin/python -m pip install --upgrade pip' command.
+Job succeeded
+Now, let’s compare the previous YAML file with the new one:
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job1:
+  stage: build
+  image: python:3.6
+  script:
+    - pip install -r requirements.txt
+
+job2:
+  stage: build
+  script:
+    - apk add python3 py3-pip
+    - pip install -r requirements.txt
+
+Can you identify the differences between job1 and job2?
+
+The command appears similar, but if you observe closely, job1 uses the image attribute, whereas job2 does not define it. Instead, it uses the - apk add python3 py3-pip command to install pip.
+
+Reference: https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-an-image.
+
+You might be wondering why we need to install the python3-pip package in job2. This is because if no image attribute is defined, it will use the default image that is defined at the top of the configuration file, which is image: docker:20.10. The image is based on Alpine Linux, and the package manager used is apk.
+
+Let’s move to the next step.
+```
+```markdown
+Docker-in-Docker in GitLab
+Remember!
+
+Except for DevSecOps-Box, every other machine closes after two hours, even if you are in the middle of the exercise. You need to refresh the exercise page and click on Start the Exercise button to continue working on it.
+
+Docker-in-Docker (DinD) is a feature in GitLab that allows you to run Docker containers inside a Docker container. DinD enables you to use the full capabilities of Docker in your GitLab CI/CD pipelines.
+
+When using DinD, GitLab creates a virtual Docker environment within your pipeline job. This allows you to build, test, and deploy applications using Docker commands. It provides an isolated Docker runtime environment where you can run containers, build images, and execute tasks that require Docker functionality.
+
+DinD is useful when you need to perform tasks like building and pushing Docker images, running Dockerized tests, or deploying applications using Docker. It allows you to replicate the same Docker environment within your pipeline as you would have on your local machine or a dedicated Docker host.
+
+To use DinD in GitLab CI/CD pipelines, you simply need to configure your pipeline job to use the Docker image available at https://hub.docker.com/_/docker. You can choose the specific version you need.
+
+We have already learned about DinD in the previous step. Now, we will explore it further within the CI/CD system.
+
+These are the last changes we made in the pipeline:
+
+Command Output
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job1:
+  stage: build
+  image: python:3.6
+  script:
+    - pip install -r requirements.txt
+
+job2:
+  stage: build
+  script:
+    - apk add python3 py3-pip
+    - pip install -r requirements.txt
+Let us try to see how the docker:20.10 image can be used to operate Docker inside the pipeline.
+
+Please copy the following content and replace it in your .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job1:
+  stage: build
+  script:
+    - docker version
+
+Check the last pipeline and click on the appropriate job name.
+
+Command Output
+...[SNIP]...
+$ docker version
+Client:
+ Version:           20.10.24
+ API version:       1.41
+ Go version:        go1.19.7
+ Git commit:        297e128
+ Built:             Tue Apr  4 18:17:06 2023
+ OS/Arch:           linux/amd64
+ Context:           default
+ Experimental:      true
+Server: Docker Engine - Community
+ Engine:
+  Version:          20.10.10
+  API version:      1.41 (minimum version 1.12)
+  Go version:       go1.16.9
+  Git commit:       e2f740d
+  Built:            Mon Oct 25 07:41:08 2021
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.5.10
+  GitCommit:        2a1d4dbdb2a1030dc5b01e96fb110a9d9f150ecc
+ runc:
+  Version:          1.0.3
+  GitCommit:        v1.0.3-0-gf46b6ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+That is interesting! The docker command is available in the pipeline, and we can use it to minimize the installation of any tools we need to run in the CI/CD system. Let’s take an example of using the safety tool, which we will cover in a separate exercise.
+
+Use the following content in your .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+job1:
+  stage: build
+  script:
+    - docker run --rm -v $(pwd):/src hysnsec/safety check -r /src/requirements.txt --json
+
+Let’s break down the Docker command with its flags/options:
+
+Command	Description
+docker run	This command is used to run a Docker container.
+--rm	This flag stands for remove and is used to automatically remove the container after it finishes running. This helps in keeping your system clean by removing temporary containers.
+-v $(pwd):/src	This option sets up a volume mount within the container. It binds the current working directory to the /src directory inside the container.
+hysnsec/safety	This refers to the Docker image you want to run. In this case, it is the image named hysnsec/safety, which contains the Safety tool.
+check -r /src/requirements.txt --json	These are the arguments passed to the safety check command within the container. It instructs the Safety tool to check the Python packages specified in the requirements.txt file located inside the /src directory. The --json flag tells Safety to output the results in JSON format.
+The above single line of code scans the requirements.txt file for vulnerabilities without the need to install the safety tool using the pip3 install command.
+
+The purpose is the same as the code snippet below.
+
+Command Output
+job1:
+  stage: build
+  image: python:3.6
+  script:
+    - pip install safety
+    - safety check -r /src/requirements.txt --json
+At this stage, we assume that you understand how the image attribute and DinD work inside the pipeline.
+
+If you have any remaining time on this lab exercise, you can either conduct additional experiments or redo the exercise to allocate more time.
+
+Let’s move to the next step.
+```
+```markdown
+Shared Runner
+A Shared Runner in GitLab is a resource that multiple projects can use to run their CI/CD pipelines. It provides a centralized execution environment, eliminating the need for each project to have dedicated resources.
+
+Shared Runners are configured at the GitLab instance level and can be shared across different projects within that instance. They allow projects to use the same CI/CD infrastructure, taking advantage of shared computing power and resources.
+
+Let’s continue experimenting with how a working runner performs.
+
+Go to Settings > CI/CD > Runners and disable the shared runner.
+
+SharedRunner
+
+https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/settings/ci_cd#js-runners-settings
+
+Now, let’s re-run our pipeline.
+
+As shown below, you’ll see a tag with a stuck status. This indicates that the runner isn’t working properly for the pipeline. As a result, the jobs in our GitLab won’t be triggered.
+
+SharedRunnerOutput
+
+By completing this exercise, you’ve gained an understanding of CI/CD behavior.
+
+That’s all for now, see you in the next lesson!
+```
+```markdown
+GitLab Rules for Conditional Pipelines
+A Simple CI/CD Pipeline
+GitLab CI/CD is an implementation of the CI/CD pipeline that you can use to create a deployment pipeline for your project.
+
+Learning the GitLab CI/CD pipeline helps you easily understand many other CI/CD systems like Jenkins, Travis CI, Circle CI, Bitbucket Pipelines, GitHub Actions, Drone CI, and others with minor adjustments.
+
+In the Create Simple CI Pipeline exercise, we saw the following simple CI/CD pipeline:
+
+Click anywhere to copy
+
+# This is how a comment is added to a YAML file; please read them carefully.
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+build:            # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same, i.e., build
+  script:
+    - echo "This is a build step."  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - exit 1     # Non zero exit code, fails a job.
+
+integration:            # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+
+Let’s log into GitLab using the following details and execute this pipeline once again:
+
+Name        Value
+Gitlab URL  https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username    root
+Password    pdso-training
+
+Now, let’s create a CI/CD pipeline by adding the content we just saw to the .gitlab-ci.yml file.
+
+To do this, follow these steps:
+
+Click on the Edit button to open the file for editing.  
+Copy and paste the YAML content into the file.  
+After adding the content, save your changes by clicking the Commit changes button.  
+
+Verifying the pipeline run
+Once you make changes to the repository, the pipeline automatically starts running the jobs.
+
+To see the results of this pipeline:
+
+Visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.  
+Find the most recent pipeline run.  
+Click on the job names to view their individual outputs.  
+
+Great job! You’ve now set up and run your first CI/CD pipeline. Let’s continue to the next step to learn more.
+```
+```markdown
+Rules attributes
+rules is YAML syntax for GitLab CI to include or exclude jobs in pipelines. It replaces the only and except clauses. Using this syntax, you can control when a job will be triggered in a pipeline based on the rules you define in the .gitlab-ci.yml file.
+
+Let’s look at some examples of the rules clause.
+
+rules:if
+Click anywhere to copy
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+build:              # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build      # this job belongs to the build stage. Here both job name and stage name is the same, i.e., build
+  script:
+    - echo "This is a build step."          # We are running an echo command, but it can be any command.
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'   # this job will get triggered when the branch name is __main__
+
+You will notice that build job has if statement that uses branch name under rules as a condition. So, any changes in main branch will kick-start the pipelines because the value ​​being compared is main. Other than that, you can also use any expressions like (==, !=, =~, ~=) and conjunction/disjunction like (&&, ||) then combine them with the help of predefined variables from GitLab to make your CI/CD workflow.
+
+Note
+
+If no attributes are defined in the rules attribute, the defaults are when: on_success and allow_failure: false.
+
+By default, this job executes when the previous jobs in earlier stages succeed (when: on_success), and it causes the entire build to fail if this job fails to run (allow_failure: false).
+
+Click anywhere to copy
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - staging      # this is staging stage
+ - prod         # this is prod/production stage
+
+job1:               # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build      # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"          # We are running an echo command, but it can be any command.
+
+job4:
+  stage: test
+  script:
+    - echo "This is a test step."
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+The above content has job4, which will get triggered with Merge Request event.
+
+rules:changes
+Click anywhere to copy
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+build:              # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build      # this job belongs to the build stage. Here both job name and stage name is the same, i.e., build
+  script:
+    - echo "This is a build step."          # We are running an echo command, but it can be any command.
+  rules:
+    - changes:
+      - Dockerfile
+
+In this sample, we define the rule clause to specify under what rules the job should be executed. The above sample specifies that the job named build should only run when a file named Dockerfile is changed. So, if you edit the .gitlab-ci.yml file, then copy the above content and save the changes, it won’t execute the pipeline because there was no change to the Dockerfile.
+
+The changes clause can be combined with if statement as shown below:
+
+Click anywhere to copy
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+build:              # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build      # this job belongs to the build stage. Here both job name and stage name is the same, i.e., build
+  script:
+    - echo "This is a build step."          # We are running an echo command, but it can be any command.
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - Dockerfile
+
+rules:exists
+Click anywhere to copy
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - prod         # this is prod/production stage
+
+build:              # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build      # this job belongs to the build stage. Here both job name and stage name is the same, i.e., build
+  script:
+    - docker build -t $CI_REGISTRY/root/django-nv .
+  rules:
+    - exists:
+      - Dockerfile
+
+In the above example, a job will run when certain file exists. In this case, our rule specifies to the run when a file named Dockerfile exists, or you can use glob patterns to match multiple files in a specific directory.
+
+rules:allow_failure
+Click anywhere to copy
+
+stages:         # Dictionary
+ - build        # this is build stage
+ - test         # this is test stage
+ - integration  # this is an integration stage
+ - staging      # this is staging stage
+ - prod         # this is prod/production stage
+
+job4:
+  stage: staging
+  script:
+    - echo "This is a deploy step to staging environment."
+    - exit 1    # Non zero exit code, fails a job.
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'   # this job will get triggered when the branch name is __main__
+      allow_failure: true
+
+job5:
+  stage: prod
+  script:
+    - echo "This is a deploy step to production environment."
+  rules:
+    - if: '$CI_COMMIT_TAG !~ "/^$/"'   # this job will trigger when you create a new tag
+      when: manual
+
+In this file:
+
+job4: if the changes are pushed to main branch, job4 will run, and the pipeline will continue to run the next job because there is ___allow_failure__: true even though there is an exit 1 indicting a job failure  
+job5: if the changes are pushed for a new tag with any name, and need a human approval before the job can run  
+
+As discussed, any change to the repo kick-starts the pipeline in accordance with the rules specified in the job.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Pipeline with out job 5
+
+However, after committing this file, you may notice that job 5 does not appear in the pipeline. This is because the condition will only execute the job when a Git tag is created. To resolve this and make job 5 execute, follow these steps:
+
+Visit GitLab Tag: Navigate to the Tags section of your GitLab project, either through Git commands or using the GitLab web interface.  
+Gitlab Tags Feature  
+
+Create a New Tag: Create a new Git tag with a name that meets the criteria specified in your GitLab CI/CD configuration. For example, you can add a tag with a name like for-practice  
+Adding New Tags  
+
+Trigger the Pipeline: After creating the tag, you need to manually trigger the pipeline job in the pipeline as per the rules defined in your configuration.  
+Start the Job Manually  
+
+By following these steps, you will be able to trigger and execute job 5 manually in your GitLab CI/CD pipeline, as it is configured to require manual approval for jobs triggered by new Git tags.
+
+Click on the appropriate job name to see the output.
+
+Note
+
+You don’t need to use rules attribute if you want the pipeline kick-starts after any changes.
+```
+```markdown
+Troubleshooting SSH Issues
+This section provides assistance in troubleshooting SSH connection issues.
+
+Note
+
+At this point in the course, you are most likely to embark on CI/CD exercises that involve creating variables and using SSH keys for authentication.
+
+This section is meant to assist you in troubleshooting any SSH connection issues that may arise during the setup.
+
+This section is not a tutorial about the working details of SSH and its setup. If you would like to know the process involved in setting up SSH connections using a public-private key pair, then you would have already come across an exercise titled Working With SSH.
+
+Introduction to SSH
+Secure Shell (SSH) is a commonly used mechanism that is used for communication between two systems.
+
+There is an intrinsic need to authenticate one system to another in order to establish trust. Establishing trust between systems requires credentials.
+
+Credentials can be passwords, tokens, public-private key pairs, and many others.
+
+When using SSH connections, a popular and arguably more secure choice for authentication is using SSH Keys.
+
+Error 1: Could Not Resolve Hostname or Host Not Found
+If you get an SSH error that says could not resolve hostname, then it probably means your lab machine is not alive, or there are typos in your machine name, or your lab machine ID might have changed.
+
+Command Output
+ssh: Could not resolve hostname prod-xxxxxxxx: Temporary failure in name resolution
+
+What can you do to fix?
+1. Try and ping the machine you are trying to connect to, if you get a ping response, then your machine exists and is alive.
+
+Error 2: Invalid Key Format
+When using a public-private key pair for authentication, you need to share your private key with a remote server to authenticate the connection.
+
+Private keys are typically stored in the ~/.ssh/ directory.
+
+For example, private keys generated using the RSA algorithm are stored in the file ~/.ssh/id_rsa.
+
+The private key file has a specific format.
+
+The private key begins with -----BEGIN RSA PRIVATE KEY-----, followed by the contents of the private key, and ends with -----END RSA PRIVATE KEY-----.
+
+When sharing private keys for authentication, it is essential to share the entire contents of the ~/.ssh/id_rsa file, including the -----BEGIN RSA PRIVATE KEY----- and -----END RSA PRIVATE KEY----- lines.
+
+Invalid Key Format error occurs when:
+
+- The private key passed is either empty  
+- The private key misses the -----BEGIN RSA PRIVATE KEY----- and -----END RSA PRIVATE KEY----- section  
+- The private key contains additional characters that may be typos, or characters that are not a part of the original private key  
+
+What can you do to fix?
+If you are using GitLab CI or other CI/CD systems to connect to other servers in order to perform a certain operation:
+
+- Ensure that the private key is copied correctly starting from -----BEGIN RSA PRIVATE KEY----- and ending exactly with -----END RSA PRIVATE KEY-----  
+- Ensure there are no trailing spaces or characters like ~ or # or / after the -----END RSA PRIVATE KEY-----  
+- If you are using variables to store private keys, ensure the variable name that is used in the CI/CD script is indeed the variable that contains the private key  
+
+The below image highlights exactly what needs to be copied when using SSH private keys for authentication.
+
+Working_With_SSH
+
+If you still have issues, please reach out to the Staff.
+```
+```markdown
+Continuous Deployment Using GitLab
+A Simple CI/CD Pipeline
+YAML (a recursive acronym for “YAML Ain’t Markup Language”) is a human-readable data serialization language. It is commonly used for configuration files and in applications where data is being stored or transmitted.
+
+Source: Wikipedia
+
+Considering your DevOps team created a simple CI pipeline with the following contents.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual # Continuous Delivery
+
+We have four jobs in this pipeline; a build job, a test job, a integration job, and a prod job.
+
+Let’s log into GitLab using the following details and execute this pipeline.
+
+Name        Value
+Gitlab URL  https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml
+Username    root
+Password    pdso-training
+
+Next, we need to create a CI/CD pipeline by replacing the .gitlab-ci.yml file content with the above CI script. Click on the Edit button to replace the content (use Control+A and Control+V).
+
+Save changes to the file using the Commit changes button.
+
+Verify the pipeline run
+As soon as a change is made to the repository, the pipeline starts executing the jobs.
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Pipelines
+
+Click on the appropriate job name to see the output.
+
+Let’s move to the next step.
+```
+```markdown
+Build Docker images in CI/CD pipeline
+Before adding a new job, let’s learn some basic syntax of .gitlab-ci.yml to configure our CI/CD pipelines.
+
+Remember
+
+Continuous Delivery involves human approval, whereas Continuous Deployment is automatic.
+
+In GitLab CI, we can use when: manual to create a continuous delivery pipeline. Any job with a manual tag won’t execute until you click on the play button. Let’s create such a pipeline using the following .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+image: docker:20.10  # To run all jobs in this pipeline, use the latest docker image
+
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image that contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
+  when: manual  # <-- this job will not be executed by GitLab automatically
+
+We can see the results of this pipeline by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/jobs/4.
+
+We will now containerize this application to reap the benefits of container technology.
+
+Let’s add a new job called release after the test job.
+
+Click on the Edit button to append the following content to the .gitlab-ci.yml file.
+
+Click anywhere to copy
+
+release:
+  stage: release
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE        # Push the image into registry
+
+Save changes to the file using the Commit changes button.
+
+In the above code, you will notice that we use predefined variables provided by GitLab, and we don’t need to manually define the image name.
+
+Once the pipeline is finished, you will notice that the release job failed with the error message denied: access forbidden. To fix this, we need to log into the registry with the correct credentials before pushing the image.
+
+Next, please visit https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/-/blob/main/.gitlab-ci.yml.
+
+Note
+
+If you encounter a 404 Page Not Found error, please make sure to log in using the following details:
+
+Name        Value
+URL         https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training
+Username    root
+Password    pdso-training
+
+Click on the Edit button and replace the release job with the following code.
+
+Click anywhere to copy
+
+release:
+  stage: release
+  before_script:
+   - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE        # Push the image into registry
+
+Note
+
+Where do we get CI_REGISTRY_IMAGE? Even though we haven’t defined it yet in GitLab CI/CD variables, we use predefined variables to authenticate with the registry on GitLab, so we don’t need to add any secrets to the settings.
+
+Please refer to the predefined environment variables here.
+
+Save changes to the file using the Commit changes button. Once the pipeline completes, you will notice that the release job is passed.
+
+To check if the image has been pushed, you can visit Packages & Registries → Container Registry in your project.
+
+Container_Registry
+
+Let’s move to the next step to deploy this container to the production machine.
+```
+```markdown
+Deploy Application From CI/CD Pipeline
+Note
+
+To run DAST exercises, we need a running application on the staging/production machine.
+
+The following steps will help you set up the django.nv application on the production machine.
+
+We have added a new job to release the container in our release job. Next, we will modify the prod job to deploy our application after the release process.
+
+Remember
+
+These steps would be the same for either the staging or production environment. For this exercise, imagine we are deploying to staging rather than production.
+
+We need to add the following variables (Go to Project (django.nv) → Settings → CI/CD → Variables → Expand).
+
+Name    Value
+Key     PROD_USERNAME
+Value   root
+Name    Value
+Key     PROD_HOSTNAME
+Value   prod-kr6k1mdm
+Name    Value
+Key     PROD_SSH_PRIVKEY
+Value   Copy the private key from the production machine using SSH
+
+The SSH key is available at /root/.ssh/id_rsa. You can use the following commands to obtain it:
+
+First, log into the production machine using SSH:
+
+Log into the production machine using SSH.
+
+ssh root@prod-kr6k1mdm
+
+Then view the value of id_rsa. You can use the following command:
+
+more /root/.ssh/id_rsa
+
+Note
+
+Please copy the complete value from the beginning (-----BEGIN RSA PRIVATE KEY-----) to the last line (-----END RSA PRIVATE KEY-----) are also copied.
+
+Security Best Practices
+
+Storing SSH keys in GitLab variables poses significant security risks due to plain text storage and limited access controls. For production environments, it’s recommended to use dedicated key management solutions like HashiCorp Vault for secure key storage, rotation, and access control. Learn more about managing SSH access at scale here.
+
+Once the variables are saved on the CI system, we need to edit the .gitlab-ci.yml file content once again and replace the prod job with the following code.
+
+Click anywhere to copy
+
+prod:
+  stage: prod
+  image: kroniak/ssh-client:3.6
+  environment: production
+  only:
+      - main
+  before_script:
+   - mkdir -p ~/.ssh
+   - echo "$PROD_SSH_PRIVKEY" > ~/.ssh/id_rsa
+   - chmod 600 ~/.ssh/id_rsa
+   - eval "$(ssh-agent -s)"
+   - ssh-add ~/.ssh/id_rsa
+   - ssh-keyscan -H $PROD_HOSTNAME >> ~/.ssh/known_hosts
+  script:
+   - echo
+   - |
+      ssh $PROD_USERNAME@$PROD_HOSTNAME << EOF
+        docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASS} ${CI_REGISTRY}
+        docker rm -f django.nv
+        docker run -d --name django.nv -p 8000:8000 $CI_REGISTRY_IMAGE
+      EOF
+
+Save changes to the file using the Commit changes button.
+
+Click anywhere to copy
+
+image: docker:20.10
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py check
+
+test:
+  stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
+  script:
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
+
+release:
+  stage: release
+  before_script:
+   - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE        # Push the image into registry
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+    - exit 1
+  allow_failure: true # Even if the job fails, continue to the next stages
+
+prod:
+  stage: prod
+  image: kroniak/ssh-client:3.6
+  environment: production
+  only:
+      - main
+  before_script:
+   - mkdir -p ~/.ssh
+   - echo "$PROD_SSH_PRIVKEY" > ~/.ssh/id_rsa
+   - chmod 600 ~/.ssh/id_rsa
+   - eval "$(ssh-agent -s)"
+   - ssh-add ~/.ssh/id_rsa
+   - ssh-keyscan -H $PROD_HOSTNAME >> ~/.ssh/known_hosts
+  script:
+   - echo
+   - |
+      ssh $PROD_USERNAME@$PROD_HOSTNAME << EOF
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+        docker rm -f django.nv
+        docker run -d --name django.nv -p 8000:8000 $CI_REGISTRY_IMAGE
+      EOF
+
+Notice the contents of the release and prod jobs. We create a docker image under the release stage, and we will deploy this container to the prod machine using the prod stage.
+
+SSH issues? Please refer to the troubleshooting lesson on the course portal.
+
+Let’s see the results by visiting https://gitlab-ce-kr6k1mdm.lab.practical-devsecops.training/root/django-nv/pipelines.
+
+Click on the appropriate job name to see the output.
+
+Final_Pipelines
+
+Now, we should see the Task Manager application running by accessing this URL.
+
+If you can access above URL, It means the deployment process is successful
+
+Note
+
+Please enter the credentials below to log in to the Task Manager page.
+
+Name    Value
+Username    admin
+Password    admin
+
+There you go! We have successfully implemented Continuous Deployment (CD), and that’s all for now. See you in the next lesson!
+```
+
